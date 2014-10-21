@@ -1,0 +1,68 @@
+#application specific
+## local config with passwords etc
+/code/conf.local
+## latex stuff
+*.aux
+*.glo
+*.idx
+*.log
+*.toc
+*.ist
+*.acn
+*.acr
+*.alg
+*.bbl
+*.blg
+*.dvi
+*.glg
+*.gls
+*.ilg
+*.ind
+*.lof
+*.lot
+*.maf
+*.mtc
+*.mtc1
+*.out
+*.synctex.gz
+
+
+
+#standard
+*.class
+
+# Package Files #
+*.ear
+
+# IntelliJ Files
+*.iml
+*.ipr
+*.iws
+/*/.idea
+*/.idea
+atlassian-ide-plugin.xml
+
+# NetBeans
+nbproject
+
+# Eclipse
+.classpath
+.project
+.settings
+
+# Buildtools
+build.properties
+mvn.properties
+.checkstyle
+maven-ant-tasks-*.jar
+
+# General
+logs
+output
+target
+work
+*.tmp
+thumbs.db
+Thumbs.db
+bin/setenv.*
+
