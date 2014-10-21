@@ -1,8 +1,10 @@
 aic2014
 =======
 
-Lab assignment of Advanced Internet Computing VU 2014, Winter Semester
+Lab assignment of Advanced Internet Computing VU 2014
+
 Technical University of Vienna
+
 Assignment 3: Onion Routing
 
 1. BUILD INSTRUCTIONS
