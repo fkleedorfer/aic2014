@@ -30,7 +30,7 @@ mvn install
 -----------------
 All programs read configuration files from a configuration folder that MUST BE 
 SPECIFIED as the environment variable 'ONION_CONF_DIR'. To pass it to a java program,
-use the vm argument -DONION_CONF_DIR=<the-folder-where-you-copied_code/onion/conf>
+use the vm argument -DONION_CONF_DIR=[the-folder-where-you-copied_code/onion/conf]
 
 2.2 Running locally during development
 --------------------------------------
