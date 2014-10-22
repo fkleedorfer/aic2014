@@ -11,10 +11,11 @@
   <url>https://github.com/fkleedorfer/aic2014</url>
 
   <modules>
+    <module>onion-common</module>
     <module>onion-chainnode</module>
     <module>onion-client</module>
     <module>onion-crypto</module>
-    <module>onion-dictionarynode</module>
+    <module>onion-directorynode</module>
     <module>onion-quoteserver</module>
   </modules>
 
