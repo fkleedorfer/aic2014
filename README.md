@@ -60,6 +60,7 @@ mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.directorynode.Directory
 Point your browser to `http://localhost:20141/getChain` to see if it works.
 
 2.2.2 Running inside IntelliJ
+-----------------------------
 
 In IntelliJ, a "Run Configuration" encapsulates all the parameters and configuration for running code. 
 In a nutshell, you have to create a Run Configuration for the class you want to run and specify 
