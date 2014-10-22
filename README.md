@@ -50,6 +50,7 @@ cd code/onion/onion-quoteserver
 mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.quoteserver.QuoteServerApp" -DONION_
 CONF_DIR=../conf.local
 ```
+Point your browser to http://localhost:20140/quote to see if it works.
 
 2.2 Running the AWS demo
 ------------------------
