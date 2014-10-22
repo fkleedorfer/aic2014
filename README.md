@@ -52,6 +52,16 @@ CONF_DIR=../conf.local
 ```
 Point your browser to http://localhost:20140/quote to see if it works.
 
-2.2 Running the AWS demo
+2.2.2 Running inside IntelliJ
+
+In IntelliJ, a "Run Configuration" encapsulates all the parameters and configuration for running code. 
+In a nutshell, you have to create a Run Configuration for the class you want to run and specify 
+the -DONION_CONF_DIR=conf.local VM argument.
+
+That can quite easily be done by right-clicking the class name in the project view (or into the code) 
+and chooing 'Run'. Watch it fail once (because the configuration folder is not found), then add the 
+VM argument tothe automatically generated run configuration for the class. Run again.
+
+2.3 Running the AWS demo
 ------------------------
 TODO #8: explain how to run the AWS demo
