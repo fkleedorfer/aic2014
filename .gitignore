@@ -38,8 +38,7 @@
 *.iml
 *.ipr
 *.iws
-/*/.idea
-*/.idea
+**/.idea
 atlassian-ide-plugin.xml
 
 # NetBeans
