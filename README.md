@@ -32,6 +32,11 @@ All programs read configuration files from a configuration folder that MUST BE
 SPECIFIED as the environment variable 'ONION_CONF_DIR'. To pass it to a java program,
 use the vm argument -DONION_CONF_DIR=[the-folder-where-you-copied_code/onion/conf]
 
+Logging: the logging framework in use is slf4j, using the logback implementation.
+It is configured through the logback.xml file in the conf folder. However, that file must 
+be specified as an environment variable 'logging.config' for it to be found by the
+logging system.
+
 2.2 Running locally during development
 --------------------------------------
 2.2.1 Configuration
