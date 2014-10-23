@@ -40,7 +40,7 @@ public class DirectoryNodeController
    */
   @RequestMapping(
     value = "/chainNode",
-    method = RequestMethod.PUT
+    method = RequestMethod.POST
   )
   public ResponseEntity registerChainNode(HttpServletRequest request, @RequestBody ChainNodeInfo chainNodeInfo) {
     int id = this.chainNodeService.registerChainNode(chainNodeInfo);
