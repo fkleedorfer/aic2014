@@ -12,6 +12,14 @@ public class ChainNodeInfo
   //TODO: add information about the public key
 
 
+  public URI getUri() {
+    return uri;
+  }
+
+  public void setUri(final URI uri) {
+    this.uri = uri;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
@@ -27,5 +35,12 @@ public class ChainNodeInfo
   @Override
   public int hashCode() {
     return uri != null ? uri.hashCode() : 0;
+  }
+
+  @Override
+  public String toString() {
+    return "ChainNodeInfo{" +
+      "uri=" + uri +
+      '}';
   }
 }

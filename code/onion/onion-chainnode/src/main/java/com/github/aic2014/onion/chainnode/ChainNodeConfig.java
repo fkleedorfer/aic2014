@@ -1,7 +1,10 @@
 package com.github.aic2014.onion.chainnode;
 
+import com.github.aic2014.onion.model.ChainNodeInfo;
+import com.github.aic2014.onion.rest.DirectoryNodeClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.embedded.EmbeddedServletContainer;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
@@ -11,6 +14,10 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+
 @Configuration
 @EnableAutoConfiguration
 @ComponentScan(basePackages = {"com.github.aic2014"})
@@ -18,6 +25,9 @@ import org.springframework.context.annotation.PropertySource;
 public class ChainNodeConfig
 {
   private final Logger logger = LoggerFactory.getLogger(getClass());
+  @Value("${directorynode.baseUri}")
+  private String directoryNodeBaseUri;
+
   /**
    * Bean that registers an application listener. When the application container starts up
    * the listener is called and retrieves the host/port from the container and
@@ -26,7 +36,8 @@ public class ChainNodeConfig
    * @return
    */
   @Bean
-  public ApplicationListener<EmbeddedServletContainerInitializedEvent> getPortDiscoveryBean() {
+  public ApplicationListener<EmbeddedServletContainerInitializedEvent> getPortDiscoveryBean(final DirectoryNodeClient
+    client) {
     ApplicationListener<EmbeddedServletContainerInitializedEvent> listener = new
       ApplicationListener<EmbeddedServletContainerInitializedEvent>()
       {
@@ -35,12 +46,28 @@ public class ChainNodeConfig
           EmbeddedServletContainer container = embeddedServletContainerInitializedEvent.getEmbeddedServletContainer();
           int port = container.getPort();
           logger.debug("servlet container initialized, port is {}", port);
+          try {
+            String hostname = InetAddress.getLocalHost().getHostName();
+            ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
+            chainNodeInfo.setUri(URI.create("http://" + hostname + ":" + port));
+            URI uriInDirectory = client.registerChainNode(chainNodeInfo);
+            logger.debug("chain node registered, obtained this URI: {}", uriInDirectory);
+          } catch (UnknownHostException e) {
+            logger.warn("could not register chain node", e);
+          }
 
         }
       };
     return listener;
   }
 
+
+  @Bean
+  public DirectoryNodeClient getDirectoryNodeClient() {
+    DirectoryNodeClient client = new DirectoryNodeClient();
+    client.setDirectoryNodeURI(directoryNodeBaseUri);
+    return client;
+  }
 
 
 }

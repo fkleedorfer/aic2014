@@ -2,6 +2,8 @@ package com.github.aic2014.onion.directorynode;
 
 
 import com.github.aic2014.onion.model.ChainNodeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,8 @@ import java.util.List;
 @Controller
 public class DirectoryNodeController
 {
+  private final Logger logger = LoggerFactory.getLogger(getClass());
+
   @Autowired
   private ChainNodeService chainNodeService;
 
@@ -42,11 +46,14 @@ public class DirectoryNodeController
     value = "/chainNode",
     method = RequestMethod.POST
   )
-  public ResponseEntity registerChainNode(HttpServletRequest request, @RequestBody ChainNodeInfo chainNodeInfo) {
+  public ResponseEntity<Object> registerChainNode(HttpServletRequest request,
+    @RequestBody ChainNodeInfo chainNodeInfo) {
     int id = this.chainNodeService.registerChainNode(chainNodeInfo);
+    URI newUri = URI.create(request.getRequestURL().toString() + "/"+id);
+    logger.info("chain node {} registered, assigned uri {}", chainNodeInfo, newUri);
     HttpHeaders headers = new HttpHeaders();
-    headers.setLocation(URI.create(request.getRequestURI().toString() + "/" + id));
-    return new ResponseEntity(headers, HttpStatus.CREATED);
+    headers.setLocation(newUri);
+    return new ResponseEntity<Object>(headers, HttpStatus.CREATED);
   }
 
   /**
