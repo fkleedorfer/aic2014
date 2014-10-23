@@ -1,7 +1,6 @@
 #application specific
 ## local config with passwords etc
-code/conf.local/
-code/conf.local/**
+code/onion/conf.local/
 
 ## latex stuff
 *.aux
