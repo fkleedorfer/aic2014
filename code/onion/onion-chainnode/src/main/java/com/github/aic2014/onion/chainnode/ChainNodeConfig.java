@@ -13,5 +13,4 @@ public class ChainNodeConfig
 {
   //TODO: add bean that registers with the directory node upon startup
 
-  //TODO: configure server.port to use a random value (at least in local development setups)
 }
