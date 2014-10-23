@@ -5,7 +5,7 @@ Lab assignment of Advanced Internet Computing VU 2014
 
 Technical University of Vienna
 
-Assignment 3: Onion Routing
+Group 6, Topic 3: Onion Routing
 
 1. BUILD INSTRUCTIONS
 ---------------------
@@ -13,13 +13,13 @@ Assignment 3: Onion Routing
 1.1 Requirements
 ----------------
 * Java 8
-* maven 3.0.5 or higher
+* Maven 3.0.5 or higher
 
 1.2 Build
 ---------
 The following command builds the code
 ```
-cd code
+cd code/onion
 mvn install
 ````
 
