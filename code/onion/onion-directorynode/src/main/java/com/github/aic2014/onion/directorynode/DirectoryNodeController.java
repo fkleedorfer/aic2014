@@ -49,12 +49,14 @@ public class DirectoryNodeController
   public ResponseEntity<Object> registerChainNode(HttpServletRequest request,
     @RequestBody ChainNodeInfo chainNodeInfo) {
     int id = this.chainNodeService.registerChainNode(chainNodeInfo);
-    URI newUri = URI.create(request.getRequestURL().toString() + "/"+id);
+    URI newUri = createChainNodeUri(request, id);
     logger.info("chain node {} registered, assigned uri {}", chainNodeInfo, newUri);
     HttpHeaders headers = new HttpHeaders();
     headers.setLocation(newUri);
     return new ResponseEntity<Object>(headers, HttpStatus.CREATED);
   }
+
+
 
   /**
    * Returns a collection of all registered chain nodes.
@@ -92,9 +94,10 @@ public class DirectoryNodeController
     value = "/chainNode/{id}",
     method = RequestMethod.DELETE
   )
-  public ResponseEntity deleteChainNode(@PathVariable @NotNull Integer id) {
+  public ResponseEntity<Object> deleteChainNode(HttpServletRequest request, @PathVariable @NotNull Integer id) {
     this.chainNodeService.unregisterChainNode(id);
-    return new ResponseEntity(HttpStatus.OK);
+    logger.info("chain node {} unregistered", request.getRequestURL());
+    return new ResponseEntity<Object>(HttpStatus.OK);
   }
 
   /**
@@ -109,4 +112,9 @@ public class DirectoryNodeController
     return new ResponseEntity<List<ChainNodeInfo>>(this.chainNodeService.getChain(), HttpStatus.OK);
   }
 
+  private URI createChainNodeUri(final HttpServletRequest request, final int id) {
+    return URI.create(request.getRequestURL().toString() + "/"+id);
+  }
 }
+
+

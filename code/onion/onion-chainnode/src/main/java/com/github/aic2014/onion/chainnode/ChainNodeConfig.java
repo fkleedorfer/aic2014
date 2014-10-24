@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.event.ContextClosedEvent;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -28,6 +29,7 @@ public class ChainNodeConfig
   @Value("${directorynode.baseUri}")
   private String directoryNodeBaseUri;
 
+  private URI chainNodeUri;
   /**
    * Bean that registers an application listener. When the application container starts up
    * the listener is called and retrieves the host/port from the container and
@@ -50,8 +52,8 @@ public class ChainNodeConfig
             String hostname = InetAddress.getLocalHost().getHostName();
             ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
             chainNodeInfo.setUri(URI.create("http://" + hostname + ":" + port));
-            URI uriInDirectory = client.registerChainNode(chainNodeInfo);
-            logger.debug("chain node registered, obtained this URI: {}", uriInDirectory);
+            chainNodeUri = client.registerChainNode(chainNodeInfo);
+            logger.debug("chain node registered, obtained this URI: {}", chainNodeUri);
           } catch (UnknownHostException e) {
             logger.warn("could not register chain node", e);
           }
@@ -61,6 +63,20 @@ public class ChainNodeConfig
     return listener;
   }
 
+  @Bean
+  public ApplicationListener<ContextClosedEvent> getUnregisterOnContextEventBean(final DirectoryNodeClient
+    client) {
+    ApplicationListener<ContextClosedEvent> listener = new
+      ApplicationListener<ContextClosedEvent>()
+      {
+        @Override
+        public void onApplicationEvent(final ContextClosedEvent contextClosedEvent) {
+            client.unregisterChainNode(chainNodeUri);
+            logger.debug("chain node {} unregistered", chainNodeUri);
+        }
+      };
+    return listener;
+  }
 
   @Bean
   public DirectoryNodeClient getDirectoryNodeClient() {

@@ -19,7 +19,13 @@ public class DirectoryNodeClient
     return restTemplate.postForLocation(directoryNodeURI + "/chainNode", chainNodeInfo);
   }
 
+  public void unregisterChainNode(final URI chainNodeUri) {
+    restTemplate.delete(chainNodeUri);
+  }
+
   public void setDirectoryNodeURI(final String directoryNodeURI) {
     this.directoryNodeURI = directoryNodeURI;
   }
+
+
 }
