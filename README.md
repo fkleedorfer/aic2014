@@ -73,6 +73,15 @@ l -Dlogging.config=../conf.local/logback.xml
 The port the chain node uses is chosen at random. It is output as one of the last log messages.
 Point your browser to `http://localhost:[port]/route` to see if it works.
 
+Running the client:
+```
+cd code/onion/onion-client
+mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.client.ClientApp" -DONION_CONF_DIR=..\conf.loca
+l -Dlogging.config=../conf.local/logback.xml
+```
+Currently, the client fetches the chain from the directory node and sends a request to the first chain node in the chain.
+
+
 2.2.2 Running inside IntelliJ
 -----------------------------
 
