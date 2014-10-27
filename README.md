@@ -86,7 +86,7 @@ Currently, the client fetches the chain from the directory node and sends a requ
 -----------------------------
 
 In IntelliJ, a "Run Configuration" encapsulates all the parameters and configuration for running code. 
-In a nutshell, you have to create a Run Configuration for the class you want to run and specify 
+In a nutshell, you have to create a Run Configuration for each class you want to run and specify 
 the -DONION_CONF_DIR=conf.local VM argument.
 
 That can quite easily be done by right-clicking the class name in the project view (or into the code) 
@@ -98,6 +98,9 @@ The classes to run are:
   * check: `http://localhost:20140/quote`
 * com.github.aic2014.onion.directorynode.DirectoryNodeApp
   * check: `http://localhost:20141/getChain`
+* com.github.aic2014.onion.chainnode.ChainNodeApp
+  * run this 3x, then check again `http://localhost:20141/getChain`
+  
 
 
 2.3 Running the AWS demo
