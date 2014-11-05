@@ -52,7 +52,7 @@ pain. Maven helps us here.
 Running the quoteserver:
 ```
 cd code/onion/onion-quoteserver
-mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.quoteserver.QuoteServerApp" -DONION_CONF_DIR=..\conf.local -Dlogging.config=../conf.local/logback.xml
+mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.quoteserver.QuoteServerApp" -DONION_CONF_DIR=../conf.local -Dlogging.config=../conf.local/logback.xml
 ```
 Point your browser to `http://localhost:20140/quote` to see if it works.
 
@@ -60,14 +60,14 @@ Running the directory node:
 ```
 cd code/onion/onion-directorynode
 mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.directorynode.DirectoryNodeApp"
--DONION_CONF_DIR=..\conf.local -Dlogging.config=../conf.local/logback.xml
+-DONION_CONF_DIR=../conf.local -Dlogging.config=../conf.local/logback.xml
 ```
 Point your browser to `http://localhost:20141/getChain` to see if it works.
 
 Running the chain node:
 ```
 cd code/onion/onion-chainnode
-mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.chainnode.ChainNodeApp" -DONION_CONF_DIR=..\conf.loca
+mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.chainnode.ChainNodeApp" -DONION_CONF_DIR=../conf.loca
 l -Dlogging.config=../conf.local/logback.xml
 ``` 
 The port the chain node uses is chosen at random. It is output as one of the last log messages.
@@ -76,7 +76,7 @@ Point your browser to `http://localhost:[port]/route` to see if it works.
 Running the client:
 ```
 cd code/onion/onion-client
-mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.client.ClientApp" -DONION_CONF_DIR=..\conf.loca
+mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.client.ClientApp" -DONION_CONF_DIR=../conf.loca
 l -Dlogging.config=../conf.local/logback.xml
 ```
 Currently, the client fetches the chain from the directory node and sends a request to the first chain node in the chain.
