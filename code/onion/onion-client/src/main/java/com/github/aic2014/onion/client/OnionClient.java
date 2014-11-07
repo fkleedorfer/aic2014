@@ -55,19 +55,17 @@ public class OnionClient {
     Message msg = buildMessage(chain, payload);
     logger.debug("sending this message: {}", msg);
     restTemplate.put(chain[0].getUri().toString() + "/request", msg);
-    logger.info("result obtained from chain node: {}", msg);
   }
 
   private Message buildMessage(final ChainNodeInfo[] chain, final String payload) {
     logger.debug("building message for chain {} and payload {}", chain, payload);
     UUID chainId = UUID.randomUUID();
-    int idx = chain.length - 1;
     String lastPayload = payload;
     Message msg = null;
     //from last call to first call, create message object, serialize it and
     //add it encrypted as payload to the one before.
     //start by building the outermost
-    do {
+    for (int idx = chain.length - 1; idx >= 0; idx --) {
       msg = new Message();
       msg.setId(chainId);
       msg.setRecipient(chain[idx].getUri());
@@ -82,8 +80,7 @@ public class OnionClient {
       logger.debug("message for chain step {}: {}", idx, msg);
       //now, convert the newly built message to a payload for the next message
       lastPayload = JsonUtils.toJSON(msg);
-      idx--;
-    } while (idx >= 0);
+    }
     return msg;
   }
 

@@ -37,7 +37,8 @@ public class ChainNodeController
     String decrypted = cryptoService.decrypt(payload);
     if (msg.getHopsToGo() == 0){
       //last hop: we expect that the decrypted string is a http request.
-      logger.info("last hop, received payload {}", payload);
+      String plaintext = this.cryptoService.decrypt(payload);
+      logger.info("last hop, received payload {}", plaintext);
     } else {
       Message nextMsg = JsonUtils.fromJSON(decrypted);
       logger.info("hopsToGo: {}, sending message {}", msg.getHopsToGo(), nextMsg);
