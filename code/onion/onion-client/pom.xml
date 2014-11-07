@@ -38,6 +38,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.github.aic2014</groupId>
+      <artifactId>onion-crypto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
     </dependency>

@@ -1,5 +1,7 @@
 package com.github.aic2014.onion.chainnode;
 
+import com.github.aic2014.onion.crypto.CryptoService;
+import com.github.aic2014.onion.crypto.DummyCryptoService;
 import com.github.aic2014.onion.model.ChainNodeInfo;
 import com.github.aic2014.onion.rest.DirectoryNodeClient;
 import org.slf4j.Logger;
@@ -83,6 +85,11 @@ public class ChainNodeConfig
     DirectoryNodeClient client = new DirectoryNodeClient();
     client.setDirectoryNodeURI(directoryNodeBaseUri);
     return client;
+  }
+
+  @Bean
+  public CryptoService getCryptoService(){
+    return new DummyCryptoService();
   }
 
 

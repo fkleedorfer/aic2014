@@ -22,6 +22,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.github.aic2014</groupId>
+      <artifactId>onion-crypto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
