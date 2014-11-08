@@ -1,6 +1,5 @@
 package com.github.aic2014.onion.quoteserver;
 
-import com.oracle.webservices.internal.api.message.PropertySet;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
