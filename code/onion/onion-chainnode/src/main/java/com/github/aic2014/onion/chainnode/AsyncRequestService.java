@@ -30,13 +30,13 @@ public class AsyncRequestService {
   public void sendExitRequestAndTunnelResponse(String request, UUID chainId){
     logger.debug("sending tunneled http request {} ... NOT![still mocking this functionality]", request);
     //TODO: execute http request, convert response into a string
-    String response = "dummyresponse";
+    String response = "Exit node received this request: '" + request + "', currently not sending the request anywhere";
     Message responseMessage = new Message();
     ResponseInfo responseInfo = responseInfoService.getAndDeleteResponseInfo(chainId);
     if (responseInfo == null){
       throw new IllegalArgumentException("could not obtain ResponseInfo for id " + chainId);
     }
-    responseMessage.setId(chainId);
+    responseMessage.setChainId(chainId);
     responseMessage.setPayload(this.cryptoService.encrypt(response));
     logger.debug("sending this response message back through the chain: {}", responseMessage);
     this.restTemplate.put(responseInfo.getSenderOfRequest() + "/response", responseMessage);
@@ -49,14 +49,11 @@ public class AsyncRequestService {
   }
 
   public void sendChainResponse(Message msg) {
-    ResponseInfo responseInfo = this.responseInfoService.getAndDeleteResponseInfo(msg.getId());
+    ResponseInfo responseInfo = this.responseInfoService.getAndDeleteResponseInfo(msg.getChainId());
     if (responseInfo == null){
       throw new IllegalStateException("cannot retrieve ResponseInfo");
     }
-    logger.debug("/response: sending message: ", msg);
-    if (responseInfo.getSenderOfRequest() != null){
-      //TODO: this check is only necessary as long as the originator server is not implemented
-      restTemplate.put(responseInfo.getSenderOfRequest() + "/response", msg);
-    }
+    logger.debug("/response: sending message: {}", msg);
+    restTemplate.put(responseInfo.getSenderOfRequest() + "/response", msg);
   }
 }

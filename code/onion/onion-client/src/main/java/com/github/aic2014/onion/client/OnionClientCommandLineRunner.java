@@ -11,6 +11,6 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
 
   @Override
   public void run(final String... strings) throws Exception {
-    client.sendRequest();
+    client.executeOnionRoutedHttpRequest("dummyRequest");
   }
 }

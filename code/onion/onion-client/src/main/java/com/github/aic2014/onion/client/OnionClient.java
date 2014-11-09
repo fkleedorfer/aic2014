@@ -8,11 +8,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.concurrent.SettableListenableFuture;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 /**
  * Client that accesses the directory node for obtaining a chain and then
@@ -24,11 +28,14 @@ public class OnionClient {
 
   private URI directoryNodeUri;
   private URI quoteServerUri;
-  private URI clientUri;
+  private URI originatorUri;
   @Autowired
   private CryptoService cryptoService;
+  @Autowired
+  private PendingResponseService pendingResponseService;
 
   private RestTemplate restTemplate = new RestTemplate();
+  private Map<UUID, Future<String>> pendingResponses = new HashMap<UUID, Future<String>>();
 
   public OnionClient() {
   }
@@ -42,7 +49,7 @@ public class OnionClient {
     return newChain;
   }
 
-  public void sendRequest() {
+  public Future<String> executeOnionRoutedHttpRequest(String request) {
     //get the chain for the request
     ChainNodeInfo[] chain = getChain();
     logger.info("obtained chain {}", Arrays.toString(chain));
@@ -51,15 +58,20 @@ public class OnionClient {
 
     //TODO: replace with http request
     String payload = "dummyContent";
+    UUID chainId = UUID.randomUUID();
+    SettableListenableFuture<String> response = new SettableListenableFuture<String>();
+    PendingResponse pendingResponse = new PendingResponse(chainId, response, chain.length);
+    pendingResponseService.addPendingResponse(chainId, pendingResponse);
 
-    Message msg = buildMessage(chain, payload);
+    Message msg = buildMessage(chain, chainId, payload);
     logger.debug("sending this message: {}", msg);
     restTemplate.put(chain[0].getUri().toString() + "/request", msg);
+    return response;
   }
 
-  private Message buildMessage(final ChainNodeInfo[] chain, final String payload) {
+  private Message buildMessage(final ChainNodeInfo[] chain, UUID chainId, final String payload) {
     logger.debug("building message for chain {} and payload {}", chain, payload);
-    UUID chainId = UUID.randomUUID();
+
     String lastPayload = payload;
     Message msg = null;
     //from last call to first call, create message object, serialize it and
@@ -67,13 +79,13 @@ public class OnionClient {
     //start by building the outermost
     for (int idx = chain.length - 1; idx >= 0; idx --) {
       msg = new Message();
-      msg.setId(chainId);
+      msg.setChainId(chainId);
       msg.setRecipient(chain[idx].getUri());
       if (idx > 0){
         msg.setSender(chain[idx-1].getUri());
       } else {
         //for the outermost message, the client is the sender
-        msg.setSender(this.clientUri);
+        msg.setSender(this.originatorUri);
       }
       msg.setHopsToGo(chain.length - 1 - idx);
       msg.setPayload(this.cryptoService.encrypt(lastPayload));
@@ -93,7 +105,7 @@ public class OnionClient {
     this.quoteServerUri = quoteServerUri;
   }
 
-  public void setClientUri(URI clientUri) {
-    this.clientUri = clientUri;
+  public void setOriginatorUri(URI originatorUri) {
+    this.originatorUri = originatorUri;
   }
 }

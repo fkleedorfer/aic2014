@@ -46,13 +46,13 @@ public class ChainNodeController
     if (msg.getHopsToGo() < 0){
       throw new IllegalArgumentException("hopsToGo must not be <0");
     }
-    this.responseInfoService.addResponseInfo(msg.getId(), new ResponseInfo(msg.getSender(), msg.getPublicKey()));
+    this.responseInfoService.addResponseInfo(msg.getChainId(), new ResponseInfo(msg.getSender(), msg.getPublicKey()));
     if (msg.getHopsToGo() == 0){
       //last hop: we expect that the decrypted string is a http request.
       String plaintext = this.cryptoService.decrypt(payload);
       logger.debug("/request: last hop, received payload {}", plaintext);
       logger.debug("/request: sending exit request asynchronously");
-      this.asyncRequestService.sendExitRequestAndTunnelResponse(plaintext, msg.getId());
+      this.asyncRequestService.sendExitRequestAndTunnelResponse(plaintext, msg.getChainId());
     } else {
       Message nextMsg = JsonUtils.fromJSON(decrypted);
       logger.debug("/request: sending chain request asynchronously");
@@ -64,10 +64,10 @@ public class ChainNodeController
 
   @RequestMapping(value="/response", method=RequestMethod.PUT)
   public ResponseEntity<String> routeResponse(@RequestBody Message msg){
-    logger.debug("/response: received message: ", msg);
+    logger.debug("/response: received message: {}", msg);
     Message nextMessage = new Message();
     nextMessage.setPayload(this.cryptoService.encrypt(JsonUtils.toJSON(msg)));
-    nextMessage.setId(msg.getId());
+    nextMessage.setChainId(msg.getChainId());
     logger.debug("/response: sending chain response asynchronously");
     this.asyncRequestService.sendChainResponse(nextMessage);
     logger.debug("/response: done");

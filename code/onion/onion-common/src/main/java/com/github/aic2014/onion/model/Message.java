@@ -10,10 +10,10 @@ import java.util.UUID;
  * Message class for onion routing.
  */
 @JsonIgnoreProperties(ignoreUnknown = true) //when deserializing, do not complain about unknown values
-@JsonSerialize(include=JsonSerialize.Inclusion.NON_NULL) //do not serialize nulls
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_NULL) //do not serialize nulls.
 public class Message {
-  //The id of the message, also the id of the circuit.
-  UUID id;
+  //The chainId of the message, also the chainId of the circuit.
+  UUID chainId;
   //The forwarded payload of the message.
   String payload;
   //The sender of the message.
@@ -25,12 +25,12 @@ public class Message {
   //The number of hops to go - 0 means the payload is the actual http request
   int hopsToGo;
 
-  public UUID getId() {
-    return id;
+  public UUID getChainId() {
+    return chainId;
   }
 
-  public void setId(UUID id) {
-    this.id = id;
+  public void setChainId(UUID chainId) {
+    this.chainId = chainId;
   }
 
   public String getPayload() {
@@ -81,7 +81,7 @@ public class Message {
     Message message = (Message) o;
 
     if (hopsToGo != message.hopsToGo) return false;
-    if (id != null ? !id.equals(message.id) : message.id != null) return false;
+    if (chainId != null ? !chainId.equals(message.chainId) : message.chainId != null) return false;
     if (payload != null ? !payload.equals(message.payload) : message.payload != null) return false;
     if (publicKey != null ? !publicKey.equals(message.publicKey) : message.publicKey != null) return false;
     if (recipient != null ? !recipient.equals(message.recipient) : message.recipient != null) return false;
@@ -92,7 +92,7 @@ public class Message {
 
   @Override
   public int hashCode() {
-    int result = id != null ? id.hashCode() : 0;
+    int result = chainId != null ? chainId.hashCode() : 0;
     result = 31 * result + (payload != null ? payload.hashCode() : 0);
     result = 31 * result + (sender != null ? sender.hashCode() : 0);
     result = 31 * result + (recipient != null ? recipient.hashCode() : 0);
@@ -104,7 +104,7 @@ public class Message {
   @Override
   public String toString() {
     return "Message{" +
-            "id=" + id +
+            "chainId=" + chainId +
             ", payload='" + payload + '\'' +
             ", sender=" + sender +
             ", recipient=" + recipient +
