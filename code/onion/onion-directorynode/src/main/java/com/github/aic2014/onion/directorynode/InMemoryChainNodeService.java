@@ -40,13 +40,13 @@ public class InMemoryChainNodeService implements ChainNodeService
 
   @Override
   public List<ChainNodeInfo> getChain() {
-    //TODO make more random!
     List<ChainNodeInfo> chain = new ArrayList<ChainNodeInfo>(3);
     if (this.chainNodeInfos.size() < CHAIN_LENGTH) {
       throw new IllegalStateException("At least " + CHAIN_LENGTH +
         " chain nodes must be registered to build a chain. " +
         "Currently registered: " + this.chainNodeInfos.size());
     }
+    Collections.shuffle(this.chainNodeInfos);
     Iterator<ChainNodeInfo> it = this.chainNodeInfos.iterator();
     for (int i = 0; i < CHAIN_LENGTH; i++){
       chain.add(it.next());
