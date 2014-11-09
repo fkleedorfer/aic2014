@@ -1,11 +1,16 @@
 package com.github.aic2014.onion.model;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
 import java.net.URI;
 import java.util.UUID;
 
 /**
  * Message class for onion routing.
  */
+@JsonIgnoreProperties(ignoreUnknown = true) //when deserializing, do not complain about unknown values
+@JsonSerialize(include=JsonSerialize.Inclusion.NON_NULL) //do not serialize nulls
 public class Message {
   //The id of the message, also the id of the circuit.
   UUID id;

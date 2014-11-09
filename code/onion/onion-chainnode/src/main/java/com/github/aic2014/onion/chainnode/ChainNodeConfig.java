@@ -16,6 +16,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -23,6 +24,7 @@ import java.net.UnknownHostException;
 
 @Configuration
 @EnableAutoConfiguration
+@EnableAsync
 @ComponentScan(basePackages = {"com.github.aic2014"})
 @PropertySource("file:${ONION_CONF_DIR}/chainnode.properties")
 public class ChainNodeConfig
@@ -91,6 +93,17 @@ public class ChainNodeConfig
   public CryptoService getCryptoService(){
     return new DummyCryptoService();
   }
+
+  @Bean
+  public ResponseInfoService getResponseInfoService(){
+    return new InMemoryResponseInfoService();
+  }
+
+  @Bean
+  AsyncRequestService getExitRequestService(){
+    return new AsyncRequestService();
+  }
+
 
 
 }
