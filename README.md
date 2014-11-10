@@ -100,8 +100,9 @@ The classes to run are:
   * check: `http://localhost:20141/getChain`
 * com.github.aic2014.onion.chainnode.ChainNodeApp
   * run this 3x, then check again `http://localhost:20141/getChain`
-  
 
+If you want to run an application directly (withouth Spring), you need to add an additional VM argument to your Run Configuration:
+ -Dlogback.configurationFile=../conf.local/logback.xml
 
 2.3 Running the AWS demo
 ------------------------
