@@ -8,7 +8,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.xml.bind.DatatypeConverter;
 import java.security.*;
 
-public class GeneratorTests {
+public class GeneratorTest {
     @Test
     public void generateRSAKeyPairTest() throws NoSuchAlgorithmException {
         KeyPair kp = Generators.generateRSAKeyPair();

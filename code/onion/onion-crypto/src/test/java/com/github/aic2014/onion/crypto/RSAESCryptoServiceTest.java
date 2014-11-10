@@ -5,11 +5,11 @@ import static org.junit.Assert.*;
 
 import java.security.GeneralSecurityException;
 
-public class RSAESCryptoServiceTests {
+public class RSAESCryptoServiceTest {
     public static String vulcan = "Eyjafjallaj\u00f6kull";
 
     @Test
-    public void RSAESCryptoServiceBasicTest() throws GeneralSecurityException {
+    public void BasicTest() throws GeneralSecurityException {
         RSAESCryptoService service = new RSAESCryptoService();
         String e = service.encrypt(vulcan, service.getPublicKey());
         System.out.printf("rsa_aes(%s): %s%n", vulcan, e);

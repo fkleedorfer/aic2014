@@ -11,7 +11,7 @@ import static org.junit.Assert.*;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 
-public class CipherTests {
+public class CipherTest {
     public static String vulcan = "Eyjafjallaj\u00f6kull";
 
     @Test

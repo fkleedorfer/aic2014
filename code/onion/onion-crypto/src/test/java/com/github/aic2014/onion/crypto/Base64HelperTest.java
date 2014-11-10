@@ -3,11 +3,11 @@ package com.github.aic2014.onion.crypto;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class Base64HelperTests {
+public class Base64HelperTest {
     public static String vulcan = "Eyjafjallaj\u00f6kull";
 
     @Test
-    public void Base64BasicTest()
+    public void BasicTest()
     {
         String e = Base64Helper.encodeString(vulcan);
         System.out.printf("base64(%s): %s%n", vulcan, e);
