@@ -88,7 +88,7 @@ public class OnionClient {
         msg.setSender(this.originatorUri);
       }
       msg.setHopsToGo(chain.length - 1 - idx);
-      msg.setPayload(this.cryptoService.encrypt(lastPayload));
+      msg.setPayload(this.cryptoService.encrypt(lastPayload, null));
       logger.debug("message for chain step {}: {}", idx, msg);
       //now, convert the newly built message to a payload for the next message
       lastPayload = JsonUtils.toJSON(msg);
