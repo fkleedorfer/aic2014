@@ -5,18 +5,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.File;
 
-
+@PropertySource("file:${ONION_CONF_DIR}/quoteserver.properties")
 @Controller
 public class QuoteController {
-
+    
+    //ToDo - klappt nicht mit dem Property - geht das nur im config?
+    @Value("${quotesUrl}")
+    private String quotesUrl = "conf.local" + File.separator + "quotes.txt";
+    
     private List<String> RSSFeed;
 
     //hier wird die Quote-Liste geladen - denk aber das wird anders initialisiert - aber wie? klären wir am Montag
@@ -52,18 +55,42 @@ public class QuoteController {
         try
         {
 
-            Document doc = Jsoup.connect("http://www.textfiles.com/science/").get();
-            Elements tableElements = doc.select("table");
-            Elements tableRowElements = tableElements.get(0).select(":not(thead) tr");
+            BufferedReader in = new BufferedReader(new FileReader(quotesUrl));
 
-            for (int i = 1; i < tableRowElements.size(); i++) {
-                Element row = tableRowElements.get(i);
-                Elements rowItems = row.select("td");
-                if (rowItems.size() == 3) {
-                    PoemList.add("Filename: " + rowItems.get(0).text() + " Size: " + rowItems.get(1).text() +
-                            " Description: " + rowItems.get(2).text());
+            String s, quote = "";
+            Boolean Started = false, reading = false, isUpperCase = false;
+            char c;
+            while (in.ready()) {
+                s = in.readLine();
+                if (!Started && s.contains("---------------------------------------------"))
+                  Started = true;
+
+                if (Started && (!s.trim().equals("")) && !s.contains("---------------------------------------------") )
+                {
+                    isUpperCase = true;
+                    for (int i = 0; i < s.trim().length(); i ++)
+                    {
+                        c = s.charAt(i);
+                        if (!Character.isUpperCase(c) && !Character.isWhitespace(c) )
+                        {
+                            isUpperCase = false;
+                            break;
+                        }
+                    }
+                    if (!isUpperCase)
+                    {
+                        quote += s + " ";
+                        reading = true;
+                    }
+                }
+                if (reading && (s.contains("---------------------------------------------")|| s.trim().equals("")) )
+                {
+                    reading = false;
+                    PoemList.add(quote.trim());
+                    quote = "";
                 }
             }
+            in.close();
 
             return PoemList;
 
