@@ -46,11 +46,16 @@ public class InMemoryChainNodeService implements ChainNodeService
         " chain nodes must be registered to build a chain. " +
         "Currently registered: " + this.chainNodeInfos.size());
     }
-    Collections.shuffle(this.chainNodeInfos);
-    Iterator<ChainNodeInfo> it = this.chainNodeInfos.iterator();
-    for (int i = 0; i < CHAIN_LENGTH; i++){
-      chain.add(it.next());
-    }
+
+     //when using one RandomGenerator - it will not us numbers more than once
+    Random randomGenerator = new Random();
+    int i = randomGenerator.nextInt(this.chainNodeInfos.size());
+    chain.add(this.chainNodeInfos.get(i));
+    i = randomGenerator.nextInt(this.chainNodeInfos.size());
+    chain.add(this.chainNodeInfos.get(i));
+    i = randomGenerator.nextInt(this.chainNodeInfos.size());
+    chain.add(this.chainNodeInfos.get(i));
+
     return chain;
   }
 }

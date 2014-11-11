@@ -57,13 +57,12 @@ public class OnionClient {
     //to the first chain node, which responds with a dummy response.
 
     //TODO: replace with http request
-    String payload = "dummyContent";
     UUID chainId = UUID.randomUUID();
     SettableListenableFuture<String> response = new SettableListenableFuture<String>();
     PendingResponse pendingResponse = new PendingResponse(chainId, response, chain.length);
     pendingResponseService.addPendingResponse(chainId, pendingResponse);
 
-    Message msg = buildMessage(chain, chainId, payload);
+    Message msg = buildMessage(chain, chainId, request);
     logger.debug("sending this message: {}", msg);
     restTemplate.put(chain[0].getUri().toString() + "/request", msg);
     return response;

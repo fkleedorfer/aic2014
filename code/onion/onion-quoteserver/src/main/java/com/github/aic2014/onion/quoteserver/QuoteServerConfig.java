@@ -13,4 +13,6 @@ public class QuoteServerConfig
 {
   //nothing to be done here for now, all is magically configured through
   //the annotations
+
+
 }

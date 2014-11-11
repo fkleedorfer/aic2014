@@ -30,6 +30,7 @@ public class AsyncRequestService {
   public void sendExitRequestAndTunnelResponse(String request, UUID chainId){
     logger.debug("sending tunneled http request {} ... NOT![still mocking this functionality]", request);
     //TODO: execute http request, convert response into a string
+
     String response = "Exit node received this request: '" + request + "', currently not sending the request anywhere";
     Message responseMessage = new Message();
     ResponseInfo responseInfo = responseInfoService.getAndDeleteResponseInfo(chainId);
