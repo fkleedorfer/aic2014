@@ -1,6 +1,5 @@
 package com.github.aic2014.onion.crypto;
 
-import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 
 /**

@@ -1,27 +1,33 @@
 package com.github.aic2014.onion.crypto;
 
-import com.github.aic2014.onion.crypto.cipher.*;
+import com.github.aic2014.onion.crypto.cipher.AESCipher;
+import com.github.aic2014.onion.crypto.cipher.Cipher;
+import com.github.aic2014.onion.crypto.cipher.RSACipher;
+import com.github.aic2014.onion.crypto.cipher.StringCipherAdapter;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Message encryption service using a common hybrid mode of RSA and AES.
+ * An AES key is generated, used to encrypt the payload, encrypted by itself using the RSA private key
+ * and then passed along as part of the encrypted payload.
+ */
 public class RSAESCryptoService implements CryptoService {
 
     private KeyPair myKeyPair;
 
-    public RSAESCryptoService() throws NoSuchAlgorithmException {
+    public RSAESCryptoService() throws GeneralSecurityException {
         this(Generators.generateRSAKeyPair());
     }
 
-    public RSAESCryptoService(KeyPair myKey)
-    {
+    public RSAESCryptoService(KeyPair myKey) {
         this.myKeyPair = myKey;
     }
 
@@ -41,9 +47,7 @@ public class RSAESCryptoService implements CryptoService {
 
             return ep.toString();
 
-        }
-        catch (GeneralSecurityException e)
-        {
+        } catch (GeneralSecurityException e) {
             throw new CryptoServiceException(e);
         }
     }
@@ -62,9 +66,7 @@ public class RSAESCryptoService implements CryptoService {
             plaintext = aes.decrypt(ep.payload);
 
             return plaintext;
-        }
-        catch (GeneralSecurityException e)
-        {
+        } catch (GeneralSecurityException e) {
             throw new CryptoServiceException(e);
         }
     }
@@ -74,16 +76,21 @@ public class RSAESCryptoService implements CryptoService {
         return myKeyPair.getPublic();
     }
 
+    /**
+     * Internal format for encrypted payload and accompanying session parameters.
+     */
     static class EncryptedPayload {
 
         final static String B64 = "[a-zA-Z0-9/\\+]+=+";
         final static Pattern epPattern = Pattern.compile(String.format("(%1$s);(%1$s);(%1$s)", B64));
+        public byte[] sessionKey;
+        public byte[] sessionIV;
+        public byte[] payload;
 
-        public EncryptedPayload()
-        {}
+        public EncryptedPayload() {
+        }
 
-        public EncryptedPayload(String ep)
-        {
+        public EncryptedPayload(String ep) {
             Matcher m = epPattern.matcher(ep);
             assert m.matches() : "Encrypted payload string malformed: " + epPattern.pattern();
 
@@ -92,13 +99,8 @@ public class RSAESCryptoService implements CryptoService {
             payload = Base64Helper.decodeByte(m.group(3));
         }
 
-        public byte[] sessionKey;
-        public byte[] sessionIV;
-        public byte[] payload;
-
         @Override
-        public String toString()
-        {
+        public String toString() {
             return String.format(
                     "%s;%s;%s",
                     Base64Helper.encodeByte(sessionKey),

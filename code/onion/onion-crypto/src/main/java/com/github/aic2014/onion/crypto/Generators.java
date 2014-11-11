@@ -3,22 +3,19 @@ package com.github.aic2014.onion.crypto;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 
-public class Generators {
+public class Generators extends BouncyCastleBase {
     /**
      * Generates an RSA key pair with a default bit size.
      * @throws NoSuchAlgorithmException
      */
-    public static KeyPair generateRSAKeyPair() throws NoSuchAlgorithmException {
+    public static KeyPair generateRSAKeyPair() throws GeneralSecurityException {
         return generateRSAKeyPair(1024);
     }
 
-    public static KeyPair generateRSAKeyPair(int b) throws NoSuchAlgorithmException {
-        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+    public static KeyPair generateRSAKeyPair(int b) throws GeneralSecurityException {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", getProviderName());
         generator.initialize(b);
         return generator.generateKeyPair();
     }
@@ -27,7 +24,7 @@ public class Generators {
      * Generates an AES key with a default bit size.
      * @throws NoSuchAlgorithmException
      */
-    public static SecretKey generateAESKey() throws NoSuchAlgorithmException {
+    public static SecretKey generateAESKey() throws GeneralSecurityException {
         return generateAESKey(128);
     }
 
@@ -36,8 +33,8 @@ public class Generators {
      * @param b Key size in bits. > 128 needs Oracle Unlimited JCE Jurisdiction Policy installed.
      * @throws NoSuchAlgorithmException
      */
-    public static SecretKey generateAESKey(int b) throws NoSuchAlgorithmException {
-        KeyGenerator generator = KeyGenerator.getInstance("AES");
+    public static SecretKey generateAESKey(int b) throws GeneralSecurityException {
+        KeyGenerator generator = KeyGenerator.getInstance("AES", getProviderName());
         generator.init(b);
         return generator.generateKey();
     }

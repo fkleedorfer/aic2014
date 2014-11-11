@@ -10,7 +10,7 @@ import java.security.*;
 
 public class GeneratorTest {
     @Test
-    public void generateRSAKeyPairTest() throws NoSuchAlgorithmException {
+    public void generateRSAKeyPairTest() throws GeneralSecurityException {
         KeyPair kp = Generators.generateRSAKeyPair();
         PrivateKey pem = kp.getPrivate();
         PublicKey pub = kp.getPublic();
@@ -21,7 +21,7 @@ public class GeneratorTest {
     }
 
     @Test
-    public void generateAESKeyTest() throws NoSuchAlgorithmException {
+    public void generateAESKeyTest() throws GeneralSecurityException {
         SecretKey k = Generators.generateAESKey();
         assertEquals("AES", k.getAlgorithm());
         printKey("Gen. AES key", k.getEncoded());

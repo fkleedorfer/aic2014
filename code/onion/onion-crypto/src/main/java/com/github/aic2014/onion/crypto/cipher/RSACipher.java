@@ -1,10 +1,16 @@
 package com.github.aic2014.onion.crypto.cipher;
 
-import com.github.aic2014.onion.crypto.Generators;
+import com.github.aic2014.onion.crypto.BouncyCastleBase;
 
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
-public class RSACipher extends BouncyCastleCipher<byte[], byte[]> {
+/**
+ * RSA cipher for asymmetric encryption of small amounts of data (typ. < 64 bytes).
+ */
+public class RSACipher extends BouncyCastleBase implements Cipher<byte[], byte[]> {
 
     private static String algo = "RSA/NONE/OAEPWithSHA256AndMGF1Padding";
 
@@ -19,7 +25,7 @@ public class RSACipher extends BouncyCastleCipher<byte[], byte[]> {
 
     public RSACipher(PublicKey publicKey) throws GeneralSecurityException {
         this.publicKey = publicKey;
-        cipher = javax.crypto.Cipher.getInstance(algo);
+        cipher = javax.crypto.Cipher.getInstance(algo, getProviderName());
     }
 
     public PublicKey getPublicKey()

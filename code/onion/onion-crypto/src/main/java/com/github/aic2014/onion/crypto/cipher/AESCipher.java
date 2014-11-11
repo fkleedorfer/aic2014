@@ -1,12 +1,16 @@
 package com.github.aic2014.onion.crypto.cipher;
 
-import com.github.aic2014.onion.crypto.Generators;
+import com.github.aic2014.onion.crypto.BouncyCastleBase;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.*;
+import java.security.GeneralSecurityException;
 
-public class AESCipher extends BouncyCastleCipher<byte[], byte[]> {
+/**
+ * AES cipher for symmetric encryption.
+ * Take care to never use the same Key/IV combination multiple times!
+ */
+public class AESCipher extends BouncyCastleBase implements Cipher<byte[], byte[]> {
 
     private static String algo = "AES/CTR/PKCS5Padding";
 
@@ -17,7 +21,7 @@ public class AESCipher extends BouncyCastleCipher<byte[], byte[]> {
     public AESCipher(SecretKey key, IvParameterSpec iv) throws GeneralSecurityException {
         this.key = key;
         this.ivSpec = iv;
-        cipher = javax.crypto.Cipher.getInstance(algo);
+        cipher = javax.crypto.Cipher.getInstance(algo, getProviderName());
     }
 
     public SecretKey getKey()
