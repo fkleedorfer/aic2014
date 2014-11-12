@@ -4,15 +4,15 @@ import com.github.aic2014.onion.crypto.cipher.AESCipher;
 import com.github.aic2014.onion.crypto.cipher.Cipher;
 import com.github.aic2014.onion.crypto.cipher.RSACipher;
 import com.github.aic2014.onion.crypto.cipher.StringCipherAdapter;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Message encryption service using a common hybrid mode of RSA and AES.
@@ -45,7 +45,7 @@ public class RSAESCryptoService implements CryptoService {
             Cipher<byte[], byte[]> rsa = new RSACipher(receiver);
             ep.sessionKey = rsa.encrypt(key.getEncoded());
 
-            return ep.toString();
+            return ep.toJSON();
 
         } catch (GeneralSecurityException e) {
             throw new CryptoServiceException(e);
@@ -55,17 +55,15 @@ public class RSAESCryptoService implements CryptoService {
     @Override
     public String decrypt(String ciphertext) throws CryptoServiceException {
         try {
-            EncryptedPayload ep = new EncryptedPayload(ciphertext);
-            String plaintext;
+            EncryptedPayload ep = EncryptedPayload.fromJSON(ciphertext);
 
             Cipher<byte[], byte[]> rsa = new RSACipher(myKeyPair);
             SecretKey key = new SecretKeySpec(rsa.decrypt(ep.sessionKey), "AES");
 
             IvParameterSpec iv = new IvParameterSpec(ep.sessionIV);
             Cipher<String, byte[]> aes = new StringCipherAdapter<>(new AESCipher(key, iv));
-            plaintext = aes.decrypt(ep.payload);
+            return aes.decrypt(ep.payload);
 
-            return plaintext;
         } catch (GeneralSecurityException e) {
             throw new CryptoServiceException(e);
         }
@@ -81,32 +79,34 @@ public class RSAESCryptoService implements CryptoService {
      */
     static class EncryptedPayload {
 
-        final static String B64 = "[a-zA-Z0-9/\\+]+=+";
-        final static Pattern epPattern = Pattern.compile(String.format("(%1$s);(%1$s);(%1$s)", B64));
+        // RSA encrypted AES session key
         public byte[] sessionKey;
+        // IV for AES
         public byte[] sessionIV;
+        // AES encrypted payload
         public byte[] payload;
 
-        public EncryptedPayload() {
+        public static EncryptedPayload fromJSON(String ep) throws CryptoServiceException {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                return mapper.readValue(ep, EncryptedPayload.class);
+            } catch (IOException e) {
+                throw new CryptoServiceException("JSON mapping", e);
+            }
         }
 
-        public EncryptedPayload(String ep) {
-            Matcher m = epPattern.matcher(ep);
-            assert m.matches() : "Encrypted payload string malformed: " + epPattern.pattern();
-
-            sessionKey = Base64Helper.decodeByte(m.group(1));
-            sessionIV = Base64Helper.decodeByte(m.group(2));
-            payload = Base64Helper.decodeByte(m.group(3));
+        public String toJSON() throws CryptoServiceException {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                return mapper.writeValueAsString(this);
+            } catch (IOException e) {
+                throw new CryptoServiceException("JSON mapping", e);
+            }
         }
 
         @Override
         public String toString() {
-            return String.format(
-                    "%s;%s;%s",
-                    Base64Helper.encodeByte(sessionKey),
-                    Base64Helper.encodeByte(sessionIV),
-                    Base64Helper.encodeByte(payload)
-            );
+            return toJSON();
         }
     }
 }
