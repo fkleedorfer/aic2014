@@ -1,6 +1,9 @@
 package com.github.aic2014.onion.crypto;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.junit.Assert.*;
 
 import javax.crypto.SecretKey;
@@ -9,6 +12,8 @@ import javax.xml.bind.DatatypeConverter;
 import java.security.*;
 
 public class GeneratorTest {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     @Test
     public void generateRSAKeyPairTest() throws GeneralSecurityException {
         KeyPair kp = Generators.generateRSAKeyPair();
@@ -35,11 +40,11 @@ public class GeneratorTest {
 
     private void printKey(String name, byte[] key)
     {
-        System.out.printf(
-                "%s (%d bytes): %.64s[..]%n",
+        logger.info(String.format(
+                "%s (%d bytes): %.64s[..]",
                 name,
                 key.length,
                 DatatypeConverter.printHexBinary(key)
-        );
+        ));
     }
 }
