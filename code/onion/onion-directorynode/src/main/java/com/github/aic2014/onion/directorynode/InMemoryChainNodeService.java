@@ -49,12 +49,17 @@ public class InMemoryChainNodeService implements ChainNodeService
 
      //when using one RandomGenerator - it will not us numbers more than once
     Random randomGenerator = new Random();
-    int i = randomGenerator.nextInt(this.chainNodeInfos.size());
-    chain.add(this.chainNodeInfos.get(i));
-    i = randomGenerator.nextInt(this.chainNodeInfos.size());
-    chain.add(this.chainNodeInfos.get(i));
-    i = randomGenerator.nextInt(this.chainNodeInfos.size());
-    chain.add(this.chainNodeInfos.get(i));
+      int first = randomGenerator.nextInt(this.chainNodeInfos.size());
+      int second = randomGenerator.nextInt(this.chainNodeInfos.size());
+      while(second == first)
+          second = randomGenerator.nextInt(this.chainNodeInfos.size());
+      int third = randomGenerator.nextInt(this.chainNodeInfos.size());
+      while((third == first)|| (third == second))
+          third = randomGenerator.nextInt(this.chainNodeInfos.size());
+
+    chain.add(this.chainNodeInfos.get(first));
+    chain.add(this.chainNodeInfos.get(second));
+    chain.add(this.chainNodeInfos.get(third));
 
     return chain;
   }
