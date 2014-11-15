@@ -106,12 +106,7 @@
                 <version>1.1.1</version>
             </dependency>
 
-            <!-- amazon AWS API -->
-            <dependency>
-                <groupId>com.amazonaws.resources</groupId>
-                <artifactId>aws-resources-ec2</artifactId>
-                <version>0.0.2</version>
-            </dependency>
+            <!-- amazon AWS SDK for Java -->
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk</artifactId>
