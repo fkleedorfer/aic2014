@@ -1,5 +1,6 @@
 package com.github.aic2014.onion.model;
 
+import java.net.URI;
 import java.util.Date;
 
 /**
@@ -8,12 +9,12 @@ import java.util.Date;
  */
 public class ChainNodeInfo {
 
-    private String id;
-    private String name;
-    private String publicIP;
-    private int port;
-    private Date launchedDate;
-    private Date lastLifeCheck;
+    private String id = null;
+    private String name = null;
+    private String publicIP = null;
+    private int port = 0;
+    private Date launchedDate = null;
+    private Date lastLifeCheck = null;
     //TODO: add information about the public key
 
     /**
@@ -89,6 +90,13 @@ public class ChainNodeInfo {
 
     public void setLastLifeCheck(Date lastLifeCheck) {
         this.lastLifeCheck = lastLifeCheck;
+    }
+
+    public URI getUri() {
+        if (publicIP == null || port == 0)
+            return null;
+
+        return URI.create("http://" + publicIP + ":" + port);
     }
 
     @Override

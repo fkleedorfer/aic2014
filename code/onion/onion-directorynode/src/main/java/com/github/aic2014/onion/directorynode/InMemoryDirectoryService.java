@@ -7,15 +7,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import java.util.*;
 
-public class InMemoryChainNodeService implements DirectoryNodeService {
+public class InMemoryDirectoryService implements DirectoryNodeService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int CHAIN_LENGTH = 3;
     private List<ChainNodeInfo> chainNodeInfos = Collections.synchronizedList(new ArrayList<ChainNodeInfo>());
-
-    @PostConstruct
-    public void onStartup() {
-        logger.info("Hmm... startup from service");
-    }
 
     @Override
     public String registerChainNode(final ChainNodeInfo chainNodeInfo) {

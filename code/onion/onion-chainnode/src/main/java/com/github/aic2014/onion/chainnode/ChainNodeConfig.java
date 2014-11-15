@@ -53,9 +53,11 @@ public class ChainNodeConfig
           int port = container.getPort();
           logger.debug("servlet container initialized, port is {}", port);
           try {
-            String hostname = InetAddress.getLocalHost().getHostName();
+            //String hostname = InetAddress.getLocalHost().getHostName();
+            String ip = InetAddress.getLocalHost().getHostAddress();
             ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
-            chainNodeInfo.setUri(URI.create("http://" + hostname + ":" + port));
+            chainNodeInfo.setPort(port);
+            chainNodeInfo.setPublicIP(ip);
             chainNodeUri = client.registerChainNode(chainNodeInfo);
             logger.debug("chain node registered, obtained this URI: {}", chainNodeUri);
           } catch (UnknownHostException e) {
