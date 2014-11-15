@@ -26,95 +26,79 @@ import java.util.List;
  * produces a random chain.
  */
 @Controller
-public class DirectoryNodeController
-{
-  private final Logger logger = LoggerFactory.getLogger(getClass());
+public class DirectoryNodeController {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-  @Autowired
-  private ChainNodeService chainNodeService;
+    @Autowired
+    private DirectoryNodeService directoryNodeService;
 
-
-  /**
-   * Registers a chain node info and assigns an id for it
-   * The id is returned in the value of the HTTP 'Location' header.
-   *
-   * @param request
-   * @param chainNodeInfo
-   * @return
-   */
-  @RequestMapping(
-    value = "/chainNode",
-    method = RequestMethod.POST
-  )
-  public ResponseEntity<Object> registerChainNode(HttpServletRequest request,
-    @RequestBody ChainNodeInfo chainNodeInfo) {
-    int id = this.chainNodeService.registerChainNode(chainNodeInfo);
-    URI newUri = createChainNodeUri(request, id);
-    logger.info("chain node {} registered, assigned uri {}", chainNodeInfo, newUri);
-    HttpHeaders headers = new HttpHeaders();
-    headers.setLocation(newUri);
-    return new ResponseEntity<Object>(headers, HttpStatus.CREATED);
-  }
+    /**
+     * Registers a chain node info and assigns an id for it
+     * The id is returned in the value of the HTTP 'Location' header.
+     *
+     * @param request
+     * @param chainNodeInfo
+     * @return
+     */
+    @RequestMapping(value = "/chainNode", method = RequestMethod.POST)
+    public ResponseEntity<Object> registerChainNode(HttpServletRequest request,
+                                                    @RequestBody ChainNodeInfo chainNodeInfo) {
+        String id = this.directoryNodeService.registerChainNode(chainNodeInfo);
+        URI newUri = createChainNodeUri(request, id);
+        logger.info("chain node {} registered, assigned uri {}", chainNodeInfo, newUri);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(newUri);
+        return new ResponseEntity<Object>(headers, HttpStatus.CREATED);
+    }
 
 
+    /**
+     * Returns a collection of all registered chain nodes.
+     *
+     * @return
+     */
+    @RequestMapping(value = "/chainNode", method = RequestMethod.GET)
+    public ResponseEntity<Collection<ChainNodeInfo>> getAllChainNodes() {
+        return new ResponseEntity<Collection<ChainNodeInfo>>(this.directoryNodeService.getAllChainNodes(), HttpStatus.OK);
+    }
 
-  /**
-   * Returns a collection of all registered chain nodes.
-   *
-   * @return
-   */
-  @RequestMapping(
-    value = "/chainNode",
-    method = RequestMethod.GET
-  )
-  public ResponseEntity<Collection<ChainNodeInfo>> getAllChainNodes() {
-    return new ResponseEntity<Collection<ChainNodeInfo>>(this.chainNodeService.getAllChainNodes(), HttpStatus.OK);
-  }
+    /**
+     * Returns the chain node with the specified id.
+     *
+     * @param id
+     * @return
+     */
+    @RequestMapping(value = "/chainNode/{id}", method = RequestMethod.GET)
+    public ResponseEntity<ChainNodeInfo> getChainNode(@PathVariable @NotNull String id) {
+        return new ResponseEntity<ChainNodeInfo>(this.directoryNodeService.getChainNode(id), HttpStatus.OK);
+    }
 
-  /**
-   * Returns the chain node with the specified id.
-   *
-   * @param id
-   * @return
-   */
-  @RequestMapping(
-    value = "/chainNode/{id}",
-    method = RequestMethod.GET
-  )
-  public ResponseEntity<ChainNodeInfo> getChainNode(@PathVariable @NotNull Integer id) {
-    return new ResponseEntity<ChainNodeInfo>(this.chainNodeService.getChainNode(id), HttpStatus.OK);
-  }
+    /**
+     * Unregisters the chain node with the specified id.
+     *
+     * @param id
+     * @return
+     */
+    @RequestMapping(value = "/chainNode/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<Object> deleteChainNode(HttpServletRequest request, @PathVariable @NotNull String id) {
+        this.directoryNodeService.unregisterChainNode(id);
+        logger.info("chain node {} unregistered", request.getRequestURL());
+        return new ResponseEntity<Object>(HttpStatus.OK);
+    }
 
-  /**
-   * Unregisters the chain node with the specified id.
-   * @param id
-   * @return
-   */
-  @RequestMapping(
-    value = "/chainNode/{id}",
-    method = RequestMethod.DELETE
-  )
-  public ResponseEntity<Object> deleteChainNode(HttpServletRequest request, @PathVariable @NotNull Integer id) {
-    this.chainNodeService.unregisterChainNode(id);
-    logger.info("chain node {} unregistered", request.getRequestURL());
-    return new ResponseEntity<Object>(HttpStatus.OK);
-  }
+    /**
+     * Returns a random chain of chain nodes.
+     *
+     * @return
+     */
+    @RequestMapping(value = "/getChain", method = RequestMethod.GET)
+    public ResponseEntity<List<ChainNodeInfo>> getChain() {
+        return new ResponseEntity<List<ChainNodeInfo>>(this.directoryNodeService.getChain(), HttpStatus.OK);
+    }
 
-  /**
-   * Returns a random chain of chain nodes.
-   * @return
-   */
-  @RequestMapping(
-    value = "/getChain",
-    method = RequestMethod.GET
-  )
-  public ResponseEntity<List<ChainNodeInfo>> getChain (){
-    return new ResponseEntity<List<ChainNodeInfo>>(this.chainNodeService.getChain(), HttpStatus.OK);
-  }
-
-  private URI createChainNodeUri(final HttpServletRequest request, final int id) {
-    return URI.create(request.getRequestURL().toString() + "/"+id);
-  }
+    private URI createChainNodeUri(final HttpServletRequest request, final String id) {
+        return URI.create(request.getRequestURL().toString() + "/" + id);
+    }
 }
 
 
