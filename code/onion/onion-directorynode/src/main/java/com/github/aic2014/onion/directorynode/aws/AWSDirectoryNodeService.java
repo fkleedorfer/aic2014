@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 
 /**
  * Concrete implementation of the directory node service using AWS SDK to access EC2 instances
- * Created by fabthe on 15.11.2014.
  */
 public class AWSDirectoryNodeService implements DirectoryNodeService {
 

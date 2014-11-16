@@ -99,6 +99,10 @@ public class ChainNodeInfo {
         return URI.create("http://" + publicIP + ":" + port);
     }
 
+    public void setUri(URI u) {
+        ;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o)

@@ -27,85 +27,84 @@ import java.net.UnknownHostException;
 @EnableAsync
 @ComponentScan(basePackages = {"com.github.aic2014"})
 @PropertySource("file:${ONION_CONF_DIR}/chainnode.properties")
-public class ChainNodeConfig
-{
-  private final Logger logger = LoggerFactory.getLogger(getClass());
-  @Value("${directorynode.baseUri}")
-  private String directoryNodeBaseUri;
+public class ChainNodeConfig {
 
-  private URI chainNodeUri;
-  /**
-   * Bean that registers an application listener. When the application container starts up
-   * the listener is called and retrieves the host/port from the container and
-   * registers with the directory node.
-   *
-   * @return
-   */
-  @Bean
-  public ApplicationListener<EmbeddedServletContainerInitializedEvent> getPortDiscoveryBean(final DirectoryNodeClient
-    client) {
-    ApplicationListener<EmbeddedServletContainerInitializedEvent> listener = new
-      ApplicationListener<EmbeddedServletContainerInitializedEvent>()
-      {
-        @Override
-        public void onApplicationEvent(final EmbeddedServletContainerInitializedEvent embeddedServletContainerInitializedEvent) {
-          EmbeddedServletContainer container = embeddedServletContainerInitializedEvent.getEmbeddedServletContainer();
-          int port = container.getPort();
-          logger.debug("servlet container initialized, port is {}", port);
-          try {
-            //String hostname = InetAddress.getLocalHost().getHostName();
-            String ip = InetAddress.getLocalHost().getHostAddress();
-            ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
-            chainNodeInfo.setPort(port);
-            chainNodeInfo.setPublicIP(ip);
-            chainNodeUri = client.registerChainNode(chainNodeInfo);
-            logger.debug("chain node registered, obtained this URI: {}", chainNodeUri);
-          } catch (UnknownHostException e) {
-            logger.warn("could not register chain node", e);
-          }
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-        }
-      };
-    return listener;
-  }
+    @Value("${directorynode.baseUri}")
+    private String directoryNodeBaseUri;
 
-  @Bean
-  public ApplicationListener<ContextClosedEvent> getUnregisterOnContextEventBean(final DirectoryNodeClient
-    client) {
-    ApplicationListener<ContextClosedEvent> listener = new
-      ApplicationListener<ContextClosedEvent>()
-      {
-        @Override
-        public void onApplicationEvent(final ContextClosedEvent contextClosedEvent) {
-            client.unregisterChainNode(chainNodeUri);
-            logger.debug("chain node {} unregistered", chainNodeUri);
-        }
-      };
-    return listener;
-  }
+    private URI chainNodeUri;
 
-  @Bean
-  public DirectoryNodeClient getDirectoryNodeClient() {
-    DirectoryNodeClient client = new DirectoryNodeClient();
-    client.setDirectoryNodeURI(directoryNodeBaseUri);
-    return client;
-  }
+    /**
+     * Bean that registers an application listener. When the application container starts up
+     * the listener is called and retrieves the host/port from the container and
+     * registers with the directory node.
+     *
+     * @return
+     */
+    @Bean
+    public ApplicationListener<EmbeddedServletContainerInitializedEvent> getPortDiscoveryBean(final DirectoryNodeClient
+                                                                                                      client) {
+        ApplicationListener<EmbeddedServletContainerInitializedEvent> listener = new
+                ApplicationListener<EmbeddedServletContainerInitializedEvent>() {
+                    @Override
+                    public void onApplicationEvent(final EmbeddedServletContainerInitializedEvent embeddedServletContainerInitializedEvent) {
+                        EmbeddedServletContainer container = embeddedServletContainerInitializedEvent.getEmbeddedServletContainer();
+                        int port = container.getPort();
+                        logger.debug("servlet container initialized, port is {}", port);
+                        try {
+                            //String hostname = InetAddress.getLocalHost().getHostName();
+                            String ip = InetAddress.getLocalHost().getHostAddress();
+                            ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
+                            chainNodeInfo.setPort(port);
+                            chainNodeInfo.setPublicIP(ip);
+                            chainNodeUri = client.registerChainNode(chainNodeInfo);
+                            logger.debug("chain node registered, obtained this URI: {}", chainNodeUri);
+                        } catch (UnknownHostException e) {
+                            logger.warn("could not register chain node", e);
+                        }
 
-  @Bean
-  public CryptoService getCryptoService(){
-    return new DummyCryptoService();
-  }
+                    }
+                };
+        return listener;
+    }
 
-  @Bean
-  public ResponseInfoService getResponseInfoService(){
-    return new InMemoryResponseInfoService();
-  }
+    @Bean
+    public ApplicationListener<ContextClosedEvent> getUnregisterOnContextEventBean(final DirectoryNodeClient
+                                                                                           client) {
+        ApplicationListener<ContextClosedEvent> listener = new
+                ApplicationListener<ContextClosedEvent>() {
+                    @Override
+                    public void onApplicationEvent(final ContextClosedEvent contextClosedEvent) {
+                        client.unregisterChainNode(chainNodeUri);
+                        logger.debug("chain node {} unregistered", chainNodeUri);
+                    }
+                };
+        return listener;
+    }
 
-  @Bean
-  AsyncRequestService getExitRequestService(){
-    return new AsyncRequestService();
-  }
+    @Bean
+    public DirectoryNodeClient getDirectoryNodeClient() {
+        DirectoryNodeClient client = new DirectoryNodeClient();
+        client.setDirectoryNodeURI(directoryNodeBaseUri);
+        return client;
+    }
 
+    @Bean
+    public CryptoService getCryptoService() {
+        return new DummyCryptoService();
+    }
+
+    @Bean
+    public ResponseInfoService getResponseInfoService() {
+        return new InMemoryResponseInfoService();
+    }
+
+    @Bean
+    AsyncRequestService getExitRequestService() {
+        return new AsyncRequestService();
+    }
 
 
 }

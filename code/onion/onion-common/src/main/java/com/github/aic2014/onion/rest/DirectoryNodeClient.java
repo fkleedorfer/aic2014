@@ -8,24 +8,23 @@ import java.net.URI;
 /**
  * REST client that can be used to talk to the directory node.
  */
-public class DirectoryNodeClient
-{
+public class DirectoryNodeClient {
 
-  private String directoryNodeURI;
+    private String directoryNodeURI;
 
-  private RestTemplate restTemplate = new RestTemplate();
+    private RestTemplate restTemplate = new RestTemplate();
 
-  public URI registerChainNode(ChainNodeInfo chainNodeInfo){
-    return restTemplate.postForLocation(directoryNodeURI + "/chainNode", chainNodeInfo);
-  }
+    public URI registerChainNode(ChainNodeInfo chainNodeInfo) {
+        return restTemplate.postForLocation(directoryNodeURI + "/chainNode", chainNodeInfo);
+    }
 
-  public void unregisterChainNode(final URI chainNodeUri) {
-    restTemplate.delete(chainNodeUri);
-  }
+    public void unregisterChainNode(final URI chainNodeUri) {
+        restTemplate.delete(chainNodeUri);
+    }
 
-  public void setDirectoryNodeURI(final String directoryNodeURI) {
-    this.directoryNodeURI = directoryNodeURI;
-  }
+    public void setDirectoryNodeURI(final String directoryNodeURI) {
+        this.directoryNodeURI = directoryNodeURI;
+    }
 
 
 }
