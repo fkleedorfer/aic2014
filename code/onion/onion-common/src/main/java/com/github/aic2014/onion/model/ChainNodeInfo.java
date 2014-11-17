@@ -15,7 +15,7 @@ public class ChainNodeInfo {
     private int port = 0;
     private Date launchedDate = null;
     private Date lastLifeCheck = null;
-    //TODO: add information about the public key
+    private String publicKey = null;
 
     /**
      * Gets the ID of this chain node.
@@ -122,5 +122,19 @@ public class ChainNodeInfo {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
+    }
+
+    /**
+     * Gets the RSA encryption public key of the chainnode
+     */
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    /**
+     * Sets the RSA encryption public key of the chainnode
+     */
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
     }
 }

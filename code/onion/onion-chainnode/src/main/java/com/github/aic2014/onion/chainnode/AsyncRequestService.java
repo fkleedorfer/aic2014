@@ -38,7 +38,7 @@ public class AsyncRequestService {
       throw new IllegalArgumentException("could not obtain ResponseInfo for id " + chainId);
     }
     responseMessage.setChainId(chainId);
-    responseMessage.setPayload(this.cryptoService.encrypt(response, null));
+    responseMessage.setPayload(this.cryptoService.encrypt(response, responseMessage.getPublicKey()));
     logger.debug("sending this response message back through the chain: {}", responseMessage);
     this.restTemplate.put(responseInfo.getSenderOfRequest() + "/response", responseMessage);
   }

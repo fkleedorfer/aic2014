@@ -66,7 +66,7 @@ public class ChainNodeController
   public ResponseEntity<String> routeResponse(@RequestBody Message msg){
     logger.debug("/response: received message: {}", msg);
     Message nextMessage = new Message();
-    nextMessage.setPayload(this.cryptoService.encrypt(JsonUtils.toJSON(msg), null));
+    nextMessage.setPayload(this.cryptoService.encrypt(JsonUtils.toJSON(msg), msg.getPublicKey()));
     nextMessage.setChainId(msg.getChainId());
     logger.debug("/response: sending chain response asynchronously");
     this.asyncRequestService.sendChainResponse(nextMessage);

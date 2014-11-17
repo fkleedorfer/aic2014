@@ -2,6 +2,7 @@ package com.github.aic2014.onion.chainnode;
 
 import com.github.aic2014.onion.crypto.CryptoService;
 import com.github.aic2014.onion.crypto.DummyCryptoService;
+import com.github.aic2014.onion.crypto.RSAESCryptoService;
 import com.github.aic2014.onion.model.ChainNodeInfo;
 import com.github.aic2014.onion.rest.DirectoryNodeClient;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
 import java.util.UUID;
 
 @Configuration
@@ -61,10 +63,13 @@ public class ChainNodeConfig {
                             chainNodeInfo.setId(UUID.randomUUID().toString());
                             chainNodeInfo.setPort(port);
                             chainNodeInfo.setPublicIP(ip);
+                            chainNodeInfo.setPublicKey(getCryptoService().getPublicKey());
                             chainNodeUri = client.registerChainNode(chainNodeInfo);
                             logger.debug("chain node registered, obtained this URI: {}", chainNodeUri);
                         } catch (UnknownHostException e) {
                             logger.warn("could not register chain node", e);
+                        } catch (GeneralSecurityException e) {
+                            logger.warn("crypto service security error", e);
                         }
 
                     }
@@ -94,7 +99,7 @@ public class ChainNodeConfig {
     }
 
     @Bean
-    public CryptoService getCryptoService() {
+    public CryptoService getCryptoService() throws GeneralSecurityException {
         return new DummyCryptoService();
     }
 

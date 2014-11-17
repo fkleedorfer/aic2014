@@ -18,6 +18,7 @@ import org.springframework.context.annotation.PropertySource;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
 
 @Configuration
 @EnableAutoConfiguration
@@ -41,7 +42,7 @@ public class OnionClientConfig
   }
 
   @Bean
-  public CryptoService getCryptoService(){
+  public CryptoService getCryptoService() throws GeneralSecurityException {
     return new DummyCryptoService();
   }
 
