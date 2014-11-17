@@ -14,6 +14,7 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
 
     @Override
     public String registerChainNode(final ChainNodeInfo chainNodeInfo) {
+        chainNodeInfos.add(chainNodeInfo);
         return chainNodeInfo != null ? chainNodeInfo.getId() : null;
     }
 

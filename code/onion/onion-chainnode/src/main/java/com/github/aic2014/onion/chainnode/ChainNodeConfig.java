@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.UUID;
 
 @Configuration
 @EnableAutoConfiguration
@@ -57,6 +58,7 @@ public class ChainNodeConfig {
                             //String hostname = InetAddress.getLocalHost().getHostName();
                             String ip = InetAddress.getLocalHost().getHostAddress();
                             ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
+                            chainNodeInfo.setId(UUID.randomUUID().toString());
                             chainNodeInfo.setPort(port);
                             chainNodeInfo.setPublicIP(ip);
                             chainNodeUri = client.registerChainNode(chainNodeInfo);
