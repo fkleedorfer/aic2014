@@ -1,7 +1,5 @@
 package com.github.aic2014.onion.crypto;
 
-import java.security.PublicKey;
-
 /**
  * Service for encrypting/decrypting a message.
  */
@@ -10,10 +8,10 @@ public interface CryptoService {
     /**
      * Encrypts the specified plaintext and returns a Base64 encoded ciphertext.
      * @param plaintext Plaintext message to send
-     * @param receiver Public key component of the intended message receiver
+     * @param receiverPublicKey Public key component of the intended message receiver
      * @return Base64 encoded ciphertext
      */
-    public String encrypt(String plaintext, PublicKey receiver) throws CryptoServiceException;
+    public String encrypt(String plaintext, String receiverPublicKey) throws CryptoServiceException;
 
     /**
      * Decrypts the specified Base64 encoded ciphertext and returns the plaintext.
@@ -25,5 +23,5 @@ public interface CryptoService {
     /**
      * @return Gets the public key to encrypt messages for this CryptoService.
      */
-    public PublicKey getPublicKey();
+    public String getPublicKey();
 }

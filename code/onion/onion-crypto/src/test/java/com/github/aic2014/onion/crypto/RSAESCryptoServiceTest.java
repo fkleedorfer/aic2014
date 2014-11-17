@@ -15,7 +15,11 @@ public class RSAESCryptoServiceTest {
     @Test
     public void BasicTest() throws GeneralSecurityException {
         RSAESCryptoService service = new RSAESCryptoService();
-        String e = service.encrypt(vulcan, service.getPublicKey());
+
+        String publicKey = service.getPublicKey();
+        logger.info("My public key: {}", publicKey);
+
+        String e = service.encrypt(vulcan, publicKey);
         logger.info("rsa_aes({}): {}", vulcan, e);
 
         String d = service.decrypt(e);

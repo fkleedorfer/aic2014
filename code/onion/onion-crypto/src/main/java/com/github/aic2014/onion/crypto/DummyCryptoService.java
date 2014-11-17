@@ -1,13 +1,11 @@
 package com.github.aic2014.onion.crypto;
 
-import java.security.PublicKey;
-
 /**
  * Dummy CryptoService that only applies base64 encoding of the specified string.
  */
 public class DummyCryptoService implements CryptoService {
     @Override
-    public String encrypt(String plaintext, PublicKey receiver) throws CryptoServiceException {
+    public String encrypt(String plaintext, String receiverPublicKey) throws CryptoServiceException {
         return Base64Helper.encodeString(plaintext);
     }
 
@@ -17,7 +15,7 @@ public class DummyCryptoService implements CryptoService {
     }
 
     @Override
-    public PublicKey getPublicKey() {
+    public String getPublicKey() {
         return null;
     }
 }
