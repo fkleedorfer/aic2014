@@ -21,6 +21,9 @@ class PublicKeyString {
     }
 
     public PublicKeyString(String publicKey) throws GeneralSecurityException {
+        if (publicKey == null || publicKey.isEmpty())
+            throw new GeneralSecurityException("publicKey must not be empty");
+
         KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
         byte[] encoded = Base64Helper.decodeByte(publicKey);
         this.publicKey = rsaKeyFactory.generatePublic(new X509EncodedKeySpec(encoded));

@@ -137,4 +137,9 @@ public class ChainNodeInfo {
     public void setPublicKey(String publicKey) {
         this.publicKey = publicKey;
     }
+
+    @Override
+    public String toString() {
+        return String.format("ChainNodeInfo{id='%s', name='%s', publicIP='%s', port=%d}", id, name, publicIP, port);
+    }
 }
