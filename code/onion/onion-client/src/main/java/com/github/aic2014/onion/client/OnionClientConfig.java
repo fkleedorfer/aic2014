@@ -1,7 +1,7 @@
 package com.github.aic2014.onion.client;
 
 import com.github.aic2014.onion.crypto.CryptoService;
-import com.github.aic2014.onion.crypto.DummyCryptoService;
+import com.github.aic2014.onion.crypto.RSAESCryptoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +43,7 @@ public class OnionClientConfig
 
   @Bean
   public CryptoService getCryptoService() throws GeneralSecurityException {
-    return new DummyCryptoService();
+    return new RSAESCryptoService();
   }
 
   @Bean

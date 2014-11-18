@@ -1,7 +1,6 @@
 package com.github.aic2014.onion.chainnode;
 
 import com.github.aic2014.onion.crypto.CryptoService;
-import com.github.aic2014.onion.crypto.DummyCryptoService;
 import com.github.aic2014.onion.crypto.RSAESCryptoService;
 import com.github.aic2014.onion.model.ChainNodeInfo;
 import com.github.aic2014.onion.rest.DirectoryNodeClient;
@@ -100,7 +99,7 @@ public class ChainNodeConfig {
 
     @Bean
     public CryptoService getCryptoService() throws GeneralSecurityException {
-        return new DummyCryptoService();
+        return new RSAESCryptoService();
     }
 
     @Bean
