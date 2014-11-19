@@ -1,42 +1,39 @@
 package com.github.aic2014.onion.quoteserver;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.beans.factory.annotation.Value;
+
+import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.File;
-
 
 @PropertySource("file:${ONION_CONF_DIR}/quoteserver.properties")
 @Controller
 public class QuoteController {
-    
-    //ToDo - klappt nicht mit dem Property - geht das nur im config?
-    @Value("${quotesUrl}")
-    private String quotesUrl = "conf.local" + File.separator + "quotes.txt";
-    
-    private List<String> RSSFeed;
 
-    //hier wird die Quote-Liste geladen - denk aber das wird anders initialisiert - aber wie? klären wir am Montag
-    public QuoteController()
-    {
-        this.RSSFeed = LoadRSSFeed();
-    }
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private List<String> quotes = new ArrayList<>();
+    private Random random = new Random();
 
+    @Value("${quotesFilename}")
+    private String quotesFilename;
 
     @RequestMapping(
             value = "/quote",
             method = RequestMethod.GET)
     public ResponseEntity getQuote() {
-        return new ResponseEntity<String>(fetchRandomQuote(), HttpStatus.OK);
+        return new ResponseEntity<>(getRandomQuote(), HttpStatus.OK);
     }
 
     /**
@@ -44,65 +41,69 @@ public class QuoteController {
      *
      * @return
      */
-    private String fetchRandomQuote() {
+    private String getRandomQuote() {
+        if (this.quotes.isEmpty()) {
+            logger.error("No quotes here");
+            return "Oops, ran out of quotes.";
+        }
 
-        Random randomGenerator = new Random();
-        int randomInt = randomGenerator.nextInt(this.RSSFeed.size());
-        String poem = this.RSSFeed.get(randomInt);
-        return poem;
+        int randomInt = random.nextInt(this.quotes.size());
+        return quotes.get(randomInt);
     }
 
-    private List<String> LoadRSSFeed()
-    {
-        List<String> PoemList = new ArrayList<String>();
-        try
-        {
+    private String getConfDir() {
+        return System.getProperty("ONION_CONF_DIR");
+    }
 
-            BufferedReader in = new BufferedReader(new FileReader(quotesUrl));
+    private File getQuotesFile() {
+        File quotes = new File(quotesFilename);
+        if (!quotes.isAbsolute() && getConfDir() != null)
+            quotes = new File(getConfDir(), quotesFilename);
+        return quotes;
+    }
+
+    @PostConstruct
+    private void LoadQuotes() {
+        quotes.clear();
+        File quotesFile = getQuotesFile();
+
+        try (BufferedReader in = new BufferedReader(new FileReader(quotesFile))) {
+            logger.info("Loading quotes from {}", quotesFile);
 
             String s, quote = "";
-            Boolean Started = false, reading = false, isUpperCase = false;
+            Boolean started = false, reading = false, isUpperCase;
             char c;
             while (in.ready()) {
                 s = in.readLine();
-                if (!Started && s.contains("---------------------------------------------"))
-                  Started = true;
+                if (!started && s.contains("---------------------------------------------"))
+                    started = true;
 
-                if (Started && (!s.trim().equals("")) && !s.contains("---------------------------------------------") )
-                {
+                if (started && (!s.trim().equals("")) && !s.contains("---------------------------------------------")) {
                     isUpperCase = true;
-                    for (int i = 0; i < s.trim().length(); i ++)
-                    {
+                    for (int i = 0; i < s.trim().length(); i++) {
                         c = s.charAt(i);
-                        if (!Character.isUpperCase(c) && !Character.isWhitespace(c) )
-                        {
+                        if (!Character.isUpperCase(c) && !Character.isWhitespace(c)) {
                             isUpperCase = false;
                             break;
                         }
                     }
-                    if (!isUpperCase)
-                    {
+                    if (!isUpperCase) {
                         quote += s + " ";
                         reading = true;
                     }
                 }
-                if (reading && (s.contains("---------------------------------------------")|| s.trim().equals("")) )
-                {
+                if (reading && (s.contains("---------------------------------------------") || s.trim().equals(""))) {
                     reading = false;
-                    PoemList.add(quote.trim());
+                    quotes.add(quote.trim());
                     quote = "";
                 }
             }
-            in.close();
+            logger.info("Loaded {} quotes", quotes.size());
 
-            return PoemList;
-
-        } catch (Exception  e) {
-            e.printStackTrace();
-            return PoemList;
+        } catch (Exception e) {
+            logger.error("Quotes loading", e);
         }
     }
-
 
 
 }
