@@ -4,6 +4,8 @@ import com.github.aic2014.onion.crypto.cipher.AESCipher;
 import com.github.aic2014.onion.crypto.cipher.Cipher;
 import com.github.aic2014.onion.crypto.cipher.RSACipher;
 import com.github.aic2014.onion.crypto.cipher.StringCipherAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -19,6 +21,7 @@ import java.security.PublicKey;
  */
 public class RSAESCryptoService implements CryptoService {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private KeyPair myKeyPair;
 
     public RSAESCryptoService() throws GeneralSecurityException {
@@ -42,6 +45,7 @@ public class RSAESCryptoService implements CryptoService {
 
     private EncryptedPayload encrypt(String plaintext, PublicKey receiverPublicKey) throws CryptoServiceException {
         try {
+            logger.debug("Encrypting {} chars: {}", plaintext.length(), plaintext);
             SecretKey key = Generators.generateAESKey();
             IvParameterSpec iv = Generators.generateIV();
             Cipher<String, byte[]> aes = new StringCipherAdapter<>(new AESCipher(key, iv));
@@ -73,7 +77,10 @@ public class RSAESCryptoService implements CryptoService {
 
             IvParameterSpec iv = new IvParameterSpec(ep.sessionIV);
             Cipher<String, byte[]> aes = new StringCipherAdapter<>(new AESCipher(key, iv));
-            return aes.decrypt(ep.payload);
+            String plaintext = aes.decrypt(ep.payload);
+
+            logger.debug("Decrypted {} chars: {}", plaintext.length(), plaintext);
+            return plaintext;
 
         } catch (GeneralSecurityException e) {
             throw new CryptoServiceException(e);

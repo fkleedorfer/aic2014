@@ -1,11 +1,16 @@
 package com.github.aic2014.onion.crypto;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.security.*;
 
 public class Generators extends BouncyCastleBase {
+    private static final Logger logger = LoggerFactory.getLogger(Generators.class);
+
     /**
      * Generates an RSA key pair with a default bit size.
      * @throws NoSuchAlgorithmException
@@ -15,6 +20,7 @@ public class Generators extends BouncyCastleBase {
     }
 
     public static KeyPair generateRSAKeyPair(int b) throws GeneralSecurityException {
+        logger.info("Generating RSA key pair ({} bits)", b);
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", getProviderName());
         generator.initialize(b);
         return generator.generateKeyPair();

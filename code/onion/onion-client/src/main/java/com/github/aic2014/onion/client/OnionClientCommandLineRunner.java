@@ -17,5 +17,6 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
               "GET /quote HTTP/1.1\n"+
               "Host : http://localhost:20140\n\n"
       );
+      System.out.println("Response: " + response.get());
   }
 }

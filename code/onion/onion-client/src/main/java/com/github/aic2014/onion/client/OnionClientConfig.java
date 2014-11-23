@@ -1,7 +1,7 @@
 package com.github.aic2014.onion.client;
 
 import com.github.aic2014.onion.crypto.CryptoService;
-import com.github.aic2014.onion.crypto.DummyCryptoService;
+import com.github.aic2014.onion.crypto.RSAESCryptoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +18,7 @@ import org.springframework.context.annotation.PropertySource;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
 
 @Configuration
 @EnableAutoConfiguration
@@ -41,8 +42,8 @@ public class OnionClientConfig
   }
 
   @Bean
-  public CryptoService getCryptoService(){
-    return new DummyCryptoService();
+  public CryptoService getCryptoService() throws GeneralSecurityException {
+    return new RSAESCryptoService();
   }
 
   @Bean
