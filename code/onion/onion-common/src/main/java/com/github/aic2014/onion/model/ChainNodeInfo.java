@@ -1,5 +1,7 @@
 package com.github.aic2014.onion.model;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import java.net.URI;
 import java.util.Date;
 
@@ -92,15 +94,12 @@ public class ChainNodeInfo {
         this.lastLifeCheck = lastLifeCheck;
     }
 
+    @JsonIgnore
     public URI getUri() {
         if (publicIP == null || port == 0)
             return null;
 
         return URI.create("http://" + publicIP + ":" + port);
-    }
-
-    public void setUri(URI u) {
-        ;
     }
 
     @Override

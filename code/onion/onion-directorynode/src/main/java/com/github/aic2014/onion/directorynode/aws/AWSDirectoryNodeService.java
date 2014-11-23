@@ -34,12 +34,13 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     @Autowired
     private Environment env;
 
-    //private EC2 ec2;
     private AmazonEC2 ec2;
-    private List<ChainNodeInfo> chainNodes = new LinkedList<>();
     private int latestNodeNumber = 0;
     private int numberOfChainNodes;
     private int minNumberOfChainNodes;
+
+    private List<ChainNodeInfo> chainNodes = new LinkedList<>();
+    //private List<>
 
     /**
      * Initializes the AWS Directory Node Service
