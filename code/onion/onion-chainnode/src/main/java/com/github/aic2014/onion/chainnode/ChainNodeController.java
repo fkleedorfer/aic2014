@@ -34,8 +34,6 @@ public class ChainNodeController
   @Autowired
   CryptoService cryptoService;
   @Autowired
-  ResponseInfoService responseInfoService;
-  @Autowired
   AsyncRequestService asyncRequestService;
   @Value("${messageTimeout}")
   long messageTimeout;

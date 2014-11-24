@@ -63,6 +63,7 @@ public class ChainNodeConfig {
                             chainNodeInfo.setPort(port);
                             chainNodeInfo.setPublicIP(ip);
                             chainNodeInfo.setPublicKey(getCryptoService().getPublicKey());
+
                             chainNodeUri = client.registerChainNode(chainNodeInfo);
                             logger.debug("chain node registered, obtained this URI: {}", chainNodeUri);
                         } catch (UnknownHostException e) {
@@ -100,11 +101,6 @@ public class ChainNodeConfig {
     @Bean
     public CryptoService getCryptoService() throws GeneralSecurityException {
         return new RSAESCryptoService();
-    }
-
-    @Bean
-    public ResponseInfoService getResponseInfoService() {
-        return new InMemoryResponseInfoService();
     }
 
     @Bean
