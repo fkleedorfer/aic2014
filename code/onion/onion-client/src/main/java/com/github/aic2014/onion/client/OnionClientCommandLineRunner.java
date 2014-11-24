@@ -38,7 +38,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
       sessionOutputBuffer.flush();
       String requestString = new String(out.toByteArray());
       System.out.println("sending request:\n" + requestString);
-      Future<String> response = client.executeOnionRoutedHttpRequest(requestString);
-      System.out.println("Response: " + response.get());
+      String response = client.executeOnionRoutedHttpRequest(requestString);
+      System.out.println("Response: " + response);
   }
 }

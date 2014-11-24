@@ -7,13 +7,16 @@ import com.github.aic2014.onion.model.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import java.io.IOException;
 
@@ -34,11 +37,15 @@ public class ChainNodeController
   ResponseInfoService responseInfoService;
   @Autowired
   AsyncRequestService asyncRequestService;
+  @Value("${messageTimeout}")
+  long messageTimeout;
 
   RestTemplate restTemplate = new RestTemplate();
 
-  @RequestMapping(value="/request", method = RequestMethod.PUT)
-  public ResponseEntity<String> routeRequest(@RequestBody Message msg)
+
+  @RequestMapping(value="/request", method = RequestMethod.POST)
+  @ResponseBody
+  public DeferredResult<Message> routeRequest(final @RequestBody Message msg)
     throws IOException {
     logger.debug("received request with message {}", msg);
     String payload = msg.getPayload();
@@ -46,39 +53,38 @@ public class ChainNodeController
     if (msg.getHopsToGo() < 0){
       throw new IllegalArgumentException("hopsToGo must not be <0");
     }
-    this.responseInfoService.addResponseInfo(msg.getChainId(), new ResponseInfo(msg.getSender(), msg.getPublicKey()));
+    ListenableFuture<String> msgFuture = null;
     if (msg.getHopsToGo() == 0){
       //last hop: we expect that the decrypted string is a http request.
       logger.debug("/request: last hop, received payload {}", decrypted);
       logger.debug("/request: sending exit request asynchronously");
-      this.asyncRequestService.sendExitRequestAndTunnelResponse(decrypted, msg.getChainId());
+      msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(decrypted);
     } else {
       Message nextMsg = JsonUtils.fromJSON(decrypted);
       logger.debug("/request: sending chain request asynchronously");
-      this.asyncRequestService.sendChainRequest(nextMsg);
+      msgFuture = this.asyncRequestService.sendChainRequest(nextMsg);
     }
-    logger.debug("/request: done");
-    return new ResponseEntity<String>("request routed", HttpStatus.OK);
+
+    //TODO: implement the onTimeout method of the DeferredResult to return
+    //      a nice message that the client will be able to handle
+    final DeferredResult deferredResult = new DeferredResult<Message>(messageTimeout);
+    msgFuture.addCallback(new ListenableFutureCallback<String>() {
+        @Override
+        public void onFailure(Throwable ex) {
+            //TODO: handle failure
+            logger.debug("/request: failure", ex);
+        }
+
+        @Override
+        public void onSuccess(String resultMessageString) {
+            logger.debug("/request: done");
+            Message responseMessage = new Message();
+            responseMessage.setChainId(msg.getChainId());
+            responseMessage.setPayload(cryptoService.encrypt(resultMessageString, msg.getPublicKey()));
+            deferredResult.setResult(responseMessage);
+        }
+    });
+    return deferredResult;
   }
-
-  @RequestMapping(value="/response", method=RequestMethod.PUT)
-  public ResponseEntity<String> routeResponse(@RequestBody Message msg){
-    logger.debug("/response: received message: {}", msg);
-    Message nextMessage = new Message();
-    nextMessage.setChainId(msg.getChainId());
-    nextMessage.setPublicKey(msg.getPublicKey());
-    nextMessage.setPayload(this.cryptoService.encrypt(JsonUtils.toJSON(msg), msg.getPublicKey()));
-    logger.debug("/response: sending chain response asynchronously");
-    this.asyncRequestService.sendChainResponse(nextMessage);
-    logger.debug("/response: done");
-    return new ResponseEntity<String>(HttpStatus.OK);
-  }
-
-
-
-
-
-
-
 
 }

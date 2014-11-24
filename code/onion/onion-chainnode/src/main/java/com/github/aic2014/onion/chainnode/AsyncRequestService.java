@@ -14,14 +14,17 @@ import org.apache.http.io.HttpMessageWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.SettableListenableFuture;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.UUID;
 
 /**
  * Service responsible for asynchonously executing the
@@ -30,43 +33,40 @@ import java.util.UUID;
  */
 @Service
 public class AsyncRequestService {
-  private final Logger logger = LoggerFactory.getLogger(getClass());
-  @Autowired
-  private ResponseInfoService responseInfoService;
-  @Autowired
-  private CryptoService cryptoService;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    @Autowired
+    private CryptoService cryptoService;
 
-  private RestTemplate restTemplate = new RestTemplate();
+    private RestTemplate restTemplate = new RestTemplate();
 
-  private DefaultHttpRequestParserFactory httpRequestParserFactory = new DefaultHttpRequestParserFactory();
+    private DefaultHttpRequestParserFactory httpRequestParserFactory = new DefaultHttpRequestParserFactory();
 
-  @Async
-  public void sendExitRequestAndTunnelResponse(String request, UUID chainId){
-    logger.debug("sending tunneled http request {}", request);
-    //TODO: execute http request, convert response into a string
-      String response = null;
-      try {
-          response = sendRequestSynchronously(request);
-      } catch (Exception e) {
-          //TODO: log to debug and send error message back to originator
-          logger.warn("caught exception:", e);
-      }
-
-      //String response = "Exit node received this request: '" + request + "', currently not sending the request anywhere";
-    Message responseMessage = new Message();
-    ResponseInfo responseInfo = responseInfoService.getAndDeleteResponseInfo(chainId);
-    if (responseInfo == null){
-      throw new IllegalArgumentException("could not obtain ResponseInfo for id " + chainId);
+    @Async
+    public ListenableFuture<String> sendChainRequest(Message msg) {
+        logger.debug("sending chain request message: {}", msg);
+        ResponseEntity<String> msgEntity = restTemplate.postForEntity(msg.getRecipient() + "/request", msg, String.class);
+        //TODO: handle errors
+        return new AsyncResult<String>(msgEntity.getBody());
     }
-    responseMessage.setChainId(chainId);
-    responseMessage.setPublicKey(responseInfo.getPublicKey());
-    responseMessage.setPayload(this.cryptoService.encrypt(response, responseInfo.getPublicKey()));
-    logger.debug("sending this response message back through the chain: {}", responseMessage);
-    this.restTemplate.put(responseInfo.getSenderOfRequest() + "/response", responseMessage);
-  }
+
+
+    @Async
+    public ListenableFuture<String> sendExitRequestAndTunnelResponse(String request) {
+        logger.debug("sending tunneled http request {}", request);
+        SettableListenableFuture<Message> msgFuture = new SettableListenableFuture<>();
+        String response = null;
+        try {
+            response = sendRequestSynchronously(request);
+        } catch (Exception e) {
+            //TODO: log to debug and send error message back to originator
+            logger.warn("caught exception:", e);
+        }
+        return new AsyncResult<String>(response);
+    }
 
     /**
      * Sends the specified http request synchronously.
+     *
      * @param request the full string of the http request to send.
      * @return
      * @throws IOException
@@ -83,11 +83,11 @@ public class AsyncRequestService {
         sessionInputBuffer.bind(in);
         //parse out a HttpMessage
         HttpMessage httpMessage = parser.parse();
-        if (!httpMessage.containsHeader("Host")){
+        if (!httpMessage.containsHeader("Host")) {
             throw new OnionRoutingException("No 'Host' header found in the http request");
         }
         HttpRequest httpRequest = null;
-        if (!(httpMessage instanceof HttpRequest)){
+        if (!(httpMessage instanceof HttpRequest)) {
             throw new OnionRoutingException("not an http request");
         }
         httpRequest = (HttpRequest) httpMessage;
@@ -95,8 +95,8 @@ public class AsyncRequestService {
         String hostHeader = hostHeaders[0].getValue();
         HttpHost httpHost = null;
         int colonIdx = hostHeader.indexOf(':');
-        if (colonIdx > -1){
-            httpHost = new HttpHost(hostHeader.substring(0, colonIdx), Integer.parseInt(hostHeader.substring(colonIdx+1)));
+        if (colonIdx > -1) {
+            httpHost = new HttpHost(hostHeader.substring(0, colonIdx), Integer.parseInt(hostHeader.substring(colonIdx + 1)));
         } else {
             httpHost = new HttpHost(hostHeader);
         }
@@ -111,18 +111,5 @@ public class AsyncRequestService {
         return new String(out.toByteArray());
     }
 
-    @Async
-  public void sendChainRequest(Message msg) {
-    logger.debug("sending chain request message: {}", msg);
-    restTemplate.put(msg.getRecipient()+"/request", msg);
-  }
 
-  public void sendChainResponse(Message msg) {
-    ResponseInfo responseInfo = this.responseInfoService.getAndDeleteResponseInfo(msg.getChainId());
-    if (responseInfo == null){
-      throw new IllegalStateException("cannot retrieve ResponseInfo");
-    }
-    logger.debug("/response: sending message: {}", msg);
-    restTemplate.put(responseInfo.getSenderOfRequest() + "/response", msg);
-  }
 }
