@@ -65,9 +65,18 @@ public class AsyncRequestService {
     this.restTemplate.put(responseInfo.getSenderOfRequest() + "/response", responseMessage);
   }
 
+    /**
+     * Sends the specified http request synchronously.
+     * @param request the full string of the http request to send.
+     * @return
+     * @throws IOException
+     * @throws HttpException
+     */
     private String sendRequestSynchronously(String request) throws IOException, HttpException {
+        //initialize stuff we need for http request handling
         HttpTransportMetricsImpl metrics = new HttpTransportMetricsImpl();
         MessageConstraints constraints = MessageConstraints.DEFAULT;
+
         SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(metrics, 255);
         HttpMessageParser parser = httpRequestParserFactory.create(sessionInputBuffer, constraints);
         ByteArrayInputStream in = new ByteArrayInputStream(request.getBytes());
@@ -92,7 +101,6 @@ public class AsyncRequestService {
             httpHost = new HttpHost(hostHeader);
         }
         CloseableHttpClient httpclient = HttpClients.createDefault();
-        //httpRequest = new HttpGet("http://localhost:20140/quote");
         CloseableHttpResponse response = httpclient.execute(httpHost, httpRequest);
         SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(metrics, 255);
         HttpMessageWriter<HttpResponse> httpResponseWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);

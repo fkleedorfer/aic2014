@@ -22,10 +22,13 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   @Value("${quoteserver.baseUri}")
   private String quoteServerUri;
 
+  @Value("${quoteserver.hostnamePort}")
+  private String quoteServerHostnamePort;
+
   @Override
   public void run(final String... strings) throws Exception {
-      HttpGet request = new HttpGet("localhost:20140/quote");
-      request.addHeader("Host", "localhost:20140");
+      HttpGet request = new HttpGet(quoteServerUri+"/quote");
+      request.addHeader("Host", quoteServerHostnamePort);
       HttpTransportMetricsImpl metrics = new HttpTransportMetricsImpl();
       SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(metrics, 255);
       HttpMessageWriter<HttpRequest> httpRequestWriter = new DefaultHttpRequestWriter(sessionOutputBuffer);
