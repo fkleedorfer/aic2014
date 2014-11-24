@@ -1,6 +1,7 @@
 package com.github.aic2014.onion.model;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.net.URI;
 import java.util.Date;

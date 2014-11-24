@@ -1,8 +1,8 @@
 package com.github.aic2014.onion.json;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.aic2014.onion.exception.OnionRoutingException;
 import com.github.aic2014.onion.model.Message;
-import org.codehaus.jackson.map.ObjectMapper;
 
 /**
  * Utilities for mapping Message objects to/from JSON.

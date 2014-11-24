@@ -1,6 +1,7 @@
 package com.github.aic2014.onion.crypto;
 
-import org.codehaus.jackson.map.ObjectMapper;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 

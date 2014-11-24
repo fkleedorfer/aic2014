@@ -32,6 +32,7 @@ public class OnionClientConfig
   private String directoryNodeBaseUri;
 
 
+
   @Bean
   public OnionClient getOnionClient(){
     OnionClient client = new OnionClient();
