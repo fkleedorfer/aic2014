@@ -49,10 +49,9 @@ public class ChainNodeController
     this.responseInfoService.addResponseInfo(msg.getChainId(), new ResponseInfo(msg.getSender(), msg.getPublicKey()));
     if (msg.getHopsToGo() == 0){
       //last hop: we expect that the decrypted string is a http request.
-      String plaintext = this.cryptoService.decrypt(payload);
-      logger.debug("/request: last hop, received payload {}", plaintext);
+      logger.debug("/request: last hop, received payload {}", decrypted);
       logger.debug("/request: sending exit request asynchronously");
-      this.asyncRequestService.sendExitRequestAndTunnelResponse(plaintext, msg.getChainId());
+      this.asyncRequestService.sendExitRequestAndTunnelResponse(decrypted, msg.getChainId());
     } else {
       Message nextMsg = JsonUtils.fromJSON(decrypted);
       logger.debug("/request: sending chain request asynchronously");
@@ -74,6 +73,11 @@ public class ChainNodeController
     logger.debug("/response: done");
     return new ResponseEntity<String>(HttpStatus.OK);
   }
+
+
+
+
+
 
 
 
