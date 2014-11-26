@@ -12,11 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.web.context.request.RequestScope;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * Concrete implementation of the directory node service using AWS SDK to access EC2 instances
@@ -38,9 +36,12 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     private int latestNodeNumber = 0;
     private int numberOfChainNodes;
     private int minNumberOfChainNodes;
+    private String awsAccessKeyId;
+    private String awsSecretAccessKey;
+    private String awsRegion;
 
     private List<ChainNodeInfo> chainNodes = new LinkedList<>();
-    //private List<>
+    private List<AWSChainNode> awsChainNodes = new LinkedList<>();
 
     /**
      * Initializes the AWS Directory Node Service
@@ -48,26 +49,31 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     @PostConstruct
     public void onInit() {
 
-        try {
-            numberOfChainNodes = Integer.parseInt(env.getProperty("aws.chainnode.quantity"));
-        } catch (NumberFormatException e) { numberOfChainNodes = DEFAULT_NUM_CHAINS; }
-        try {
-            minNumberOfChainNodes = Integer.parseInt(env.getProperty("aws.chainnode.minQuantity"));
-        } catch (NumberFormatException e) { minNumberOfChainNodes = DEFAULT_MIN_CHAIN_SIZE; }
+        //
+        //1. read configuration
+        initConfiguration();
 
-        ec2 = new AmazonEC2Client(new BasicAWSCredentials(env.getProperty("aws.accesskeyid"), env.getProperty("aws.secretaccesskey")));
-        ec2.setRegion(Region.getRegion(Regions.fromName(env.getProperty("aws.region"))));
+        //
+        //2. init AWS-EC2 client
+        ec2 = new AmazonEC2Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey));
+        ec2.setRegion(Region.getRegion(Regions.fromName(awsRegion)));
 
-        updateChainNodeList();
-        logger.info("Found " + chainNodes.size() + " existing chain nodes on startup. Let's terminate them all!");
+        //3. search for existing chain nodes
+        List<AWSChainNode> existingChainNodes = readAWSChainNodes();
+        logger.info("Found " + existingChainNodes.size() + " existing chain nodes on startup. Let's terminate them all!");
 
-        // for now... after each start of the directory node, let us terminate all existing chain nodes.
-        chainNodes.forEach(cni -> shutdownNode(cni));
+        //4. for now... after each start of the directory node, terminate all existing chain nodes.
+        existingChainNodes.forEach(cni -> terminateChainNode(cni));
+        AWSChainNode cn = null;
 
-        // create
-        createChainNode(numberOfChainNodes);
-        updateChainNodeList();
-        logger.info("Created " + chainNodes.size() + " chain nodes.");
+        //5. create new chain nodes
+        createAWSChainNodes(numberOfChainNodes);
+        awsChainNodes = readAWSChainNodes();
+        logger.info("Created " + awsChainNodes.size() + " chain nodes within AWS.");
+
+        //6. Run setup-script for new chainnodes
+        ChainNodeInstaller cnInstaller = new ChainNodeInstaller();
+        cnInstaller.runInstallerFor(awsChainNodes);
     }
 
     @Override
@@ -112,11 +118,29 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     }
 
     /**
-     * Adds or updates the internal chain-node-list.
-     * For anyone confused by the Reservations: http://stackoverflow.com/questions/15618825/what-is-the-purpose-of-reservations-in-amazon-ec2
-     * TODO: delete missing chain nodes.
+     * Performs all configuration-related tasks.
      */
-    private void updateChainNodeList() {
+    private void initConfiguration() {
+        try {
+            numberOfChainNodes = Integer.parseInt(env.getProperty("aws.chainnode.quantity"));
+        } catch (NumberFormatException e) { numberOfChainNodes = DEFAULT_NUM_CHAINS; }
+        try {
+            minNumberOfChainNodes = Integer.parseInt(env.getProperty("aws.chainnode.minQuantity"));
+        } catch (NumberFormatException e) { minNumberOfChainNodes = DEFAULT_MIN_CHAIN_SIZE; }
+
+        awsAccessKeyId = env.getProperty("aws.accesskeyid");
+        awsSecretAccessKey = env.getProperty("aws.secretaccesskey");
+        awsRegion = env.getProperty("aws.region");
+    }
+
+    /**
+     * Gets all PENDING or ACTIVE chain nodes.
+     * Results are not cached.
+     * @return
+     */
+    private List<AWSChainNode> readAWSChainNodes() {
+
+        ArrayList<AWSChainNode> awsChainNodes = new ArrayList<>();
 
         DescribeInstancesResult result = ec2.describeInstances();
         for (Reservation reservation : result.getReservations()) {
@@ -134,41 +158,40 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                 String instanceName = optional.get().getValue();
                 String publicIP = instance.getPublicIpAddress();
                 InstanceState state = instance.getState();
-                Date launchedDate = instance.getLaunchTime();
 
                 if (!(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING) || state.getName().equalsIgnoreCase(AWS_STATE_PENDING))) {
                     //current instance is neither running nor starting... ignore
                     continue;
                 }
 
-                ChainNodeInfo cni = null;
-                Optional<ChainNodeInfo> existingCNI = chainNodes.stream().filter(existingcni -> existingcni.getId().equals(instanceName)).findFirst();
-                if (existingCNI.isPresent())
-                    cni = existingCNI.get();
-                else {
-                    cni = new ChainNodeInfo();
-                    chainNodes.add(cni);
-                }
-
-                cni.setId(id);
-                cni.setName(instanceName);
-                cni.setPublicIP(publicIP);
-                cni.setLaunchedDate(launchedDate);
+                AWSChainNode awsCN = new AWSChainNode();
+                awsCN.setInstanceId(id);
+                awsCN.setInstanceName(instanceName);
+                awsCN.setPublicIP(publicIP);
             }
         }
+
+        return awsChainNodes;
     }
 
-    private void shutdownNode(ChainNodeInfo cni) {
+    /**
+     * Terminates the given chain node
+     * @param awsCN
+     */
+    private void terminateChainNode(AWSChainNode awsCN) {
         TerminateInstancesRequest request = new TerminateInstancesRequest();
         request.setInstanceIds(new ArrayList<String>() {{
-            add(cni.getId());
+            add(awsCN.getInstanceId());
         }});
 
         TerminateInstancesResult result = ec2.terminateInstances(request);
-        chainNodes.remove(cni);
     }
 
-    private void createChainNode(int quantity) {
+    /**
+     * Requests the creation of new chain node instances
+     * @param quantity
+     */
+    private void createAWSChainNodes(int quantity) {
 
         RunInstancesRequest request = new RunInstancesRequest();
         request.withImageId(env.getProperty("aws.chainnode.defaultami"))
