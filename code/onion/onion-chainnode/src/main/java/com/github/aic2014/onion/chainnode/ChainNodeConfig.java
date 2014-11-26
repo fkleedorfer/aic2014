@@ -16,20 +16,23 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.scheduling.annotation.AsyncConfigurerSupport;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAutoConfiguration
 @EnableAsync
 @ComponentScan(basePackages = {"com.github.aic2014"})
 @PropertySource("file:${ONION_CONF_DIR}/chainnode.properties")
-public class ChainNodeConfig {
+public class ChainNodeConfig extends AsyncConfigurerSupport {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -37,6 +40,16 @@ public class ChainNodeConfig {
     private String directoryNodeBaseUri;
 
     private URI chainNodeUri;
+
+    @Override
+    public Executor getAsyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(10);
+        executor.initialize();
+        return executor;
+    }
 
     /**
      * Bean that registers an application listener. When the application container starts up
@@ -107,6 +120,5 @@ public class ChainNodeConfig {
     AsyncRequestService getExitRequestService() {
         return new AsyncRequestService();
     }
-
 
 }

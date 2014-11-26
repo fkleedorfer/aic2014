@@ -4,6 +4,7 @@ import com.github.aic2014.onion.crypto.CryptoService;
 import com.github.aic2014.onion.json.JsonUtils;
 import com.github.aic2014.onion.model.ChainNodeInfo;
 import com.github.aic2014.onion.model.Message;
+import com.github.aic2014.onion.model.OnionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,10 +92,20 @@ public class OnionClient {
 
     private String decryptResponse(Message msg, int chainLength) {
         for (int i = 1; i < chainLength; i++) {
+            if (msg.getStatus() != OnionStatus.OK) {
+                break;
+            }
             String payload = this.cryptoService.decrypt(msg.getPayload());
             msg = JsonUtils.fromJSON(payload);
         }
-        return this.cryptoService.decrypt(msg.getPayload());
+        if (msg.getStatus() == OnionStatus.OK) {
+            return this.cryptoService.decrypt(msg.getPayload());
+        } else {
+            StringBuilder errmsg = new StringBuilder();
+            errmsg.append("Failed to execute onion routing request: ")
+                    .append(msg.toString());
+            return errmsg.toString();
+        }
     }
 
 
