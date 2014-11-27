@@ -49,19 +49,19 @@ public class ChainNodeController {
             throws IOException {
         logger.debug("received request with message {}", msg);
         String payload = msg.getPayload();
-        String decrypted = cryptoService.decrypt(payload);
+        String decryptedPayload = cryptoService.decrypt(payload);
         if (msg.getHopsToGo() < 0) {
             throw new IllegalArgumentException("hopsToGo must not be <0");
         }
-        ListenableFuture<String> msgFuture = null;
+        ListenableFuture<Message> msgFuture = null;
         Message timeoutMessage = null; //if we hit a timeout, send this message (if not null)
         if (msg.getHopsToGo() == 0) {
             //last hop: we expect that the decrypted string is a http request.
-            logger.debug("/request: last hop, received payload {}", decrypted);
+            logger.debug("/request: last hop, received payload {}", decryptedPayload);
             logger.debug("/request: sending exit request asynchronously");
-            msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(msg.getRecipient(), decrypted);
+            msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(msg.getRecipient(), msg.getChainId(),msg.getPublicKey(),decryptedPayload);
         } else {
-            Message nextMsg = JsonUtils.fromJSON(decrypted);
+            Message nextMsg = JsonUtils.fromJSON(decryptedPayload);
             logger.debug("/request: sending chain request asynchronously");
             msgFuture = this.asyncRequestService.sendChainRequest(nextMsg);
             //if sending nextMsg yields a timeout, send the follwing message back through the chain
@@ -73,36 +73,29 @@ public class ChainNodeController {
 
         //DeferredResult treats a new Object as no object
         Object timeoutObject = timeoutMessage == null ? new Object() : timeoutMessage;
-        final DeferredResult deferredResult = new DeferredResult<Message>(messageTimeout * msg.getHopsToGo(), timeoutObject);
-        msgFuture.addCallback(new ListenableFutureCallback<String>() {
+        final DeferredResult deferredResult = new DeferredResult<Message>(messageTimeout * (msg.getHopsToGo() + 1), timeoutObject);
+        msgFuture.addCallback(new ListenableFutureCallback<Message>() {
             @Override
             public void onFailure(Throwable ex) {
-                //TODO: this method actually isn't called when an exception is thrown in
-                //an @Async-annotated method - spring doesn't support that. If we really want that
-                //we have to manage a thread pool manually or devise a different way of throwing an
-                //error back to the calling thread.
                 logger.debug("/request: failure", ex);
                 Message responseMessage = new Message();
                 responseMessage.setChainId(msg.getChainId());
                 if (ex instanceof OnionRoutingRequestException){
                     responseMessage.setMisbehavingNode(((OnionRoutingRequestException)ex).getMisbehavingNode());
-                    responseMessage.setStatus(OnionStatus.ERROR);
+                    responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
                 } else if (ex instanceof OnionRoutingTargetRequestException) {
                     responseMessage.setStatus(OnionStatus.TARGET_ERROR);
                 } else {
-                    responseMessage.setStatus(OnionStatus.ERROR);
+                    responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
                 }
                 //set a result (not an errorResult) so that the message is propagated back normally
                 deferredResult.setResult(responseMessage);
             }
 
             @Override
-            public void onSuccess(String resultMessageString) {
+            public void onSuccess(Message responseMessage) {
                 //if an exception is thrown here, the framework calls onFailure() above
-                logger.debug("/request: done. result: {}", resultMessageString);
-                Message responseMessage = new Message();
-                responseMessage.setChainId(msg.getChainId());
-                responseMessage.setPayload(cryptoService.encrypt(resultMessageString, msg.getPublicKey()));
+                logger.debug("/request: done. result: {}", responseMessage);
                 deferredResult.setResult(responseMessage);
             }
         });

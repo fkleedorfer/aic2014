@@ -5,6 +5,7 @@ import com.github.aic2014.onion.exception.OnionRoutingException;
 import com.github.aic2014.onion.exception.OnionRoutingRequestException;
 import com.github.aic2014.onion.exception.OnionRoutingTargetRequestException;
 import com.github.aic2014.onion.model.Message;
+import com.github.aic2014.onion.model.OnionStatus;
 import org.apache.http.*;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.UUID;
 
 /**
  * Service responsible for asynchonously executing the
@@ -57,24 +59,37 @@ public class AsyncRequestService {
     private int outgoingRequestSocketTimeout;
 
     @Async
-    public ListenableFuture<String> sendChainRequest(Message msg) {
+    public ListenableFuture<Message> sendChainRequest(Message msg) {
+        Message responseMessage = new Message();
         try {
             logger.debug("sending chain request message: {}", msg);
             ResponseEntity<String> msgEntity = restTemplate.postForEntity(msg.getRecipient() + "/request", msg, String.class);
-            return new AsyncResult<String>(msgEntity.getBody());
+            responseMessage.setChainId(msg.getChainId());
+            responseMessage.setPayload(cryptoService.encrypt(msgEntity.getBody(), msg.getPublicKey()));
         } catch (Exception e) {
-            //assume the receiver is misbehaving
-            throw new OnionRoutingRequestException(e, msg.getRecipient());
+            logger.debug("chainRequest: failure", e);
+            responseMessage = new Message();
+            UUID chainId = msg.getChainId();
+            populateMessageFromException(responseMessage,e, chainId);
         }
+        return new AsyncResult<Message>(responseMessage);
     }
 
-
     @Async
-    public ListenableFuture<String> sendExitRequestAndTunnelResponse(URI sender, String request) throws OnionRoutingException {
-        String response = null;
+    public ListenableFuture<Message> sendExitRequestAndTunnelResponse(URI sender, UUID chainId, String publicKey, String request) throws OnionRoutingException {
+        Message responseMessage = new Message();
         logger.debug("sending tunneled http request {}", request);
-        response = sendRequestSynchronously(sender, request);
-        return new AsyncResult<String>(response);
+        try {
+            String httpResponse = sendRequestSynchronously(sender, request);
+            responseMessage.setChainId(chainId);
+            responseMessage.setPayload(cryptoService.encrypt(httpResponse, publicKey));
+        } catch (Exception e) {
+            responseMessage = new Message();
+            logger.debug("chainRequest: failure", e);
+            responseMessage = new Message();
+            populateMessageFromException(responseMessage,e, chainId);
+        }
+        return new AsyncResult<Message>(responseMessage);
     }
 
     /**
@@ -132,31 +147,31 @@ public class AsyncRequestService {
             responseString = new String(out.toByteArray());
         } catch (HttpException e) {
             // assume that the target is misbehaving
-            throw new OnionRoutingTargetRequestException(e);
+            throw new OnionRoutingTargetRequestException(e, OnionStatus.TARGET_ERROR);
         } catch (ClientProtocolException e) {
             // assume that the target is misbehaving
-            throw new OnionRoutingTargetRequestException(e);
+            throw new OnionRoutingTargetRequestException(e, OnionStatus.TARGET_ERROR);
         } catch (IOException e) {
             //TODO: refactor status code/error propagation mechanism to propagate more
             //detailed info back to originator
             if (e instanceof InterruptedIOException) {
                 // Timeout
-                throw new OnionRoutingTargetRequestException(e);
+                throw new OnionRoutingTargetRequestException(e, OnionStatus.TARGET_TIMEOUT);
             }
             if (e instanceof UnknownHostException) {
                 // Unknown host
-                throw new OnionRoutingTargetRequestException(e);
+                throw new OnionRoutingTargetRequestException(e, OnionStatus.TARGET_UNKNOWN_HOST);
             }
             if (e instanceof ConnectTimeoutException) {
                 // Connection refused
-                throw new OnionRoutingTargetRequestException(e);
+                throw new OnionRoutingTargetRequestException(e, OnionStatus.TARGET_CONNECTION_REFUSED);
             }
             if (e instanceof SSLException) {
                 // SSL handshake exception
-                throw new OnionRoutingTargetRequestException(e);
+                throw new OnionRoutingTargetRequestException(e, OnionStatus.TARGET_SSL_HANDSHAKE_FAILED);
             } else {
                 //we may be misbehaving
-                throw new OnionRoutingRequestException(e, sender);
+                throw new OnionRoutingTargetRequestException(e, OnionStatus.TARGET_ERROR);
             }
         } catch (Exception e){
             // assume that we are misbehaving
@@ -164,6 +179,26 @@ public class AsyncRequestService {
         }
         return responseString;
     }
+
+    /**
+     * Used to extract information from different onion-routing specific exceptions and
+     * populate a message with that information.
+     * @param responseMessage
+     * @param e
+     * @param chainId
+     */
+    private void populateMessageFromException(Message responseMessage, Exception e, UUID chainId) {
+        responseMessage.setChainId(chainId);
+        if (e instanceof OnionRoutingRequestException){
+            responseMessage.setMisbehavingNode(((OnionRoutingRequestException)e).getMisbehavingNode());
+            responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
+        } else if (e instanceof OnionRoutingTargetRequestException) {
+            responseMessage.setStatus(((OnionRoutingTargetRequestException) e).getResponseStatus());
+        } else {
+            responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
+        }
+    }
+
 
     public void setOutgoingRequestConnectTimeout(int outgoingRequestConnectTimeout) {
         this.outgoingRequestConnectTimeout = outgoingRequestConnectTimeout;
