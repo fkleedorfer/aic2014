@@ -21,9 +21,6 @@ import java.util.*;
  */
 public class AWSDirectoryNodeService implements DirectoryNodeService {
 
-    private final static String AWS_STATE_RUNNING = "running";
-    private final static String AWS_STATE_PENDING = "pending";
-    private final static String AWS_TAG_NAME = "Name";
     private final static int DEFAULT_NUM_CHAINS = 6;
     private final static int DEFAULT_MIN_CHAIN_SIZE = 3;
 
@@ -32,13 +29,10 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     @Autowired
     private Environment env;
 
-    private AmazonEC2 ec2;
+    private AWSConnector awsConnector;
     private int latestNodeNumber = 0;
     private int numberOfChainNodes;
     private int minNumberOfChainNodes;
-    private String awsAccessKeyId;
-    private String awsSecretAccessKey;
-    private String awsRegion;
 
     private List<ChainNodeInfo> chainNodes = new LinkedList<>();
     private List<AWSChainNode> awsChainNodes = new LinkedList<>();
@@ -55,24 +49,27 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
         //
         //2. init AWS-EC2 client
-        ec2 = new AmazonEC2Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey));
-        ec2.setRegion(Region.getRegion(Regions.fromName(awsRegion)));
+        awsConnector = new AWSConnector(env);
 
         //3. search for existing chain nodes
-        List<AWSChainNode> existingChainNodes = readAWSChainNodes();
+        List<AWSChainNode> existingChainNodes = awsConnector.getAllChainNodes();
         logger.info("Found " + existingChainNodes.size() + " existing chain nodes on startup. Let's terminate them all!");
 
         //4. for now... after each start of the directory node, terminate all existing chain nodes.
-        existingChainNodes.forEach(cni -> terminateChainNode(cni));
+        existingChainNodes.forEach(cni -> awsConnector.terminateChainNode(cni.getInstanceId()));
         AWSChainNode cn = null;
 
         //5. create new chain nodes
-        createAWSChainNodes(numberOfChainNodes);
-        awsChainNodes = readAWSChainNodes();
+        String[] chainNodeNames = new String[numberOfChainNodes];
+        for (int i = 0; i < numberOfChainNodes; i++, latestNodeNumber++) {
+            chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), i + latestNodeNumber);
+        }
+        awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
+        awsChainNodes = awsConnector.getAllChainNodes();
         logger.info("Created " + awsChainNodes.size() + " chain nodes within AWS.");
 
         //6. Run setup-script for new chainnodes
-        ChainNodeInstaller cnInstaller = new ChainNodeInstaller();
+        ChainNodeInstaller cnInstaller = new ChainNodeInstaller(env, awsConnector);
         cnInstaller.runInstallerFor(awsChainNodes);
     }
 
@@ -127,87 +124,5 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         try {
             minNumberOfChainNodes = Integer.parseInt(env.getProperty("aws.chainnode.minQuantity"));
         } catch (NumberFormatException e) { minNumberOfChainNodes = DEFAULT_MIN_CHAIN_SIZE; }
-
-        awsAccessKeyId = env.getProperty("aws.accesskeyid");
-        awsSecretAccessKey = env.getProperty("aws.secretaccesskey");
-        awsRegion = env.getProperty("aws.region");
-    }
-
-    /**
-     * Gets all PENDING or ACTIVE chain nodes.
-     * Results are not cached.
-     * @return
-     */
-    private List<AWSChainNode> readAWSChainNodes() {
-
-        ArrayList<AWSChainNode> awsChainNodes = new ArrayList<>();
-
-        DescribeInstancesResult result = ec2.describeInstances();
-        for (Reservation reservation : result.getReservations()) {
-            for (Instance instance : reservation.getInstances()) {
-
-                Optional<Tag> optional = instance.getTags().stream().filter((tag) ->
-                                tag.getKey().equalsIgnoreCase(AWS_TAG_NAME) && tag.getValue().startsWith(env.getProperty("aws.chainnode.prefix"))
-                ).findFirst();
-                if (!optional.isPresent()) {
-                    //current instance does not start with the chain-node-name-prefix... ignore
-                    continue;
-                }
-
-                String id = instance.getInstanceId();
-                String instanceName = optional.get().getValue();
-                String publicIP = instance.getPublicIpAddress();
-                InstanceState state = instance.getState();
-
-                if (!(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING) || state.getName().equalsIgnoreCase(AWS_STATE_PENDING))) {
-                    //current instance is neither running nor starting... ignore
-                    continue;
-                }
-
-                AWSChainNode awsCN = new AWSChainNode();
-                awsCN.setInstanceId(id);
-                awsCN.setInstanceName(instanceName);
-                awsCN.setPublicIP(publicIP);
-            }
-        }
-
-        return awsChainNodes;
-    }
-
-    /**
-     * Terminates the given chain node
-     * @param awsCN
-     */
-    private void terminateChainNode(AWSChainNode awsCN) {
-        TerminateInstancesRequest request = new TerminateInstancesRequest();
-        request.setInstanceIds(new ArrayList<String>() {{
-            add(awsCN.getInstanceId());
-        }});
-
-        TerminateInstancesResult result = ec2.terminateInstances(request);
-    }
-
-    /**
-     * Requests the creation of new chain node instances
-     * @param quantity
-     */
-    private void createAWSChainNodes(int quantity) {
-
-        RunInstancesRequest request = new RunInstancesRequest();
-        request.withImageId(env.getProperty("aws.chainnode.defaultami"))
-                .withInstanceType(InstanceType.fromValue(env.getProperty("aws.chainnode.type")))
-                .withMinCount(quantity)
-                .withMaxCount(quantity)
-                .withKeyName(env.getProperty("aws.chainnode.keyname"))
-                .withSecurityGroupIds(env.getProperty("aws.chainnode.securitygroup"))
-                .withSubnetId(env.getProperty("aws.chainnode.subnet"));
-
-        RunInstancesResult result = ec2.runInstances(request);
-        for (Instance instance : result.getReservation().getInstances()) {
-            CreateTagsRequest tagRequest = new CreateTagsRequest();
-            tagRequest.withResources(instance.getInstanceId())
-                    .withTags(new Tag(AWS_TAG_NAME, String.format("%s%d", env.getProperty("aws.chainnode.prefix"), ++latestNodeNumber)));
-            ec2.createTags(tagRequest);
-        }
     }
 }

@@ -8,6 +8,7 @@ public class AWSChainNode {
     private String instanceId;
     private String instanceName;
     private String publicIP;
+    private boolean isReady;
 
     public String getInstanceId() {
         return instanceId;
@@ -31,5 +32,29 @@ public class AWSChainNode {
 
     public void setInstanceName(String instanceName) {
         this.instanceName = instanceName;
+    }
+
+    public boolean isReady() {
+        return isReady;
+    }
+
+    public void setReady(boolean isReady) {
+        this.isReady = isReady;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (instanceId != null)
+            return instanceId.equals(obj);
+
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        if (instanceId != null)
+            return instanceId.hashCode();
+
+        return super.hashCode();
     }
 }
