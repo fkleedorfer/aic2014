@@ -1,6 +1,18 @@
 #!/bin/bash
 
-# execute as root
+# ----------------------------------------------
+# AWS Instance Setup
+# Run this script as root in order to create
+# a valid chain-node-template-AMI.
+# It:
+#   - installs Java8
+#   - installs Maven
+#   - creates user 'onion'
+#   - copies authorized_keys from 'ec2-user' to 'onion'
+#   -
+#
+# This script is NOT supposed to be run on an EXISTING chain node
+# ----------------------------------------------
 
 USERNAME=onion
 JAVA_VERSION=1.8.0
@@ -37,3 +49,5 @@ echo 'export PATH=$M2:$PATH' >> /etc/profile.d/onion.sh
 
 # Prepare onion home dir
 runuser -l onion --command "mkdir chainnode"
+runuser -l onion --command "mkdir quoteserver"
+runuser -l onion --command "mkdir directorynode"
