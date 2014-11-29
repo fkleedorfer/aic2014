@@ -146,6 +146,8 @@ public class AsyncRequestService {
             sessionOutputBuffer.bind(out);
             httpResponseWriter.write(response);
             sessionOutputBuffer.flush();
+            response.getEntity().writeTo(out);
+            out.flush();
             responseString = new String(out.toByteArray());
         } catch (HttpException e) {
             // assume that the target is misbehaving
