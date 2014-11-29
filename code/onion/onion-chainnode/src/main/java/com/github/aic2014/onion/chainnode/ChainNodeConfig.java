@@ -121,4 +121,9 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
         return new AsyncRequestService();
     }
 
+    @Bean
+    RoutingInfoService getRoutingInfoService(){
+        return new RoutingInfoService();
+    }
+
 }

@@ -7,6 +7,7 @@ import com.github.aic2014.onion.exception.OnionRoutingTargetRequestException;
 import com.github.aic2014.onion.json.JsonUtils;
 import com.github.aic2014.onion.model.Message;
 import com.github.aic2014.onion.model.OnionStatus;
+import com.github.aic2014.onion.model.RoutingInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +36,13 @@ public class ChainNodeController {
 
     @Autowired
     CryptoService cryptoService;
+
     @Autowired
     AsyncRequestService asyncRequestService;
+
+    @Autowired
+    RoutingInfoService routingInfoService;
+
     @Value("${messageTimeout}")
     long messageTimeout;
 
@@ -56,16 +62,19 @@ public class ChainNodeController {
         }
         ListenableFuture<Message> msgFuture = null;
         Message timeoutMessage = null; //if we hit a timeout, send this message (if not null)
+
         if (msg.getHopsToGo() == 0) {
             logger.info("received exit request from {}", msg.getSender());
             //last hop: we expect that the decrypted string is a http request.
             logger.debug("/request: last hop, received payload {}", decryptedPayload);
             logger.debug("/request: sending exit request asynchronously");
+            updateRoutingInfoForRequest(msg, null);
             msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(msg.getRecipient(), msg.getChainId(),msg.getPublicKey(),decryptedPayload);
         } else {
             Message nextMsg = JsonUtils.fromJSON(decryptedPayload);
             logger.info("received chain request from {} to {}", msg.getSender(), nextMsg.getRecipient());
             logger.debug("/request: sending chain request asynchronously");
+            updateRoutingInfoForRequest(msg, nextMsg);
             msgFuture = this.asyncRequestService.sendChainRequest(nextMsg);
             //if sending nextMsg yields a timeout, send the follwing message back through the chain
             timeoutMessage = new Message();
@@ -93,6 +102,7 @@ public class ChainNodeController {
                 }
                 //set a result (not an errorResult) so that the message is propagated back normally
                 logger.info("An error occurred during request processing, sending back an error message");
+                updateRoutingInfoForResponse(msg, responseMessage);
                 deferredResult.setResult(responseMessage);
             }
 
@@ -101,10 +111,29 @@ public class ChainNodeController {
                 //if an exception is thrown here, the framework calls onFailure() above
                 logger.info("received response, routing it back");
                 logger.debug("/request: done. result: {}", responseMessage);
+                updateRoutingInfoForResponse(msg, responseMessage);
                 deferredResult.setResult(responseMessage);
             }
         });
         return deferredResult;
+    }
+
+    private void updateRoutingInfoForRequest(Message inMessage, Message outMessage){
+        RoutingInfo info = new RoutingInfo(
+                inMessage.getChainId(),
+                inMessage.getSender(),
+                outMessage != null ? outMessage.getRecipient() : null,
+                inMessage.getStatus());
+        this.routingInfoService.updateRoutingInfo(info);
+    }
+
+    private void updateRoutingInfoForResponse(Message inMessage, Message returnMessage){
+        RoutingInfo info = new RoutingInfo(
+                inMessage != null? inMessage.getChainId(): null,
+                inMessage != null? inMessage.getSender(): null,
+                returnMessage != null ? returnMessage.getRecipient() : null,
+                returnMessage.getStatus());
+        this.routingInfoService.updateRoutingInfo(info);
     }
 
 }
