@@ -47,11 +47,6 @@ public class OnionClientConfig
     return new RSAESCryptoService();
   }
 
-  @Bean
-  public PendingResponseService getPendingResponseService(){
-    return new PendingResponseService();
-  }
-
 
   /**
    * Bean that registers an application listener. When the application container starts up
