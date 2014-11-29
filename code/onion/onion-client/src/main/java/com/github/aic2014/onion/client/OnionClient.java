@@ -40,7 +40,7 @@ public class OnionClient {
 
     private ChainNodeInfo[] getChain() {
         String requestUri = directoryNodeUri.toString() + "/getChain";
-        logger.info("requesting: {}", requestUri);
+        logger.debug("requesting: {}", requestUri);
         ResponseEntity<ChainNodeInfo[]> newChainResult = restTemplate.getForEntity(requestUri, ChainNodeInfo[].class);
         ChainNodeInfo[] newChain = newChainResult.getBody();
         logger.debug("obtained new chain: {}", newChain);
@@ -50,7 +50,7 @@ public class OnionClient {
     public String executeOnionRoutedHttpRequest(String request) {
         //get the chain for the request
         ChainNodeInfo[] chain = getChain();
-        logger.info("obtained chain {}", Arrays.toString(chain));
+        logger.debug("obtained chain {}", Arrays.toString(chain));
         UUID chainId = UUID.randomUUID();
         Message msg = buildMessage(chain, chainId, request);
         logger.debug("sending this message: {}", msg);

@@ -71,6 +71,7 @@ public class AsyncRequestService {
             responseMessage = new Message();
             UUID chainId = msg.getChainId();
             populateMessageFromException(responseMessage,e, chainId);
+            logger.info("An error occurred, sending back an error message with status {}", responseMessage.getStatus());
         }
         return new AsyncResult<Message>(responseMessage);
     }
@@ -88,6 +89,7 @@ public class AsyncRequestService {
             logger.debug("chainRequest: failure", e);
             responseMessage = new Message();
             populateMessageFromException(responseMessage,e, chainId);
+            logger.info("An error occurred, sending back an error message with status {}", responseMessage.getStatus());
         }
         return new AsyncResult<Message>(responseMessage);
     }

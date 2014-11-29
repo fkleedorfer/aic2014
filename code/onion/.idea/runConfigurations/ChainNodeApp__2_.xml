@@ -17,6 +17,13 @@
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="onion-chainnode" />
     <envs />
-    <method />
+    <RunnerSettings RunnerId="JRebel Debug">
+      <option name="DEBUG_PORT" value="" />
+      <option name="TRANSPORT" value="0" />
+      <option name="LOCAL" value="true" />
+    </RunnerSettings>
+    <method>
+      <option name="Make" enabled="false" />
+    </method>
   </configuration>
 </component>

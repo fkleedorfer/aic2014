@@ -47,6 +47,7 @@ public class ChainNodeController {
     @ResponseBody
     public DeferredResult<Message> routeRequest(final @RequestBody Message msg)
             throws IOException {
+
         logger.debug("received request with message {}", msg);
         String payload = msg.getPayload();
         String decryptedPayload = cryptoService.decrypt(payload);
@@ -56,12 +57,14 @@ public class ChainNodeController {
         ListenableFuture<Message> msgFuture = null;
         Message timeoutMessage = null; //if we hit a timeout, send this message (if not null)
         if (msg.getHopsToGo() == 0) {
+            logger.info("received exit request from {}", msg.getSender());
             //last hop: we expect that the decrypted string is a http request.
             logger.debug("/request: last hop, received payload {}", decryptedPayload);
             logger.debug("/request: sending exit request asynchronously");
             msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(msg.getRecipient(), msg.getChainId(),msg.getPublicKey(),decryptedPayload);
         } else {
             Message nextMsg = JsonUtils.fromJSON(decryptedPayload);
+            logger.info("received chain request from {} to {}", msg.getSender(), nextMsg.getRecipient());
             logger.debug("/request: sending chain request asynchronously");
             msgFuture = this.asyncRequestService.sendChainRequest(nextMsg);
             //if sending nextMsg yields a timeout, send the follwing message back through the chain
@@ -89,12 +92,14 @@ public class ChainNodeController {
                     responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
                 }
                 //set a result (not an errorResult) so that the message is propagated back normally
+                logger.info("An error occurred during request processing, sending back an error message");
                 deferredResult.setResult(responseMessage);
             }
 
             @Override
             public void onSuccess(Message responseMessage) {
                 //if an exception is thrown here, the framework calls onFailure() above
+                logger.info("received response, routing it back");
                 logger.debug("/request: done. result: {}", responseMessage);
                 deferredResult.setResult(responseMessage);
             }
