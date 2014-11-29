@@ -5,7 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
@@ -48,15 +50,7 @@ public class ChainNodeInstaller {
                     }
                     else {
                         logger.info(awsCN.getInstanceId() + " is yet ready! Run install script");
-
-                        try {
-                            String command = String.format(installationCommand, awsCN.getPublicIP());
-                            ProcessBuilder pb = new ProcessBuilder(command);
-                            Process p = pb.start();
-                        } catch (IOException e) {
-                            logger.warn("Process to run the installation script could not be started.");
-                        }
-
+                        runScriptFor(awsCN);
                         pendingChainNodes.remove(awsCN);
                     }
                 }
@@ -77,7 +71,10 @@ public class ChainNodeInstaller {
 
     public ChainNodeInstaller(Environment env, AWSConnector awsConnector) {
         timeoutPending = 0;
-        installationCommand = env.getProperty("aws.chainnode.setupCommand");
+        installationCommand = String.format(env.getProperty("aws.chainnode.setupCommand"),
+                env.getProperty("aws.chainnode.setupIDfile"),
+                env.getProperty("aws.chainnode.setupSource"),
+                "%s");
         pendingChainNodes = new HashMap<>();
         this.awsConnector = awsConnector;
 
@@ -99,6 +96,28 @@ public class ChainNodeInstaller {
     }
 
     private void runScriptFor(AWSChainNode awsChainNode) {
+        try {
+            String rawCommand = String.format(installationCommand, awsChainNode.getPublicIP());
+            logger.info("Executing Command: " + rawCommand);
 
+            String[] cmdSplitted = rawCommand.split(" ");
+            ProcessBuilder pb = new ProcessBuilder(Arrays.asList(cmdSplitted));
+            Process p = pb.start();
+
+            Scanner s = new Scanner(p.getInputStream());
+            StringBuilder sbInput = new StringBuilder();
+            while (s.hasNextLine())
+                sbInput.append(s.nextLine());
+            logger.info("Respones of command: " + sbInput.toString());
+
+            s = new Scanner(p.getErrorStream());
+            StringBuilder sbError = new StringBuilder();
+            while (s.hasNextLine())
+                sbError.append(s.nextLine());
+            logger.info("Error-Respones of command: " + sbError.toString());
+
+        } catch (Exception e) {
+            logger.warn("Process to run the installation script could not be started.", e);
+        }
     }
 }

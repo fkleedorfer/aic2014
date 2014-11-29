@@ -15,6 +15,6 @@ public class DirectoryNodeConfig {
 
     @Bean
     DirectoryNodeService getChainNodeService() {
-        return new InMemoryDirectoryService();
+        return new AWSDirectoryNodeService();
     }
 }

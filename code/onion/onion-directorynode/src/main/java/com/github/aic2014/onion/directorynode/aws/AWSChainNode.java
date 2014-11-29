@@ -44,10 +44,15 @@ public class AWSChainNode {
 
     @Override
     public boolean equals(Object obj) {
-        if (instanceId != null)
-            return instanceId.equals(obj);
+        if (!(obj instanceof AWSChainNode))
+            return false;
+        if (obj == this)
+            return true;
 
-        return super.equals(obj);
+        if (instanceId != null)
+            return instanceId.equals(((AWSChainNode)obj).getInstanceId());
+        else
+            return super.equals(obj);
     }
 
     @Override

@@ -27,14 +27,45 @@ public class AWSConnector {
     public AWSConnector(Environment env) {
         ec2 = new AmazonEC2Client(new BasicAWSCredentials(env.getProperty("aws.accesskeyid"),  env.getProperty("aws.secretaccesskey")));
         ec2.setRegion(Region.getRegion(Regions.fromName(env.getProperty("aws.region"))));
+        this.env = env;
     }
 
     public AWSChainNode getById(String instanceId) {
-        return null;
+        List<AWSChainNode> awsChainNodes = getById(new ArrayList<String>(1){{ add(instanceId); }});
+        if (awsChainNodes.isEmpty())
+            return null;
+
+        return awsChainNodes.get(0);
     }
 
     public List<AWSChainNode> getById(List<String> instanceIds) {
-        return null;
+        ArrayList<AWSChainNode> awsChainNodes = new ArrayList<>();
+
+        DescribeInstancesResult result = ec2.describeInstances();
+        for (Reservation reservation : result.getReservations()) {
+            for (Instance instance : reservation.getInstances()) {
+
+                Optional<Tag> optional = instance.getTags().stream().filter((tag) -> tag.getKey().equalsIgnoreCase(AWS_TAG_NAME)).findFirst();
+
+                if (!instanceIds.contains(instance.getInstanceId())) {
+                    continue;
+                }
+
+                String id = instance.getInstanceId();
+                String instanceName = optional.isPresent() ? optional.get().getValue() : null;
+                String publicIP = instance.getPublicIpAddress();
+                InstanceState state = instance.getState();
+
+                AWSChainNode awsCN = new AWSChainNode();
+                awsCN.setInstanceId(id);
+                awsCN.setInstanceName(instanceName);
+                awsCN.setPublicIP(publicIP);
+                awsCN.setReady(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING));
+                awsChainNodes.add(awsCN);
+            }
+        }
+
+        return awsChainNodes;
     }
 
     /**
@@ -72,6 +103,7 @@ public class AWSConnector {
                 awsCN.setInstanceName(instanceName);
                 awsCN.setPublicIP(publicIP);
                 awsCN.setReady(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING));
+                awsChainNodes.add(awsCN);
             }
         }
 

@@ -51,20 +51,19 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         //2. init AWS-EC2 client
         awsConnector = new AWSConnector(env);
 
-        //3. search for existing chain nodes
-        List<AWSChainNode> existingChainNodes = awsConnector.getAllChainNodes();
-        logger.info("Found " + existingChainNodes.size() + " existing chain nodes on startup. Let's terminate them all!");
-
-        //4. for now... after each start of the directory node, terminate all existing chain nodes.
-        existingChainNodes.forEach(cni -> awsConnector.terminateChainNode(cni.getInstanceId()));
-        AWSChainNode cn = null;
-
-        //5. create new chain nodes
-        String[] chainNodeNames = new String[numberOfChainNodes];
-        for (int i = 0; i < numberOfChainNodes; i++, latestNodeNumber++) {
-            chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), i + latestNodeNumber);
-        }
-        awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
+//        //3. search for existing chain nodes
+//        List<AWSChainNode> existingChainNodes = awsConnector.getAllChainNodes();
+//        logger.info("Found " + existingChainNodes.size() + " existing chain nodes on startup. Let's terminate them all!");
+//
+//        //4. for now... after each start of the directory node, terminate all existing chain nodes.
+//        existingChainNodes.forEach(cni -> awsConnector.terminateChainNode(cni.getInstanceId()));
+//
+//        //5. create new chain nodes
+//        String[] chainNodeNames = new String[numberOfChainNodes];
+//        for (int i = 0; i < numberOfChainNodes; i++, latestNodeNumber++) {
+//            chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), i + latestNodeNumber);
+//        }
+//        awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
         awsChainNodes = awsConnector.getAllChainNodes();
         logger.info("Created " + awsChainNodes.size() + " chain nodes within AWS.");
 
