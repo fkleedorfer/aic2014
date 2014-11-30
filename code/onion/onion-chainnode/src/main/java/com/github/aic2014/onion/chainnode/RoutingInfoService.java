@@ -16,7 +16,7 @@ public class RoutingInfoService {
     private Comparator<RoutingInfo> routingInfoComparator = new Comparator<RoutingInfo>()  {
         @Override
         public int compare(RoutingInfo o1, RoutingInfo o2) {
-            return o1.getLatestUpdate().compareTo(o2.getLatestUpdate());
+            return o2.getLatestUpdate().compareTo(o1.getLatestUpdate());
         }
     };
 
