@@ -13,12 +13,16 @@ public class RoutingInfo {
     private URI requestRecipient;
     private OnionStatus status;
     private Date latestUpdate;
+    private RoutingDirection direction;
 
-    public RoutingInfo(UUID chainId, URI requestSender, URI requestRecipient, OnionStatus status) {
+
+
+    public RoutingInfo(UUID chainId, URI requestSender, URI requestRecipient, OnionStatus status, RoutingDirection direction) {
         this.chainId = chainId;
         this.requestSender = requestSender;
         this.requestRecipient = requestRecipient;
         this.status = status;
+        this.direction = direction;
         this.latestUpdate = new Date();
     }
 
@@ -42,15 +46,32 @@ public class RoutingInfo {
         return latestUpdate;
     }
 
+    public RoutingDirection getDirection() {
+        return direction;
+    }
+
+    @Override
+    public String toString() {
+        return "RoutingInfo{" +
+                "chainId=" + chainId +
+                ", requestSender=" + requestSender +
+                ", requestRecipient=" + requestRecipient +
+                ", status=" + status +
+                ", latestUpdate=" + latestUpdate +
+                ", direction=" + direction +
+                '}';
+    }
+
     @Override
     public boolean equals(Object o) {
-
         if (this == o) return true;
         if (!(o instanceof RoutingInfo)) return false;
 
         RoutingInfo that = (RoutingInfo) o;
 
         if (chainId != null ? !chainId.equals(that.chainId) : that.chainId != null) return false;
+        if (direction != that.direction) return false;
+        if (latestUpdate != null ? !latestUpdate.equals(that.latestUpdate) : that.latestUpdate != null) return false;
         if (requestRecipient != null ? !requestRecipient.equals(that.requestRecipient) : that.requestRecipient != null)
             return false;
         if (requestSender != null ? !requestSender.equals(that.requestSender) : that.requestSender != null)
@@ -66,16 +87,8 @@ public class RoutingInfo {
         result = 31 * result + (requestSender != null ? requestSender.hashCode() : 0);
         result = 31 * result + (requestRecipient != null ? requestRecipient.hashCode() : 0);
         result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (latestUpdate != null ? latestUpdate.hashCode() : 0);
+        result = 31 * result + (direction != null ? direction.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "RoutingInfo{" +
-                "chainId=" + chainId +
-                ", requestSender=" + requestSender +
-                ", requestRecipient=" + requestRecipient +
-                ", status=" + status +
-                '}';
     }
 }
