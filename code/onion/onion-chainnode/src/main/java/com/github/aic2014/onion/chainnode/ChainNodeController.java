@@ -7,6 +7,7 @@ import com.github.aic2014.onion.exception.OnionRoutingTargetRequestException;
 import com.github.aic2014.onion.json.JsonUtils;
 import com.github.aic2014.onion.model.Message;
 import com.github.aic2014.onion.model.OnionStatus;
+import com.github.aic2014.onion.model.RoutingDirection;
 import com.github.aic2014.onion.model.RoutingInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +124,8 @@ public class ChainNodeController {
                 inMessage.getChainId(),
                 inMessage.getSender(),
                 outMessage != null ? outMessage.getRecipient() : null,
-                inMessage.getStatus());
+                inMessage.getStatus(),
+                RoutingDirection.REQUEST);
         this.routingInfoService.updateRoutingInfo(info);
     }
 
@@ -133,7 +135,8 @@ public class ChainNodeController {
                 oldInfo.getChainId(),
                 oldInfo.getRequestSender(),
                 oldInfo.getRequestRecipient(),
-                returnMessage.getStatus());
+                returnMessage.getStatus(),
+                RoutingDirection.RESPONSE);
         this.routingInfoService.updateRoutingInfo(info);
     }
 

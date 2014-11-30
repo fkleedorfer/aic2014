@@ -9,12 +9,14 @@
 <body ng-controller="routingInfoController">
 <div class="container-fluid">
 <h1>Chainnode status page</h1>
+This table shows the most recent routing information.
 <table class="table table-striped">
     <thead>
         <td>Latest Update</td>
         <td>ChainId</td>
         <td>Sender</td>
         <td>Recipient</td>
+        <td>Direction</td>
         <td>Status</td>
     </thead>
     <tbody>
@@ -29,6 +31,7 @@
                 <a ng-if="ri.requestRecipient" href="{{ri.requestRecipient}}">{{ri.requestRecipient}}</a>
                 <span ng-if="!ri.requestRecipient">[Destination]</span>
             </td>
+            <td>{{ ri.direction }}</td>
             <td>{{ ri.status }}</td>
         </tr>
     </tbody>
