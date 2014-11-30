@@ -62,7 +62,7 @@ cd code/onion/onion-directorynode
 mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.directorynode.DirectoryNodeApp"
 -DONION_CONF_DIR=../conf.local -Dlogging.config=../conf.local/logback.xml
 ```
-Point your browser to `http://localhost:20141/getChain` to see if it works.
+Point your browser to `http://localhost:20141` to see if it works.
 
 Running the chain node:
 ```
@@ -71,7 +71,9 @@ mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.chainnode.ChainNodeApp"
 l -Dlogging.config=../conf.local/logback.xml
 ``` 
 The port the chain node uses is chosen at random. It is output as one of the last log messages.
-Point your browser to `http://localhost:[port]/route` to see if it works.
+Point your browser to `http://localhost:[port]` to see if it works.
+Also, the during startup, the chain node registers with the directory node. Reload the index page of the 
+directory node to see if it worked.
 
 Running the client:
 ```
