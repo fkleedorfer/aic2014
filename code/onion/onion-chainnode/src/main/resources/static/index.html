@@ -19,11 +19,17 @@
     </thead>
     <tbody>
         <tr ng-repeat="ri in routingInfo">
-            <td>{{ ri.latestUpdate | date:'short'}}</td>
+            <td>{{ ri.latestUpdate | date:'short' }}</td>
             <td>{{ ri.chainId }}</td>
-            <td><a href="{{ ri.requestSender}}">{{ ri.requestSender}}</a></td>
-            <td><a href="{{ ri.requestRecipient}}">{{ ri.requestRecipient}}</a></td>
-            <td>{{ ri.status}}</td>
+            <td>
+                <a ng-if="ri.requestSender" href="{{ri.requestSender}}">{{ri.requestSender}}</a>
+                <span ng-if="!ri.requestSender">[Originator]</span>
+            </td>
+            <td>
+                <a ng-if="ri.requestRecipient" href="{{ri.requestRecipient}}">{{ri.requestRecipient}}</a>
+                <span ng-if="!ri.requestRecipient">[Destination]</span>
+            </td>
+            <td>{{ ri.status }}</td>
         </tr>
     </tbody>
 </table>
