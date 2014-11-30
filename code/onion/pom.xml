@@ -12,6 +12,7 @@
 
     <modules>
         <module>onion-common</module>
+        <module>onion-webcommon</module>
         <module>onion-chainnode</module>
         <module>onion-client</module>
         <module>onion-crypto</module>
