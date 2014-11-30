@@ -75,9 +75,6 @@ public class OnionClient {
             msg.setRecipient(chain[idx].getUri());
             if (idx > 0) {
                 msg.setSender(chain[idx - 1].getUri());
-            } else {
-                //for the outermost message, the client is the sender
-                msg.setSender(this.originatorUri);
             }
             msg.setHopsToGo(chain.length - 1 - idx);
             msg.setPublicKey(this.cryptoService.getPublicKey());

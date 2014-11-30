@@ -54,6 +54,11 @@
     <dependencies>
         <dependency>
             <groupId>com.github.aic2014</groupId>
+            <artifactId>onion-webcommon</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.aic2014</groupId>
             <artifactId>onion-common</artifactId>
             <version>${project.version}</version>
         </dependency>

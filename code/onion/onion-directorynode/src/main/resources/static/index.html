@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" ng-app="directoryNodeApp">
+<head>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/angular.min.js"></script>
+    <script src="js/directoryNodeApp.js"></script>
+    <title>Chainnode</title>
+</head>
+<body ng-controller="chainNodeInfoController">
+<div class="container-fluid">
+<h1>Directorynode status page</h1>
+<h2>Registered Chain nodes</h2>
+<table class="table table-striped">
+    <thead>
+        <td>Id</td>
+        <td>IP Address</td>
+        <td>Port</td>
+        <td>Launched At</td>
+        <td>Last Life Check At</td>
+    </thead>
+    <tbody>
+        <tr ng-repeat="ci in chainNodeInfos">
+            <td><a href="{{'http://'+ ci.publicIP + ':' +ci.port + '/'}}">{{ci.id}}</a></td>
+            <td>{{ci.publicIP}}</td>
+            <td>{{ci.port}}</td>
+            <td>{{ci.launchedDate }}</td>
+            <td>{{ci.lastLifeCheck }}</td>
+        </tr>
+    </tbody>
+</table>
+<button ng-click="reloadChainNodeInfo()" ng-disabled="isRequesting">
+    Reload
+</button>
+</div>
+</body>
+</html>
