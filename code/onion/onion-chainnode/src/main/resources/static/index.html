@@ -1,8 +1,35 @@
-<html>
+<!doctype html>
+<html lang="en" ng-app="chainNodeApp">
 <head>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/angular.min.js"></script>
+    <script src="js/chainNodeApp.js"></script>
     <title>Chainnode</title>
 </head>
-<body>
-    <h1>Chainnode status page</h1>
+<body ng-controller="routingInfoController">
+<div class="container-fluid">
+<h1>Chainnode status page</h1>
+<table class="table table-striped">
+    <thead>
+        <td>Latest Update</td>
+        <td>ChainId</td>
+        <td>Sender</td>
+        <td>Recipient</td>
+        <td>Status</td>
+    </thead>
+    <tbody>
+        <tr ng-repeat="ri in routingInfo">
+            <td>{{ ri.latestUpdate | date:'short'}}</td>
+            <td>{{ ri.chainId }}</td>
+            <td><a href="{{ ri.requestSender}}">{{ ri.requestSender}}</a></td>
+            <td><a href="{{ ri.requestRecipient}}">{{ ri.requestRecipient}}</a></td>
+            <td>{{ ri.status}}</td>
+        </tr>
+    </tbody>
+</table>
+<button ng-click="reloadRoutingInfo()" ng-disabled="isRequesting">
+    Reload
+</button>
+</div>
 </body>
 </html>

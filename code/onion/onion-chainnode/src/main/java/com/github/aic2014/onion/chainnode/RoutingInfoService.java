@@ -40,6 +40,10 @@ public class RoutingInfoService {
         return infos;
     }
 
+    public RoutingInfo getRoutingInfo(UUID chainId){
+        return routingInfos.get(chainId);
+    }
+
 
     /**
      * Simple least-recently-used map that deletes the least recently used element

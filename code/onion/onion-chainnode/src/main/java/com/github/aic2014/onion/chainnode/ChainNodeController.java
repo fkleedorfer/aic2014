@@ -128,10 +128,11 @@ public class ChainNodeController {
     }
 
     private void updateRoutingInfoForResponse(Message inMessage, Message returnMessage){
+        RoutingInfo oldInfo = this.routingInfoService.getRoutingInfo(inMessage.getChainId());
         RoutingInfo info = new RoutingInfo(
-                inMessage != null? inMessage.getChainId(): null,
-                inMessage != null? inMessage.getSender(): null,
-                returnMessage != null ? returnMessage.getRecipient() : null,
+                oldInfo.getChainId(),
+                oldInfo.getRequestSender(),
+                oldInfo.getRequestRecipient(),
                 returnMessage.getStatus());
         this.routingInfoService.updateRoutingInfo(info);
     }
