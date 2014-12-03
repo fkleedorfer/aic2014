@@ -1,6 +1,7 @@
 #application specific
 ## local config with passwords etc
 code/onion/conf.local/
+code/onion/deployment/chainnode/
 
 ## latex stuff
 *.aux
