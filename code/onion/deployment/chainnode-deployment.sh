@@ -1,10 +1,8 @@
 #!/bin/bash
 
 REMOTEHOST=$1
-IDFILE="/D/Drive/TU Wien/2014WS-Advanced Internet Computing/SSH/G6-T3-id_rsa.pem"
-# IDFILE="/home/onion/directorynode/deployment/G6-T3-id_rsa.pem"
-SOURCEDIR='../deployment/chainnode/*'
-# SOURCEDIR='/home/onion/directorynode/deployment/chainnode/*'
+IDFILE="/home/onion/directorynode/deployment/G6-T3-id_rsa.pem"
+SOURCEDIR='/home/onion/directorynode/deployment/chainnode/*'
 REMOTEDIR='~/chainnode/'
 
 echo "Upload files..."
