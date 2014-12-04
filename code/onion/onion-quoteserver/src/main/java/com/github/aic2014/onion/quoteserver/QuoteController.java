@@ -32,8 +32,8 @@ public class QuoteController {
     @RequestMapping(
             value = "/quote",
             method = RequestMethod.GET)
-    public ResponseEntity getQuote() {
-        return new ResponseEntity<>(getRandomQuote(), HttpStatus.OK);
+    public ResponseEntity<Quote> getQuote() {
+        return new ResponseEntity<Quote>(getRandomQuote(), HttpStatus.OK);
     }
 
     /**
@@ -41,14 +41,14 @@ public class QuoteController {
      *
      * @return
      */
-    private String getRandomQuote() {
+    private Quote getRandomQuote() {
         if (this.quotes.isEmpty()) {
             logger.error("No quotes here");
-            return "Oops, ran out of quotes.";
+            return new Quote("Oops, ran out of quotes.");
         }
 
         int randomInt = random.nextInt(this.quotes.size());
-        return quotes.get(randomInt);
+        return new Quote(quotes.get(randomInt));
     }
 
     private String getConfDir() {
