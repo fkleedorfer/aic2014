@@ -62,7 +62,6 @@ public class QuoteController {
         return quotes;
     }
 
-    @PostConstruct
     private void LoadQuotes() {
         quotes.clear();
         File quotesFile = getQuotesFile();
@@ -97,6 +96,27 @@ public class QuoteController {
                     quotes.add(quote.trim());
                     quote = "";
                 }
+            }
+            logger.info("Loaded {} quotes", quotes.size());
+
+        } catch (Exception e) {
+            logger.error("Quotes loading", e);
+        }
+    }
+
+    @PostConstruct
+    private void loadOneLineQuotes() {
+        quotes.clear();
+        File quotesFile = getQuotesFile();
+
+        try (BufferedReader in = new BufferedReader(new FileReader(quotesFile))) {
+            logger.info("Loading quotes from {}", quotesFile);
+
+            String s, quote = "";
+            Boolean started = false, reading = false, isUpperCase;
+            while (in.ready()) {
+                s = in.readLine();
+                quotes.add(s);
             }
             logger.info("Loaded {} quotes", quotes.size());
 
