@@ -43,7 +43,9 @@ public class DirectoryNodeController {
     @RequestMapping(value = "/chainNode", method = RequestMethod.POST)
     public ResponseEntity<Object> registerChainNode(HttpServletRequest request,
                                                     @RequestBody ChainNodeInfo chainNodeInfo) {
-        String id = this.directoryNodeService.registerChainNode(chainNodeInfo);
+        chainNodeInfo.setPublicIP(request.getRemoteAddr());
+        String id = directoryNodeService.registerChainNode(chainNodeInfo);
+        chainNodeInfo.setId(id);
         URI newUri = createChainNodeUri(request, id);
         logger.info("chain node {} registered, assigned uri {}", chainNodeInfo, newUri);
         HttpHeaders headers = new HttpHeaders();
@@ -59,6 +61,7 @@ public class DirectoryNodeController {
      */
     @RequestMapping(value = "/chainNode", method = RequestMethod.GET)
     public ResponseEntity<Collection<ChainNodeInfo>> getAllChainNodes() {
+        logger.info("Get all chain nodes");
         return new ResponseEntity<Collection<ChainNodeInfo>>(this.directoryNodeService.getAllChainNodes(), HttpStatus.OK);
     }
 
@@ -100,5 +103,3 @@ public class DirectoryNodeController {
         return URI.create(request.getRequestURL().toString() + "/" + id);
     }
 }
-
-

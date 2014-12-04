@@ -79,13 +79,22 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
     @Override
     public String registerChainNode(ChainNodeInfo chainNodeInfo) {
-        //TODO
-        return null;
+
+        Optional<AWSChainNode> equivalentAWSCN = awsChainNodes.stream().filter(awsCN -> awsCN.getPublicIP().equals(chainNodeInfo.getPublicIP())).findFirst();
+        if (!equivalentAWSCN.isPresent()) {
+            logger.warn(String.format("Unknown chain node with IP %s tried to register. Ignore!", chainNodeInfo.getPublicIP()));
+            return null;
+        }
+
+        logger.info(String.format("Register chain node with IP %s.", chainNodeInfo.getPublicIP()));
+        chainNodeInfo.setId(equivalentAWSCN.get().getInstanceId());
+        chainNodes.add(chainNodeInfo);
+        return chainNodeInfo.getId();
     }
 
     @Override
     public void unregisterChainNode(String id) {
-        //TODO
+        chainNodes.removeIf(cn -> cn.getId().equals(id));
     }
 
     @Override

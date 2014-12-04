@@ -59,26 +59,24 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
      * @return
      */
     @Bean
-    public ApplicationListener<EmbeddedServletContainerInitializedEvent> getPortDiscoveryBean(final DirectoryNodeClient
-                                                                                                      client) {
+    public ApplicationListener<EmbeddedServletContainerInitializedEvent> getPortDiscoveryBean(final DirectoryNodeClient client) {
         ApplicationListener<EmbeddedServletContainerInitializedEvent> listener = new
                 ApplicationListener<EmbeddedServletContainerInitializedEvent>() {
                     @Override
                     public void onApplicationEvent(final EmbeddedServletContainerInitializedEvent embeddedServletContainerInitializedEvent) {
                         EmbeddedServletContainer container = embeddedServletContainerInitializedEvent.getEmbeddedServletContainer();
                         int port = container.getPort();
-                        logger.debug("servlet container initialized, port is {}", port);
+                        logger.info("servlet container initialized, port is {}", port);
                         try {
-                            //String hostname = InetAddress.getLocalHost().getHostName();
                             String ip = InetAddress.getLocalHost().getHostAddress();
                             ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
-                            chainNodeInfo.setId(UUID.randomUUID().toString());
+                            //chainNodeInfo.setId(UUID.randomUUID().toString());
                             chainNodeInfo.setPort(port);
-                            chainNodeInfo.setPublicIP(ip);
+                            //chainNodeInfo.setPublicIP(ip);
                             chainNodeInfo.setPublicKey(getCryptoService().getPublicKey());
 
                             chainNodeUri = client.registerChainNode(chainNodeInfo);
-                            logger.debug("chain node registered, obtained this URI: {}", chainNodeUri);
+                            logger.info("chain node registered, obtained this URI: {}", chainNodeUri);
                         } catch (UnknownHostException e) {
                             logger.warn("could not register chain node", e);
                         } catch (GeneralSecurityException e) {
@@ -91,8 +89,7 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
     }
 
     @Bean
-    public ApplicationListener<ContextClosedEvent> getUnregisterOnContextEventBean(final DirectoryNodeClient
-                                                                                           client) {
+    public ApplicationListener<ContextClosedEvent> getUnregisterOnContextEventBean(final DirectoryNodeClient client) {
         ApplicationListener<ContextClosedEvent> listener = new
                 ApplicationListener<ContextClosedEvent>() {
                     @Override
@@ -122,7 +119,7 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
     }
 
     @Bean
-    RoutingInfoService getRoutingInfoService(){
+    RoutingInfoService getRoutingInfoService() {
         return new RoutingInfoService();
     }
 

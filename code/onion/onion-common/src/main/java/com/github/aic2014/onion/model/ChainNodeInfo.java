@@ -13,7 +13,6 @@ import java.util.Date;
 public class ChainNodeInfo {
 
     private String id = null;
-    private String name = null;
     private String publicIP = null;
     private int port = 0;
     private Date launchedDate = null;
@@ -22,8 +21,6 @@ public class ChainNodeInfo {
 
     /**
      * Gets the ID of this chain node.
-     * This property is supposed to be unique, compared to other ChainNodeInfo instances
-     * E.g. i-a3f24b11
      * @return
      */
     public String getId() {
@@ -36,23 +33,6 @@ public class ChainNodeInfo {
      */
     public void setId(String id) {
         this.id = id;
-    }
-
-    /**
-     * Gets the name of this chain node.
-     * E.g. G6-T3-chainnode-4
-     * @return
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Sets the name of this chaine node-
-     * @param name
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**
@@ -140,6 +120,6 @@ public class ChainNodeInfo {
 
     @Override
     public String toString() {
-        return String.format("ChainNodeInfo{id='%s', name='%s', publicIP='%s', port=%d}", id, name, publicIP, port);
+        return String.format("ChainNodeInfo{id='%s', publicIP='%s', port=%d}", id, publicIP, port);
     }
 }
