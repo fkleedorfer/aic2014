@@ -15,6 +15,7 @@ import org.springframework.core.env.Environment;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 /**
  * Concrete implementation of the directory node service using AWS SDK to access EC2 instances
@@ -30,6 +31,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     private Environment env;
 
     private AWSConnector awsConnector;
+    private boolean terminateExisting = false;
     private int latestNodeNumber = 0;
     private int numberOfChainNodes;
     private int minNumberOfChainNodes;
@@ -52,20 +54,23 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         awsConnector = new AWSConnector(env);
 
         //3. search for existing chain nodes
-        List<AWSChainNode> existingChainNodes = awsConnector.getAllChainNodes();
-        logger.info("Found " + existingChainNodes.size() + " existing chain nodes on startup. Let's terminate them all!");
+        if (terminateExisting) {
+            List<AWSChainNode> existingChainNodes = awsConnector.getAllChainNodes();
+            logger.info("Found " + existingChainNodes.size() + " existing chain nodes on startup. Let's terminate them all!");
 
-        //4. for now... after each start of the directory node, terminate all existing chain nodes.
-        existingChainNodes.forEach(cni -> awsConnector.terminateChainNode(cni.getInstanceId()));
+            //4. for now... after each start of the directory node, terminate all existing chain nodes.
+            existingChainNodes.forEach(cni -> awsConnector.terminateChainNode(cni.getInstanceId()));
 
-        //5. create new chain nodes
-        String[] chainNodeNames = new String[numberOfChainNodes];
-        for (int i = 0; i < numberOfChainNodes; i++, latestNodeNumber++) {
-            chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), i + latestNodeNumber);
+            //5. create new chain nodes
+            String[] chainNodeNames = new String[numberOfChainNodes];
+            for (int i = 0; i < numberOfChainNodes; i++, latestNodeNumber++) {
+                chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), i + latestNodeNumber);
+            }
+            awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
         }
-        awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
+
         awsChainNodes = awsConnector.getAllChainNodes();
-        logger.info("Created " + awsChainNodes.size() + " chain nodes within AWS.");
+        logger.info("Created/found " + awsChainNodes.size() + " chain nodes within AWS.");
 
         //6. Run setup-script for new chainnodes
         ChainNodeInstaller cnInstaller = new ChainNodeInstaller(env, awsConnector);
@@ -123,5 +128,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         try {
             minNumberOfChainNodes = Integer.parseInt(env.getProperty("aws.chainnode.minQuantity"));
         } catch (NumberFormatException e) { minNumberOfChainNodes = DEFAULT_MIN_CHAIN_SIZE; }
+
+        terminateExisting = Boolean.parseBoolean(env.getProperty("aws.terminateExisting"));
     }
 }
