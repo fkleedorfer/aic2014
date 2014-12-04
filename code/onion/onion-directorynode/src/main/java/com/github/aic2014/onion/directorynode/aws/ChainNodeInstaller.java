@@ -33,7 +33,7 @@ public class ChainNodeInstaller extends Observable {
 
                 for (AWSChainNode awsCN : awsChainNodes) {
                     int startupTime = pendingChainNodes.get(awsCN);
-                    if (!awsCN.isReady() && startupTime > 20) {
+                    if (!awsCN.isReady() && startupTime > TIMEOUT_LIMIT) {
                         //
                         // Terminate non-responding chainnode
                         logger.warn("AWS instance " + awsCN.getInstanceId() + " did not response in time. Terminate!");
@@ -65,7 +65,7 @@ public class ChainNodeInstaller extends Observable {
     /**
      * Terminate not-READY AWS instance after n seconds
      */
-    private static final int TIMEOUT_LIMIT = 20;
+    private static final int TIMEOUT_LIMIT = 45;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Map<AWSChainNode, Integer> pendingChainNodes;

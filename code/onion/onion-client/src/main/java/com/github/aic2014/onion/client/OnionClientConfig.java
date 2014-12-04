@@ -38,7 +38,7 @@ public class OnionClientConfig
     OnionClient client = new OnionClient();
     client.setDirectoryNodeUri(URI.create(directoryNodeBaseUri));
     //TODO: remove the quote server URI - it will be specified by the caller
-    client.setQuoteServerUri(URI.create("localhost:20141"));
+    client.setQuoteServerUri(URI.create("http://54.67.23.233/:20140"));
     return client;
   }
 

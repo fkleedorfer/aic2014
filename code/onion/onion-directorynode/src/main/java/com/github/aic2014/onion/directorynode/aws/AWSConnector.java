@@ -144,9 +144,11 @@ public class AWSConnector {
         RunInstancesResult result = ec2.runInstances(request);
         int counter = 0;
         for (Instance instance : result.getReservation().getInstances()) {
+            String instanceName = counter >= names.length ? "#undef#" : names[counter];
+            counter++;
+
             CreateTagsRequest tagRequest = new CreateTagsRequest();
-            tagRequest.withResources(instance.getInstanceId())
-                    .withTags(new Tag(AWS_TAG_NAME, names[counter]));
+            tagRequest.withResources(instance.getInstanceId()).withTags(new Tag(AWS_TAG_NAME, instanceName));
             ec2.createTags(tagRequest);
         }
     }

@@ -63,9 +63,11 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
             //5. create new chain nodes
             String[] chainNodeNames = new String[numberOfChainNodes];
-            for (int i = 0; i < numberOfChainNodes; i++, latestNodeNumber++) {
-                chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), i + latestNodeNumber);
+            for (int i = 0; i < numberOfChainNodes; i++) {
+                int serial = latestNodeNumber + i;
+                chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), serial);
             }
+            latestNodeNumber += numberOfChainNodes;
             awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
         }
 
@@ -80,14 +82,29 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     @Override
     public String registerChainNode(ChainNodeInfo chainNodeInfo) {
 
-        Optional<AWSChainNode> equivalentAWSCN = awsChainNodes.stream().filter(awsCN -> awsCN.getPublicIP().equals(chainNodeInfo.getPublicIP())).findFirst();
-        if (!equivalentAWSCN.isPresent()) {
+        if (chainNodeInfo == null) {
+            logger.warn("NULL chain node tried to register. Ignore!");
+            return null;
+        }
+
+        AWSChainNode equivalentAWSCN = null;
+        for (AWSChainNode awsCN : awsChainNodes) {
+            if (awsCN.getPublicIP() == null || chainNodeInfo.getPublicIP() == null) {
+                continue;
+            }
+            if (awsCN.getPublicIP().equals(chainNodeInfo.getPublicIP())) {
+                equivalentAWSCN = awsCN;
+                break;
+            }
+        }
+
+        if (equivalentAWSCN == null) {
             logger.warn(String.format("Unknown chain node with IP %s tried to register. Ignore!", chainNodeInfo.getPublicIP()));
             return null;
         }
 
         logger.info(String.format("Register chain node with IP %s.", chainNodeInfo.getPublicIP()));
-        chainNodeInfo.setId(equivalentAWSCN.get().getInstanceId());
+        chainNodeInfo.setId(equivalentAWSCN.getInstanceId());
         chainNodes.add(chainNodeInfo);
         return chainNodeInfo.getId();
     }
