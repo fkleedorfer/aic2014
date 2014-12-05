@@ -32,8 +32,8 @@ public class QuoteController {
     @RequestMapping(
             value = "/quote",
             method = RequestMethod.GET)
-    public ResponseEntity getQuote() {
-        return new ResponseEntity<>(getRandomQuote(), HttpStatus.OK);
+    public ResponseEntity<Quote> getQuote() {
+        return new ResponseEntity<Quote>(getRandomQuote(), HttpStatus.OK);
     }
 
     /**
@@ -41,14 +41,14 @@ public class QuoteController {
      *
      * @return
      */
-    private String getRandomQuote() {
+    private Quote getRandomQuote() {
         if (this.quotes.isEmpty()) {
             logger.error("No quotes here");
-            return "Oops, ran out of quotes.";
+            return new Quote("Oops, ran out of quotes.");
         }
 
         int randomInt = random.nextInt(this.quotes.size());
-        return quotes.get(randomInt);
+        return new Quote(quotes.get(randomInt));
     }
 
     private String getConfDir() {
@@ -62,7 +62,6 @@ public class QuoteController {
         return quotes;
     }
 
-    @PostConstruct
     private void LoadQuotes() {
         quotes.clear();
         File quotesFile = getQuotesFile();
@@ -97,6 +96,27 @@ public class QuoteController {
                     quotes.add(quote.trim());
                     quote = "";
                 }
+            }
+            logger.info("Loaded {} quotes", quotes.size());
+
+        } catch (Exception e) {
+            logger.error("Quotes loading", e);
+        }
+    }
+
+    @PostConstruct
+    private void loadOneLineQuotes() {
+        quotes.clear();
+        File quotesFile = getQuotesFile();
+
+        try (BufferedReader in = new BufferedReader(new FileReader(quotesFile))) {
+            logger.info("Loading quotes from {}", quotesFile);
+
+            String s, quote = "";
+            Boolean started = false, reading = false, isUpperCase;
+            while (in.ready()) {
+                s = in.readLine();
+                quotes.add(s);
             }
             logger.info("Loaded {} quotes", quotes.size());
 

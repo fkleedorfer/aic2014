@@ -16,7 +16,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+
+import com.github.aic2014.onion.shell.*;
+import java.io.IOException;
+
 
 /**
  * Client that accesses the directory node for obtaining a chain and then
@@ -24,7 +31,6 @@ import java.util.concurrent.Future;
  */
 public class OnionClient {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-
 
     private URI directoryNodeUri;
     private URI quoteServerUri;
@@ -38,12 +44,13 @@ public class OnionClient {
     public OnionClient() {
     }
 
-    private ChainNodeInfo[] getChain() {
+    public ChainNodeInfo[] getChain() {
         String requestUri = directoryNodeUri.toString() + "/getChain";
         logger.debug("requesting: {}", requestUri);
         ResponseEntity<ChainNodeInfo[]> newChainResult = restTemplate.getForEntity(requestUri, ChainNodeInfo[].class);
         ChainNodeInfo[] newChain = newChainResult.getBody();
         logger.debug("obtained new chain: {}", newChain);
+
         return newChain;
     }
 
@@ -51,6 +58,11 @@ public class OnionClient {
         //get the chain for the request
         ChainNodeInfo[] chain = getChain();
         logger.debug("obtained chain {}", Arrays.toString(chain));
+        return executeOnionRoutedHttpRequest(request, chain);
+    }
+
+    public String executeOnionRoutedHttpRequest(String request, ChainNodeInfo[] chain) {
+
         UUID chainId = UUID.randomUUID();
         Message msg = buildMessage(chain, chainId, request);
         logger.debug("sending this message: {}", msg);
@@ -104,7 +116,6 @@ public class OnionClient {
             return errmsg.toString();
         }
     }
-
 
     public void setDirectoryNodeUri(final URI directoryNodeUri) {
         this.directoryNodeUri = directoryNodeUri;

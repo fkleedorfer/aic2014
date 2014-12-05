@@ -1,5 +1,6 @@
 package com.github.aic2014.onion.client;
 
+import com.github.aic2014.onion.model.ChainNodeInfo;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.io.DefaultHttpRequestWriter;
@@ -19,7 +20,7 @@ import java.io.ByteArrayOutputStream;
 public class OnionClientCommandLineRunner implements CommandLineRunner
 {
 
-  Shell shell;
+  private Shell shell;
   private static ExecutorService executor;
 
   @Autowired
@@ -62,8 +63,18 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
       String requestString = new String(out.toByteArray());
       shell.writeLine("Sending Request: " + requestString);
 
+      ChainNodeInfo[] chain = client.getChain();
+      shell.writeLine("-------------------------------");
+
+      shell.writeLine("Used Chain:");
+      for(int i = 0; i < 3; i++) {
+          shell.writeLine("ChainNode"+i+": " + chain[i].getPublicIP() + ":" + chain[i].getPort());
+      }
+      shell.writeLine("-------------------------------");
+
       long start = System.nanoTime();
-      String response = client.executeOnionRoutedHttpRequest(requestString);
+      // print
+      String response = client.executeOnionRoutedHttpRequest(requestString, chain);
 
       return String.format("Response in %s msec: %s", (System.nanoTime() - start) / 1000 / 1000, response);
   }
@@ -72,6 +83,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   public String exit() throws Exception {
       shell.writeLine("Stopping the client ...");
       shell.writeLine("Client has been stopped!");
+      executor.shutdownNow();
       System.exit(0);
       return "";
   }
