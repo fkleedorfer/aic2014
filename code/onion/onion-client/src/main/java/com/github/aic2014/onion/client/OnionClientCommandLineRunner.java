@@ -62,9 +62,10 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
       String requestString = new String(out.toByteArray());
       shell.writeLine("Sending Request: " + requestString);
 
+      long start = System.nanoTime();
       String response = client.executeOnionRoutedHttpRequest(requestString);
 
-      return "Response: " + response;
+      return String.format("Response in %s msec: %s", (System.nanoTime() - start) / 1000 / 1000, response);
   }
 
   @Command
