@@ -105,18 +105,24 @@ public class QuoteController {
     }
 
     @PostConstruct
-    private void loadOneLineQuotes() {
+    private void loadFortunueQuotes() {
         quotes.clear();
         File quotesFile = getQuotesFile();
 
         try (BufferedReader in = new BufferedReader(new FileReader(quotesFile))) {
             logger.info("Loading quotes from {}", quotesFile);
 
-            String s, quote = "";
+            String line;
+            StringBuilder quote = new StringBuilder();
             Boolean started = false, reading = false, isUpperCase;
             while (in.ready()) {
-                s = in.readLine();
-                quotes.add(s);
+                line = in.readLine();
+                if (line.trim().equals("%")){
+                    quotes.add(quote.toString());
+                    quote = new StringBuilder();
+                } else {
+                    quote.append(line).append("\n");
+                }
             }
             logger.info("Loaded {} quotes", quotes.size());
 
