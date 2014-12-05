@@ -4,6 +4,7 @@ code/onion/conf.local/
 code/onion/deployment/chainnode/
 code/onion/deployment/directorynode/
 code/onion/deployment/quoteserver/
+code/onion/deployment/client/
 
 ## latex stuff
 *.aux
