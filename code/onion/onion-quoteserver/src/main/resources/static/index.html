@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en" ng-app="quoteServerApp">
+<head>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/angular.min.js"></script>
+    <script src="js/quoteServerApp.js"></script>
+    <title>Quoteserver</title>
+</head>
+<body ng-controller="QuoteController">
+<div class="container-fluid">
+<h1>Quoteserver status</h1>
+    <button ng-click="getQuote()" ng-disabled="isRequesting">
+        getQuote
+    </button>
+    <div>
+        <pre>{{quote.text }}</pre>
+    </div>
+</div>
+</body>
+</html>

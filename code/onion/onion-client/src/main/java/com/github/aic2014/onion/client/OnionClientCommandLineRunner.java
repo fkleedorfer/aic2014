@@ -71,10 +71,12 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
           shell.writeLine("ChainNode"+i+": " + chain[i].getPublicIP() + ":" + chain[i].getPort());
       }
       shell.writeLine("-------------------------------");
+
+      long start = System.nanoTime();
       // print
       String response = client.executeOnionRoutedHttpRequest(requestString, chain);
 
-      return "Response: " + response;
+      return String.format("Response in %s msec: %s", (System.nanoTime() - start) / 1000 / 1000, response);
   }
 
   @Command
