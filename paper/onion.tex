@@ -1,6 +1,7 @@
 \documentclass{sig-alternate}
 \usepackage{enumitem}
-\usepackage{url}
+\usepackage[hyphens]{url}
+\urlstyle{same}
 
 
 % Remove copyright block
@@ -116,7 +117,7 @@ The main advantage of the Crowds concept is that every jondo looks exactly as th
 Until this point we introduced four different low-latency network anonymization techniques, where Onion Routing is conceptually based on Mix Nets and Garlic Routing is in turn based on Onion Routing. They follow more or less the same idea but have different security characteristics. Except from the concepts described above, there exist many more network anonymization mechanisms with further approaches. Within those, OR and GR belong to the most important ones and are, especially through their use in the Tor and I2P frameworks, the most widely used anonymization techniques. However, recent recherche in this topic showed that none of the current techniques is completely robust against tracking attacks as well as global or local correlation attacks. Also news report~\cite{torhacked} from time to time that especially the Tor framework had been successfully compromised several times until now. That shows that the current (low-latency) network anonymization solutions are still not yet far enough in order overcome that problems. Academic Science is aware of that and especially in the context of ongoing discussions about Internet privacy and Internet surveillance there are many scientific initiatives~\cite{ORpublications} which aim to improve the OR concept. However at the current state of the Art regarding network anonymization techniques there is still lot of space for improvement.
 
 % References
-\bibliographystyle{abbrv}
+\bibliographystyle{ieeetran}
 \bibliography{onion}
 
 \end{document}
