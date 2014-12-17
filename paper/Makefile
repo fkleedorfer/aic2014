@@ -1,5 +1,5 @@
 TARGET = onion
-MKARGS = -bibtex -quiet
+MKARGS = -bibtex
 
 .PHONY: $(TARGET).pdf clean view
 
