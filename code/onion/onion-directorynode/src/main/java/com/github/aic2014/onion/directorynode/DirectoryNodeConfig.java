@@ -9,11 +9,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @EnableAutoConfiguration
 @ComponentScan(basePackages = {"com.github.aic2014"})
 @PropertySource("file:${ONION_CONF_DIR}/directorynode.properties")
+@EnableScheduling
 public class DirectoryNodeConfig {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -32,4 +34,5 @@ public class DirectoryNodeConfig {
             return new InMemoryDirectoryService();
         }
     }
+
 }

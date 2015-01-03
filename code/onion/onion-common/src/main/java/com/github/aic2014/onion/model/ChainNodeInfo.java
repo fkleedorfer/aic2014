@@ -18,6 +18,8 @@ public class ChainNodeInfo {
     private Date launchedDate = null;
     private Date lastLifeCheck = null;
     private String publicKey = null;
+    private long pingTime = 0;
+    private int sentMessages = 0;
 
     /**
      * Gets the ID of this chain node.
@@ -73,6 +75,23 @@ public class ChainNodeInfo {
 
     public void setLastLifeCheck(Date lastLifeCheck) {
         this.lastLifeCheck = lastLifeCheck;
+    }
+
+    // last voting, when initialised the Chain-Node has 100 votes: the maximum
+    public long getPingTime() {
+        return pingTime;
+    }
+
+    public void setPingTime(long pingTime) {
+        this.pingTime = pingTime;
+    }
+
+    public int getSentMessages() {
+        return sentMessages;
+    }
+
+    public void setSentMessages(int sentMessages) {
+        this.sentMessages = sentMessages;
     }
 
     @JsonIgnore

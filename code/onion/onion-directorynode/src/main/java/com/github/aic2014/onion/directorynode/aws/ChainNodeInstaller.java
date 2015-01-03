@@ -1,5 +1,6 @@
 package com.github.aic2014.onion.directorynode.aws;
 
+import com.amazonaws.services.ec2.model.InstanceState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -17,44 +18,56 @@ public class ChainNodeInstaller extends Observable {
         @Override
         public void run() {
 
-            //1. Grab a temporary list of pending chain nodes
-            List<String> tempPendingChainNodes = new LinkedList<>();
-            synchronized (pendingChainNodes) {
-                pendingChainNodes.keySet().forEach(awsCN -> tempPendingChainNodes.add(awsCN.getInstanceId()));
-            }
+            List<AWSChainNode> awsChainNodes = Collections.synchronizedList(new ArrayList<AWSChainNode>());
+            //des wern ma zuvü listen :)
 
-            //
             // 2. Request updated information about the chain nodes
-            List<AWSChainNode> awsChainNodes = awsConnector.getById(tempPendingChainNodes);
+            synchronized (awsConnector) {
+                awsChainNodes = awsConnector.getAllChainNodes(false);
+            }
 
             //
             // 3. Update pendingChainNodes list and (if ready) execute install script
-            synchronized (pendingChainNodes) {
 
-                for (AWSChainNode awsCN : awsChainNodes) {
-                    int startupTime = pendingChainNodes.get(awsCN);
-                    if (!awsCN.isReady() && startupTime > TIMEOUT_LIMIT) {
-                        //
-                        // Terminate non-responding chainnode
-                        logger.warn("AWS instance " + awsCN.getInstanceId() + " did not response in time. Terminate!");
-                        awsConnector.terminateChainNode(awsCN.getInstanceId());
-                        pendingChainNodes.remove(awsCN);
+            InstanceState state;
+            List<String> awsCNToRestart = new ArrayList<>();
+            for (AWSChainNode awsCN : awsChainNodes) {
+                state = awsCN.getState();
+                // 0 : pending
+                if ((state.getCode() == 0) && timeoutPending > TIMEOUT_LIMIT) {
+                    // Terminate non-responding chainnode
+                    logger.warn("AWS instance " + awsCN.getId() + " did not response in time. Terminate!");
+                    synchronized (awsConnector) {
+                        awsConnector.terminateChainNode(awsCN.getId(), false);
                     }
-                    else if (!awsCN.isReady()) {
-                        //
-                        // Update timeout-counter on not-yet-ready chainnode
-                        logger.info(awsCN.getInstanceId() + " not yet ready! Increase timeout time");
-                        pendingChainNodes.put(awsCN, startupTime + POLL_TIME);
-                    }
-                    else {
-                        //
-                        // Chainnode is ready. Run deployment script
-                        logger.info(awsCN.getInstanceId() + " is yet ready! Run install script");
-                        runScriptFor(awsCN);
-                        pendingChainNodes.remove(awsCN);
-                    }
+                }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
+                else if ((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)){
+                    awsCNToRestart.add(awsCN.getInstanceName());
+                } else if ((state.getCode() == 16) && (!awsCN.scriptDone()) ){
+                    //
+                    // Chainnode is ready. Run deployment script
+                    logger.info(awsCN.getId() + " is yet ready! Run install script");
+                    runScriptFor(awsCN);
+                    awsCN.setScriptDone(true);
+
                 }
             }
+
+            if (awsCNToRestart.size() > 0) {
+                //naja also da volle java freind bin i net :) haha
+                String [] restart = new String [awsCNToRestart.size()];
+                int i = 0;
+                for (String s : awsCNToRestart) {
+                    restart[i] = s;
+                    i ++;
+                }
+
+                synchronized (awsConnector) {
+                    awsConnector.createAWSChainNodes(awsCNToRestart.size(), restart);
+                }
+            }
+
+
         }
     }
 
@@ -68,7 +81,6 @@ public class ChainNodeInstaller extends Observable {
     private static final int TIMEOUT_LIMIT = 45;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final Map<AWSChainNode, Integer> pendingChainNodes;
     private final String installationCommand;
     private AWSConnector awsConnector;
     private int timeoutPending;
@@ -78,7 +90,6 @@ public class ChainNodeInstaller extends Observable {
     public ChainNodeInstaller(Environment env, AWSConnector awsConnector) {
         timeoutPending = 0;
         installationCommand = env.getProperty("aws.chainnode.deploymentCommand");
-        pendingChainNodes = new HashMap<>();
         this.awsConnector = awsConnector;
 
         //TODO: init check-thread
@@ -88,15 +99,7 @@ public class ChainNodeInstaller extends Observable {
         isReadyCheckTimer.scheduleAtFixedRate(checkTask, 0l, 1000l);
     }
 
-    /**
-     * Adds the given list of AWS chain nodes to the installer, in order to be configured/installed as chain nodes
-     * @param awsChainNodes
-     */
-    public void runInstallerFor(List<AWSChainNode> awsChainNodes) {
-        synchronized (pendingChainNodes) {
-            awsChainNodes.forEach(awsCN -> pendingChainNodes.put(awsCN, 0));
-        }
-    }
+    //Liste wird immer neu geladen vom Connector.- neu Registrierungen werden im Connector geadded
 
     /**
      * Runs the deployment script for the for the given chainnode within a separate thread.
@@ -128,10 +131,13 @@ public class ChainNodeInstaller extends Observable {
             } catch (Exception e) {
                 logger.warn("Process to run the deployment script could not be started.", e);
             }
-        }){{ setName("Run-Script-Thread (aws-id=" + awsChainNode.getInstanceId()+")"); }}.start();
+        }){{ setName("Run-Script-Thread (aws-id=" + awsChainNode.getId()+")"); }}.start();
 
 
         setChanged();
-        notifyObservers(awsChainNode.getInstanceId());
+        notifyObservers(awsChainNode.getId());
     }
+
+
+
 }
