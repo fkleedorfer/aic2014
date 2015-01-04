@@ -33,7 +33,8 @@ public class AWSConnector {
 
 
     public AWSChainNode getById(String instanceId) {
-          return this.findChainNodeInfo(instanceId);
+        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getId().equals(instanceId)).findAny();
+        return result.isPresent() ? result.get() : null;
     }
 
     public void setPingTime(String instanceId, long pingTime) {
@@ -60,8 +61,8 @@ public class AWSConnector {
     }
 
 
-    private AWSChainNode findChainNodeInfo(String id) {
-        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getId().equals(id)).findAny();
+    private AWSChainNode findChainNodeByName(String name) {
+        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getInstanceName().equals(name)).findAny();
         return result.isPresent() ? result.get() : null;
     }
 
@@ -72,53 +73,52 @@ public class AWSConnector {
      */
     public List<AWSChainNode> getAllChainNodes(boolean allStarted) {
 
+        synchronized (this) {
 
-        DescribeInstancesResult result = ec2.describeInstances();
-        for (Reservation reservation : result.getReservations()) {
-            for (Instance instance : reservation.getInstances()) {
+            DescribeInstancesResult result = ec2.describeInstances();
+            for (Reservation reservation : result.getReservations()) {
+                for (Instance instance : reservation.getInstances()) {
 
-                Optional<Tag> optional = instance.getTags().stream().filter((tag) ->
-                                tag.getKey().equalsIgnoreCase(AWS_TAG_NAME) && tag.getValue().startsWith(env.getProperty("aws.chainnode.prefix"))
-                ).findFirst();
-                if (!optional.isPresent()) {
-                    //current instance does not start with the chain-node-name-prefix... ignore
-                    continue;
-                }
-
-                String id = instance.getInstanceId();
-                String instanceName = optional.get().getValue();
-                String publicIP = instance.getPublicIpAddress();
-                InstanceState state = instance.getState();
-
-                //hier werden die existierenden laufenden Instanzen gesucht nur in diesem Fall werden die Nodes hier der Liste zugefügt ansonsten passiert das nur wenn
-                //eine neue Instanz erstellt wird.
-                if(allStarted) {
-                    if (!(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING) || state.getName().equalsIgnoreCase(AWS_STATE_PENDING))) {
-                        //current instance is neither running nor starting... ignore
+                    Optional<Tag> optional = instance.getTags().stream().filter((tag) ->
+                                    tag.getKey().equalsIgnoreCase(AWS_TAG_NAME) && tag.getValue().startsWith(env.getProperty("aws.chainnode.prefix"))
+                    ).findFirst();
+                    if (!optional.isPresent()) {
+                        //current instance does not start with the chain-node-name-prefix... ignore
                         continue;
                     }
 
-                    AWSChainNode awsCN = this.findChainNodeInfo(id);
-                    if (awsCN == null) {
-                        awsCN = new AWSChainNode();
-                        awsCN.setId(id);
-                        awsCN.setInstanceName(instanceName);
-                        awsCN.setPublicIP(publicIP);
-                        awsCN.setScriptDone(false);
-                        awsCN.setState(state);
-                        awsChainNodes.add(awsCN);
+                    String id = instance.getInstanceId();
+                    String instanceName = optional.get().getValue();
+                    String publicIP = instance.getPublicIpAddress();
+                    InstanceState state = instance.getState();
+
+                    //hier werden die existierenden laufenden Instanzen gesucht nur in diesem Fall werden die Nodes hier der Liste zugefügt ansonsten passiert das nur wenn
+                    //eine neue Instanz erstellt wird.
+                    if(allStarted) {
+                        if (!(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING) || state.getName().equalsIgnoreCase(AWS_STATE_PENDING))) {
+                            //current instance is neither running nor starting... ignore
+                            continue;
+                        }
+
+                        AWSChainNode awsCN = this.getById(id);
+                        if (awsCN == null) {
+                            awsCN = new AWSChainNode();
+                            awsCN.setId(id);
+                            awsCN.setInstanceName(instanceName);
+                            awsCN.setPublicIP(publicIP);
+                            awsCN.setScriptDone(false);
+                            awsCN.setState(state);
+                            awsChainNodes.add(awsCN);
+                        }
+
+                    }else{
+                        AWSChainNode awsCN = this.getById(id);
+                        if (awsCN != null) {
+                            awsCN.setState(state);
+                            awsCN.setPublicIP(publicIP);
+                        }
                     }
-
-                }else{
-                    AWSChainNode awsCN = this.findChainNodeInfo(id);
-                    if (awsCN != null) {
-                        awsCN.setState(state);
-                        awsCN.setPublicIP(publicIP);
-                    }
-
-
                 }
-
             }
         }
 
@@ -142,7 +142,7 @@ public class AWSConnector {
 
         //wenn die Node aufgrund von zu langem starten unregistriert wird muss sie natürlich nicht von der Liste entfernt werden
         if (removeFromList){
-            AWSChainNode awsCN = this.findChainNodeInfo(instanceId);
+            AWSChainNode awsCN = this.getById(instanceId);
             this.awsChainNodes.remove(awsCN);
         }
     }
@@ -177,7 +177,7 @@ public class AWSConnector {
             //wenn die Node mit dem Instanznamen schon rennt wirds von der Liste gelöscht, heruntergefahren is se ja schon
             this.deleteAwsNode(instanceName);
 
-            AWSChainNode awsCN = this.findChainNodeInfo(instance.getInstanceId());
+            AWSChainNode awsCN = this.getById(instance.getInstanceId());
             if (awsCN == null) {
                 awsCN = new AWSChainNode();
                 awsCN.setId(instance.getInstanceId());

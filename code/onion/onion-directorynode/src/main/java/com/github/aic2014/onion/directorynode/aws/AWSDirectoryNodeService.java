@@ -26,8 +26,48 @@ import java.util.function.BooleanSupplier;
 /**
  * Concrete implementation of the directory node service using AWS SDK to access EC2 instances
  */
+
+
 @EnableScheduling
 public class AWSDirectoryNodeService implements DirectoryNodeService {
+
+
+    class AWSChainNodeChainedComparator implements Comparator<AWSChainNode> {
+
+        private List<Comparator<AWSChainNode>> listComparators;
+
+        @SafeVarargs
+        public AWSChainNodeChainedComparator(Comparator<AWSChainNode>... comparators) {
+            this.listComparators = Arrays.asList(comparators);
+        }
+
+        @Override
+        public int compare(AWSChainNode awsChainNode1, AWSChainNode awsChainNode2) {
+            for (Comparator<AWSChainNode> comparator : listComparators) {
+                int result = comparator.compare(awsChainNode1, awsChainNode2);
+                if (result != 0) {
+                    return result;
+                }
+            }
+            return 0;
+        }
+    }
+    class AWSChainNodeSentMessagesComparator implements Comparator<AWSChainNode> {
+
+        @Override
+        public int compare(AWSChainNode awsChainNode1, AWSChainNode awsChainNode2) {
+            return awsChainNode1.getSentMessages() - awsChainNode2.getSentMessages();
+        }
+    }
+    class AWSChainNodePingTimeComparator implements Comparator<AWSChainNode> {
+
+        @Override
+        public int compare(AWSChainNode awsChainNode1, AWSChainNode awsChainNode2) {
+            return (int)(awsChainNode1.getPingTime() - awsChainNode2.getPingTime());
+        }
+    }
+
+
 
     private final static int DEFAULT_NUM_CHAINS = 6;
     private final static int DEFAULT_MIN_CHAIN_SIZE = 3;
@@ -152,7 +192,13 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
     @Override
     public List<ChainNodeInfo> getChain() {
-        Collection<AWSChainNode> awsChainNodes = (this).getAllAWSChainNodes();
+
+        List<AWSChainNode> awsChainNodes;
+
+        synchronized (this.awsConnector) {
+            awsChainNodes = this.awsConnector.getAllChainNodes(false);
+        }
+
         List<ChainNodeInfo> chain = new ArrayList<>(minNumberOfChainNodes);
         if (awsChainNodes.size() < minNumberOfChainNodes) {
             throw new IllegalStateException("At least " + minNumberOfChainNodes +
@@ -160,11 +206,16 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                     "Currently registered: " + awsChainNodes.size());
         }
 
-        List<ChainNodeInfo> randomChainNodes = new ArrayList<>(awsChainNodes.size());
-        randomChainNodes.addAll(awsChainNodes);
-        Collections.shuffle(randomChainNodes);
+        Collections.sort(awsChainNodes, new AWSChainNodeChainedComparator(
+                        new AWSChainNodeSentMessagesComparator(),
+                        new AWSChainNodePingTimeComparator()
+        ));
 
-        randomChainNodes.stream().limit(minNumberOfChainNodes).forEach(cni -> chain.add(cni));
+        for (int i = 0;i < minNumberOfChainNodes; i++) {
+            awsChainNodes.get(i).setSentMessages(awsChainNodes.get(i).getSentMessages()+1);
+            chain.add(awsChainNodes.get(i));
+        }
+
         return chain;
     }
 
@@ -199,7 +250,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
             aWSChainNode = (AWSChainNode)itAwsChainNode.next();
 
             //instance is running check responsetime  16 : running
-            if ( aWSChainNode.getState().getCode() == 16) {
+            if ((aWSChainNode.getState()!= null)&& (aWSChainNode.getState().getCode() == 16)) {
                 try {
                     inetAddress = InetAddress.getByName(aWSChainNode.getPublicIP());
                 } catch (UnknownHostException e) {
