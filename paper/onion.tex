@@ -12,6 +12,13 @@
 % Enable page numbering which sig-templates omit by default
 \pagenumbering{arabic}
 
+%add commands for inserting comments
+\newcommand\ag[1]{\nota{AG}{#1}}
+\newcommand\da[1]{\nota{DA}{#1}}
+\newcommand\fk[1]{\nota{FK}{#1}}
+\newcommand\ft[1]{\nota{FT}{#1}}
+\newcommand\gf[1]{\nota{GF}{#1}}
+
 \begin{document}
 
 \title{Onion Routing and Low Latency Network Anonymization Mechanisms}
@@ -47,7 +54,7 @@ Daniel Achleitner\\
 
 \begin{abstract}
 
-As the World Wide Web began to connect the world in the 1990s as well as the early years of the new millennium, it became more and more a target area for organizations who have an interest in tracing traffic throughout the Internet. As a consequence, various frameworks were introduced on the basis of Network Anonymization Mechanisms, with the purpose to hide routing information from unauthorized spectators. In order to provide a technological overview in this field, this paper outlines the current state of the art of Low Latency Network Anonymization Concepts. Doing so, it especially focuses on the function of Onion Routing (OR) as it is used within the Tor framework. It furthermore points out security weakpoints regarding to OR and compares it with other anonymization frameworks, such as Mix Nets (MN), Garlic Routing (GR) and the Crowds. While MN and GR follow similar anonymization approaches compared to OR, Crowds is based on a very different mechanism. Nevertheless, as a final result this paper shows that all of the introduced mechanisms still need further work in order to overcome security weakpoints.
+As the World Wide Web began to connect the world in the 1990s as well as the early years of the new millennium, it became more and more a target area for organizations which had an interest in tracing traffic throughout the Internet. As a consequence, various frameworks were introduced on the basis of network anonymization mechanisms with the purpose of hiding routing information. In order to provide a technological overview in this field, this paper outlines the current state of the art of Low Latency Network Anonymization Concepts. Doing so, it especially focuses on the function of Onion Routing (OR) as it is used within the Tor framework. It furthermore points out security weakpoints regarding to OR and compares it with other anonymization frameworks, such as Mix Nets (MN), Garlic Routing (GR) and the Crowds. While MN and GR follow similar anonymization approaches compared to OR, Crowds is based on a very different mechanism. Nevertheless, as a final result this paper shows that all of the introduced mechanisms still need further work in order to overcome security weakpoints.
 
 \end{abstract}
 
