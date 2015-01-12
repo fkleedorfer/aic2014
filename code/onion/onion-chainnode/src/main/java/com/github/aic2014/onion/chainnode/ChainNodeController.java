@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
@@ -49,6 +51,10 @@ public class ChainNodeController {
 
     RestTemplate restTemplate = new RestTemplate();
 
+    @RequestMapping(value="/ping", method = RequestMethod.GET)
+    public ResponseEntity<Boolean> ping(){
+        return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+    }
 
     @RequestMapping(value = "/request", method = RequestMethod.POST)
     @ResponseBody
