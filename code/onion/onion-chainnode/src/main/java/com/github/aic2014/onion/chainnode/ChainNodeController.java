@@ -5,10 +5,7 @@ import com.github.aic2014.onion.crypto.CryptoService;
 import com.github.aic2014.onion.exception.OnionRoutingRequestException;
 import com.github.aic2014.onion.exception.OnionRoutingTargetRequestException;
 import com.github.aic2014.onion.json.JsonUtils;
-import com.github.aic2014.onion.model.Message;
-import com.github.aic2014.onion.model.OnionStatus;
-import com.github.aic2014.onion.model.RoutingDirection;
-import com.github.aic2014.onion.model.RoutingInfo;
+import com.github.aic2014.onion.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,16 +48,19 @@ public class ChainNodeController {
 
     RestTemplate restTemplate = new RestTemplate();
 
+    private ChainNodeStatsCollector chainNodeStatsCollector = new ChainNodeStatsCollector();
+
     @RequestMapping(value="/ping", method = RequestMethod.GET)
-    public ResponseEntity<Boolean> ping(){
-        return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+    public ResponseEntity<ChainNodeRoutingStats> ping(){
+        ChainNodeRoutingStats stats = this.chainNodeStatsCollector.getChainNodeRoutingStats();
+        return new ResponseEntity<ChainNodeRoutingStats>(stats, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/request", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<Message> routeRequest(final @RequestBody Message msg)
             throws IOException {
-
+        chainNodeStatsCollector.onMessageReceived();
         logger.debug("received request with message {}", msg);
         String payload = msg.getPayload();
         String decryptedPayload = cryptoService.decrypt(payload);
@@ -110,6 +110,7 @@ public class ChainNodeController {
                 //set a result (not an errorResult) so that the message is propagated back normally
                 logger.info("An error occurred during request processing, sending back an error message");
                 updateRoutingInfoForResponse(msg, responseMessage);
+                chainNodeStatsCollector.onMessageProcessed();
                 deferredResult.setResult(responseMessage);
             }
 
@@ -119,6 +120,7 @@ public class ChainNodeController {
                 logger.info("received response, routing it back");
                 logger.debug("/request: done. result: {}", responseMessage);
                 updateRoutingInfoForResponse(msg, responseMessage);
+                chainNodeStatsCollector.onMessageProcessed();
                 deferredResult.setResult(responseMessage);
             }
         });
@@ -137,13 +139,17 @@ public class ChainNodeController {
 
     private void updateRoutingInfoForResponse(Message inMessage, Message returnMessage){
         RoutingInfo oldInfo = this.routingInfoService.getRoutingInfo(inMessage.getChainId());
-        RoutingInfo info = new RoutingInfo(
-                oldInfo.getChainId(),
-                oldInfo.getRequestSender(),
-                oldInfo.getRequestRecipient(),
-                returnMessage.getStatus(),
-                RoutingDirection.RESPONSE);
-        this.routingInfoService.updateRoutingInfo(info);
+        //the routingInfoService keeps only the N most recent requests
+        //if too many messages are inflight, we'll get null here.
+        if (oldInfo != null) {
+            RoutingInfo info = new RoutingInfo(
+                    oldInfo.getChainId(),
+                    oldInfo.getRequestSender(),
+                    oldInfo.getRequestRecipient(),
+                    returnMessage.getStatus(),
+                    RoutingDirection.RESPONSE);
+            this.routingInfoService.updateRoutingInfo(info);
+        }
     }
 
 }

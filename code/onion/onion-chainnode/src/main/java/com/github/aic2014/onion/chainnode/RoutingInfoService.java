@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class RoutingInfoService {
 
-    private static final int CACHE_SIZE = 10;
+    private static final int CACHE_SIZE = 20;
     private LRUMap<UUID, RoutingInfo> routingInfos = new LRUMap<UUID, RoutingInfo>(CACHE_SIZE);
 
     private Comparator<RoutingInfo> routingInfoComparator = new Comparator<RoutingInfo>()  {
