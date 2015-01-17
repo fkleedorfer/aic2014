@@ -44,11 +44,13 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
       printUsage();
   }
 
+  @Command(value = "help")
   public void printUsage() throws Exception {
       shell.writeLine("Welcome to the Onion Routing Demo! :)");
       shell.writeLine("This are your commands:");
       shell.writeLine("!send ... sends a request and prints the response to the Console");
       shell.writeLine("!bomb N ... sends N requests multiple parallel threads");
+      shell.writeLine("!help ... shows this usage notice");
       shell.writeLine("!exit ... stops the Client");
   }
 
