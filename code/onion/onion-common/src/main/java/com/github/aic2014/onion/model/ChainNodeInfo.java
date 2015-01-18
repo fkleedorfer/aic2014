@@ -15,7 +15,6 @@ public class ChainNodeInfo {
     private String id = null;
     private String publicIP = null;
     private int port = 0;
-    private Date launchedDate = null;
     private Date lastLifeCheck = null;
     private String publicKey = null;
     private long pingTime = 0;
@@ -23,16 +22,14 @@ public class ChainNodeInfo {
 
     /**
      * Gets the ID of this chain node.
+     * E.g. i-abbb8b63 (usually referred to as AWS "Instance ID")
+     * E.g. 4e743978-b25b-4715-ae6a-fd42bbdb3abc (in case of local InMemoryDirService)
      * @return
      */
     public String getId() {
         return id;
     }
 
-    /**
-     * Sets the ID of this chain node.
-     * @param id
-     */
     public void setId(String id) {
         this.id = id;
     }
@@ -45,28 +42,20 @@ public class ChainNodeInfo {
         return publicIP;
     }
 
-    /**
-     * Sets the public IP of this chain node
-     * @param publicIP
-     */
     public void setPublicIP(String publicIP) {
         this.publicIP = publicIP;
     }
 
+    /**
+     * Gets the port number this chain-node is assigned to
+     * @return
+     */
     public int getPort() {
         return port;
     }
 
     public void setPort(int port) {
         this.port = port;
-    }
-
-    public Date getLaunchedDate() {
-        return launchedDate;
-    }
-
-    public void setLaunchedDate(Date launchedDate) {
-        this.launchedDate = launchedDate;
     }
 
     public Date getLastLifeCheck() {
@@ -77,7 +66,9 @@ public class ChainNodeInfo {
         this.lastLifeCheck = lastLifeCheck;
     }
 
-    // last voting, when initialised the Chain-Node has 100 votes: the maximum
+    /**
+     * last voting, when initialised the Chain-Node has 100 votes: the maximum
+     */
     public long getPingTime() {
         return pingTime;
     }

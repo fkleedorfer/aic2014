@@ -49,7 +49,7 @@ public class OnionClient {
         logger.debug("requesting: {}", requestUri);
         ResponseEntity<ChainNodeInfo[]> newChainResult = restTemplate.getForEntity(requestUri, ChainNodeInfo[].class);
         ChainNodeInfo[] newChain = newChainResult.getBody();
-        logger.debug("obtained new chain: {}", newChain);
+        logger.debug("obtained new chain: {}", Arrays.toString(newChain));
 
         return newChain;
     }
@@ -57,7 +57,6 @@ public class OnionClient {
     public String executeOnionRoutedHttpRequest(String request) {
         //get the chain for the request
         ChainNodeInfo[] chain = getChain();
-        logger.debug("obtained chain {}", Arrays.toString(chain));
         return executeOnionRoutedHttpRequest(request, chain);
     }
 

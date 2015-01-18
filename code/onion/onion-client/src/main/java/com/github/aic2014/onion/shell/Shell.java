@@ -79,6 +79,8 @@ public class Shell implements Runnable, Closeable {
                 Object result;
                 try {
                     result = invoke(line);
+                } catch (CommandNotRegisteredException e) {
+                    result = e.getMessage();
                 } catch (Throwable throwable) {
                     ByteArrayOutputStream str = new ByteArrayOutputStream(1024);
                     throwable.printStackTrace(new PrintStream(str, true));
@@ -276,8 +278,7 @@ public class Shell implements Runnable, Closeable {
         String cmdName = pos >= 0 ? cmd.substring(0, pos) : cmd;
         ShellCommandDefinition cmdDef = commandMap.get(cmdName);
         if (cmdDef == null) {
-            throw new IllegalArgumentException(String.format(
-                    "Command '%s' not registered.", cmdName));
+            throw new CommandNotRegisteredException(cmdName);
         }
 
         String[] parts = cmd.split("\\s+",

@@ -43,7 +43,7 @@ public class ChainNodeInstaller extends Observable {
                 }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
                 else if ((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)){
                     awsCNToRestart.add(awsCN.getInstanceName());
-                } else if ((state.getCode() == 16) && (!awsCN.scriptDone()) ){
+                } else if ((state.getCode() == 16) && (!awsCN.isScriptDone()) ){
                     //
                     // Chainnode is ready. Run deployment script
                     logger.info(awsCN.getId() + " is yet ready! Run install script");
