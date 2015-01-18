@@ -22,7 +22,8 @@ public class ChainNodeInfo {
 
     /**
      * Gets the ID of this chain node.
-     * E.g. i-abbb8b63 (usually referred to as "Instance ID")
+     * E.g. i-abbb8b63 (usually referred to as AWS "Instance ID")
+     * E.g. 4e743978-b25b-4715-ae6a-fd42bbdb3abc (in case of local InMemoryDirService)
      * @return
      */
     public String getId() {

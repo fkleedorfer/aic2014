@@ -70,9 +70,7 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
                         try {
                             String ip = InetAddress.getLocalHost().getHostAddress();
                             ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
-                            //chainNodeInfo.setId(UUID.randomUUID().toString());
                             chainNodeInfo.setPort(port);
-                            //chainNodeInfo.setPublicIP(ip);
                             chainNodeInfo.setPublicKey(getCryptoService().getPublicKey());
 
                             chainNodeUri = client.registerChainNode(chainNodeInfo);

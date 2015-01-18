@@ -57,8 +57,6 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         }
     }
 
-
-
     private final static int DEFAULT_NUM_CHAINS = 6;
     private final static int DEFAULT_MIN_CHAIN_SIZE = 3;
 
@@ -117,37 +115,33 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
     //TODO neue Chainode über Connector starten und in Liste speichern
     @Override
-    public String registerChainNode(ChainNodeInfo chainNodeInfo) {
+    public String registerChainNode(ChainNodeInfo remoteChainNodeInfo) {
 
-        Collection<AWSChainNode> awsChainNodes = (this).getAllAWSChainNodes();
-
-        if (chainNodeInfo == null) {
-            logger.warn("NULL chain node tried to register. Ignore!");
+        if (remoteChainNodeInfo == null) {
+            logger.warn("'null' chain-node tried to register. Ignore!");
             return null;
         }
 
+        Collection<AWSChainNode> awsChainNodes = getAllAWSChainNodes();
+
         AWSChainNode equivalentAWSCN = null;
         for (AWSChainNode awsCN : awsChainNodes) {
-            if (awsCN.getPublicIP() == null || chainNodeInfo.getPublicIP() == null) {
+            if (awsCN.getPublicIP() == null || remoteChainNodeInfo.getPublicIP() == null) {
                 continue;
             }
-            if (awsCN.getPublicIP().equals(chainNodeInfo.getPublicIP())) {
+            if (awsCN.getPublicIP().equals(remoteChainNodeInfo.getPublicIP())) {
                 equivalentAWSCN = awsCN;
                 break;
             }
         }
 
         if (equivalentAWSCN == null) {
-            logger.warn(String.format("Unknown chain node with IP %s tried to register. Ignore!", chainNodeInfo.getPublicIP()));
+            logger.warn(String.format("Unknown chain node with IP %s tried to register. Ignore!", remoteChainNodeInfo.getPublicIP()));
             return null;
         }
 
-        logger.info(String.format("Register chain node with IP %s.", chainNodeInfo.getPublicIP()));
-        chainNodeInfo.setId(equivalentAWSCN.getId());
-
-        //connector createinstances
-        //this.awsChainNodes.add((AWSChainNode)chainNodeInfo);
-        return chainNodeInfo.getId();
+        logger.info(String.format("Register chain node with IP %s.", remoteChainNodeInfo.getPublicIP()));
+        return equivalentAWSCN.getId();
     }
 
     //TODO in connector
@@ -169,7 +163,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     @Override
     public Collection<ChainNodeInfo> getAllChainNodes() {
         return new LinkedList<ChainNodeInfo>() {{
-            awsConnector.getAllChainNodes(false).forEach(cni -> add(cni));
+            getAllAWSChainNodes().forEach(cni -> add(cni));
         }};
     }
 
@@ -184,6 +178,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
         List<AWSChainNode> awsChainNodes;
 
+        //TODO: why synchronized? It doesn't seem to be necessary here.
         synchronized (this.awsConnector) {
             awsChainNodes = this.awsConnector.getAllChainNodes(false);
         }
