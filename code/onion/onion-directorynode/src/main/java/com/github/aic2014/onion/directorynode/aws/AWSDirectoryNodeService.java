@@ -17,8 +17,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import com.amazonaws.services.ec2.model.InstanceState;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
+import java.io.*;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -94,6 +96,8 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         //1. read configuration
         initConfiguration();
 
+        setIpInChainNodeConf();
+
         //
         //2. init AWS-EC2 client
         awsConnector = new AWSConnector(env);
@@ -161,11 +165,55 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         return chainNodeInfo.getId();
     }
 
-    //TODO in connector
+    private void setIpInChainNodeConf(){
+
+        Properties props = new Properties();
+        InputStream is = null;
+
+        // First try loading from the current directory
+        try {
+            String path = env.getProperty("aws.chainnode.deploymentConfPath");
+            File f = new File(path);
+            is = new FileInputStream( f );
+            if ( is == null ) {
+                // Try loading from classpath
+                is = getClass().getResourceAsStream(path);
+            }
+
+            // Try loading properties from the file (if found)
+            props.load( is );
+
+            String ip;
+            URL whatismyip = new URL("http://checkip.amazonaws.com");
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(
+                        whatismyip.openStream()));
+                ip = in.readLine();
+            } finally {
+                if (in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            props.setProperty("directorynode.hostname", "http://" + ip);
+            props.store(new FileOutputStream(path), null);
+        }
+        catch ( Exception e ) {
+            logger.error("IP of Directorynode could not be set in Config of Chainnode.");
+
+        }
+    }
+
+
     @Override
     public void unregisterChainNode(String id) {
         /*
-        synchronized(awsChainNodes) {
+        synchronized(awsChain
+        Nodes) {
             awsChainNodes.removeIf(cn -> cn.getId().equals(id));
         }
         */
