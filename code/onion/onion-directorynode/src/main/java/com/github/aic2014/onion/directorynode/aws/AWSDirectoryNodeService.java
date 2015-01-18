@@ -1,11 +1,5 @@
 package com.github.aic2014.onion.directorynode.aws;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.*;
 import com.github.aic2014.onion.directorynode.DirectoryNodeService;
 import com.github.aic2014.onion.model.ChainNodeInfo;
 import org.slf4j.Logger;
@@ -14,20 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import com.amazonaws.services.ec2.model.InstanceState;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.function.BooleanSupplier;
 
 /**
  * Concrete implementation of the directory node service using AWS SDK to access EC2 instances
  */
-
-
 @EnableScheduling
 public class AWSDirectoryNodeService implements DirectoryNodeService {
 
@@ -82,7 +72,6 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     private int latestNodeNumber = 0;
     private int numberOfChainNodes;
     private int minNumberOfChainNodes;
-
 
     /**
      * Initializes the AWS Directory Node Service
