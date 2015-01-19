@@ -58,23 +58,12 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   @Command
   public String send() throws Exception {
 
-      String requestString = buildRequestString();
-      shell.writeLine("Sending Request: " + requestString);
-
-      ChainNodeInfo[] chain = client.getChain();
-      shell.writeLine("-------------------------------");
-
-      shell.writeLine("Used Chain:");
-      for(int i = 0; i < 3; i++) {
-          shell.writeLine("ChainNode"+i+": " + chain[i].getPublicIP() + ":" + chain[i].getPort());
-      }
-      shell.writeLine("-------------------------------");
-
-      long start = System.nanoTime();
-      // print
-      String response = client.executeOnionRoutedHttpRequest(requestString, chain);
-
-      return String.format("Response in %s msec: %s", (System.nanoTime() - start) / 1000 / 1000, response);
+    String requestString = buildRequestString();
+    shell.writeLine("Sending Request: " + requestString);
+    OnionRoutedHttpRequest request = client.getHttpRequest();
+    String response = request.execute(requestString);
+    shell.writeLine(request.printUsedChain());
+    return String.format("Response in %s ms: %s", request.getRoundTripTime(), response);
   }
 
   @Command
@@ -89,10 +78,10 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
 
           public void run() {
               try {
-                  ChainNodeInfo[] chain = client.getChain();
-                  shell.writeLine(String.format("sent a request (sent %s in total, %s to go)", requestSentCounter.addAndGet(1), messageCount-requestSentCounter.get()));
-                  String response = client.executeOnionRoutedHttpRequest(requestString, chain);
-                  shell.writeLine(String.format("received a response (received %s in total, %s to go)", responseReceivedCounter.addAndGet(1), messageCount-responseReceivedCounter.get()));
+                shell.writeLine(String.format("sent a request (sent %s in total, %s to go)", requestSentCounter.addAndGet(1), messageCount-requestSentCounter.get()));
+                OnionRoutedHttpRequest request = client.getHttpRequest();
+                String response = request.execute(requestString);
+                shell.writeLine(String.format("received a response (received %s in total, %s to go)", responseReceivedCounter.addAndGet(1), messageCount-responseReceivedCounter.get()));
               } catch (Throwable e) {
                   try {
                       shell.writeLine(String.format("** CHAIN REQUEST ERROR : %s - full exception is printed at loglevel 'DEBUG'", e.getMessage()));
