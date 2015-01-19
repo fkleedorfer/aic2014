@@ -33,7 +33,8 @@ public class ChainNodeInstaller extends Observable {
             List<String> awsCNToRestart = new ArrayList<>();
             for (AWSChainNode awsCN : awsChainNodes) {
                 state = awsCN.getState();
-                // 0 : pending
+
+                //restart
                 if ((state.getCode() == 0) && timeoutPending > TIMEOUT_LIMIT) {
                     // Terminate non-responding chainnode
                     logger.warn("AWS instance " + awsCN.getId() + " did not response in time. Terminate!");
@@ -41,17 +42,18 @@ public class ChainNodeInstaller extends Observable {
                         awsConnector.terminateChainNode(awsCN.getId(), false);
                     }
                 }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
-                else if ((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)){
+                else if ((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)) {
                     awsCNToRestart.add(awsCN.getInstanceName());
-                } else if ((state.getCode() == 16) && (!awsCN.isScriptDone()) ){
+                } else if ((state.getCode() == 16) && (!awsCN.isScriptDone())) {
                     //
                     // Chainnode is ready. Run deployment script
                     logger.info(awsCN.getId() + " is yet ready! Run install script");
-                    runScriptFor(awsCN);
                     awsCN.setScriptDone(true);
+                    runScriptFor(awsCN);
 
                 }
-            }
+                }
+
 
             if (awsCNToRestart.size() > 0) {
                 //naja also da volle java freind bin i net :) haha
@@ -82,6 +84,7 @@ public class ChainNodeInstaller extends Observable {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final String installationCommand;
+    private final String startChainCommand;
     private AWSConnector awsConnector;
     private int timeoutPending;
     private Timer isReadyCheckTimer;
@@ -90,9 +93,9 @@ public class ChainNodeInstaller extends Observable {
     public ChainNodeInstaller(Environment env, AWSConnector awsConnector) {
         timeoutPending = 0;
         installationCommand = env.getProperty("aws.chainnode.deploymentCommand");
+        startChainCommand = env.getProperty("aws.chainnode.startChainCommand");
         this.awsConnector = awsConnector;
 
-        //TODO: init check-thread
         checkTask = new IsReadyCheckTask();
 
         isReadyCheckTimer = new Timer();
@@ -109,6 +112,8 @@ public class ChainNodeInstaller extends Observable {
 
         new Thread(() -> {
             try {
+
+                //split run scritp first copy than start
                 String rawCommand = String.format(installationCommand, awsChainNode.getPublicIP());
                 logger.info("Executing Command: " + rawCommand);
 
@@ -128,10 +133,30 @@ public class ChainNodeInstaller extends Observable {
                     sbError.append(s.nextLine());
                 logger.info("Error-Respones of command: " + sbError.toString());
 
+                Thread.sleep(2000);
+
+                rawCommand = String.format(startChainCommand, awsChainNode.getPublicIP());
+                logger.info("Executing Command: " + rawCommand);
+
+                cmdSplitted = rawCommand.split(" ");
+                pb = new ProcessBuilder(Arrays.asList(cmdSplitted));
+                p = pb.start();
+
+                s = new Scanner(p.getInputStream());
+                sbInput = new StringBuilder();
+                while (s.hasNextLine())
+                    sbInput.append(s.nextLine());
+                logger.info("Respones of command: " + sbInput.toString());
+
+                s = new Scanner(p.getErrorStream());
+                while (s.hasNextLine())
+                    sbError.append(s.nextLine());
+                logger.info("Error-Respones of command: " + sbError.toString());
+
             } catch (Exception e) {
                 logger.warn("Process to run the deployment script could not be started.", e);
             }
-        }){{ setName("Run-Script-Thread (aws-id=" + awsChainNode.getId()+")"); }}.start();
+       }){{ setName("Run-Script-Thread (aws-id=" + awsChainNode.getId()+")"); }}.start();
 
 
         setChanged();
