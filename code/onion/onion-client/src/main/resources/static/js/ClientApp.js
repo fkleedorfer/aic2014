@@ -16,7 +16,7 @@ onionClientApp.controller('onionClientController', function ($scope, $http) {
                         $scope.isRequesting = false;
                     });
          }
-
+//
     $scope.sendBomb = function sendBomb(){
           $scope.isRequesting = true;
           $http.get('/sendBomb').

@@ -18,13 +18,13 @@ public class OnionClientAppController {
 
     @RequestMapping(value="/sendRequest", method = RequestMethod.GET)
     public String sendRequest(){
-        //return new ResponseEntity<>(routingInfoService.getRoutingInfo(), HttpStatus.OK);
+
         return "";
     }
 
     @RequestMapping(value="/sendBomb", method = RequestMethod.GET)
     public String sendBomb(){
-        //return new ResponseEntity<>(routingInfoService.getRoutingInfo(), HttpStatus.OK);
+
         return "";
     }
 
@@ -36,7 +36,7 @@ public class OnionClientAppController {
 
     @RequestMapping(value="/sendExit", method = RequestMethod.GET)
     public String sendExit(){
-        //return new ResponseEntity<>(routingInfoService.getRoutingInfo(), HttpStatus.OK);
+
         return "";
     }
 
