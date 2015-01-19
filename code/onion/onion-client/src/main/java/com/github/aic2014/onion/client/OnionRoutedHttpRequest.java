@@ -20,10 +20,12 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
     public String execute(String request) throws OnionRoutedRequestException {
         String response = "";
 
-        for (int retry = 1; retry <= chainErrorRetries || chainErrorRetries < 1; retry++) {
+        for (int retry = 0; retry <= chainErrorRetries || chainErrorRetries < 1; retry++) {
             try {
+                if (retry > 0)
+                    logger.info("Fetching new chain and retrying request ({}/{})...", retry, chainErrorRetries);
 
-                response = executeRequest(request);
+                response = executeSingleRequest(request);
                 break;
 
             } catch (OnionRoutedRequestException e) {
@@ -31,7 +33,6 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
                 // chain is defunct: fetch a new chain and retry
                 if (e.getStatus() == OnionStatus.CHAIN_ERROR || e.getStatus() == OnionStatus.CHAIN_TIMEOUT) {
                     logger.info("Chain error {}: {}", e.getStatus(), e.getFailedNode());
-                    logger.info("Fetching new chain and retrying request ({}/{})...", retry, chainErrorRetries);
                     continue;
                 }
 
@@ -42,7 +43,7 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
         return response;
     }
 
-    private String executeRequest(String request) throws OnionRoutedRequestException {
+    private String executeSingleRequest(String request) throws OnionRoutedRequestException {
 
         fetchNewChain();
         Message msg = buildMessage(usedChain, usedChainID, request);
