@@ -98,7 +98,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                 //4. for now... after each start of the directory node, terminate all existing chain nodes.
                 existingChainNodes.forEach(cni -> awsConnector.terminateChainNode(cni.getId(), true));
 
-
+            }
                 //5. create new chain nodes
                 String[] chainNodeNames = new String[numberOfChainNodes];
                 for (int i = 0; i < numberOfChainNodes; i++) {
@@ -107,7 +107,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                 }
                 latestNodeNumber += numberOfChainNodes;
                 awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
-            }
+
         }
         logger.info("Created/found " + latestNodeNumber+1 + " chain nodes within AWS.");
 
