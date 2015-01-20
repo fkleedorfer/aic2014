@@ -88,7 +88,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
                   } catch (IOException e1) {
                       e1.printStackTrace();
                   }
-                  logger.debug("caught throwable when sending chain request", e);
+                  logger.debug("caught throwable when sending chain request from client", e);
               } finally {
                   latch.countDown();
               }

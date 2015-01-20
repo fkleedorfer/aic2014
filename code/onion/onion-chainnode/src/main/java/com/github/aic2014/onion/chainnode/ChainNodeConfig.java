@@ -24,7 +24,6 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 
 @Configuration
@@ -45,8 +44,8 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(10);
+        executor.setMaxPoolSize(20);
+        executor.setQueueCapacity(50);
         executor.initialize();
         return executor;
     }

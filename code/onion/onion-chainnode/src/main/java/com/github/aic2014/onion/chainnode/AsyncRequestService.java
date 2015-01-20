@@ -21,13 +21,16 @@ import org.apache.http.io.HttpMessageParser;
 import org.apache.http.io.HttpMessageWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.SSLException;
@@ -45,7 +48,7 @@ import java.util.UUID;
  * and for feeding the http response back into the chain.
  */
 @Service
-public class AsyncRequestService {
+public class AsyncRequestService implements InitializingBean{
   private final Logger logger = LoggerFactory.getLogger(getClass());
   @Autowired
   private CryptoService cryptoService;
@@ -58,11 +61,28 @@ public class AsyncRequestService {
   @Value("${outgoingRequest.socketTimeout}")
   private int outgoingRequestSocketTimeout;
 
+  @Override
+  public void afterPropertiesSet(){
+    assert restTemplate != null : "restTemplate must be set!";
+    restTemplate.setErrorHandler(new ResponseErrorHandler() {
+      @Override
+      public boolean hasError(ClientHttpResponse response) throws IOException {
+        return Math.floorDiv(response.getRawStatusCode(), 100) - 3 > 0;
+      }
+
+      @Override
+      public void handleError(ClientHttpResponse response) throws IOException {
+        logger.debug(String.format("Status: %s, response body: %s", response.getStatusCode(), response.getBody()));
+      }
+    });
+  }
+
   @Async
   public ListenableFuture<Message> sendChainRequest(Message msg) {
     Message responseMessage = new Message();
     try {
       logger.debug("sending chain request message: {}", msg);
+
       ResponseEntity<String> msgEntity = restTemplate.postForEntity(msg.getRecipient() + "/request", msg, String.class);
       responseMessage.setChainId(msg.getChainId());
       responseMessage.setPayload(cryptoService.encrypt(msgEntity.getBody(), msg.getPublicKey()));
@@ -77,21 +97,22 @@ public class AsyncRequestService {
   }
 
   @Async
+
   public ListenableFuture<Message> sendExitRequestAndTunnelResponse(URI sender, UUID chainId, String publicKey, String request) throws OnionRoutingException {
     Message responseMessage = new Message();
     logger.debug("sending tunneled http request {}", request);
     try {
       String httpResponse = sendRequestSynchronously(sender, request);
+      logger.debug("received external response");
       responseMessage.setChainId(chainId);
       responseMessage.setPayload(cryptoService.encrypt(httpResponse, publicKey));
     } catch (Exception e) {
-      responseMessage = new Message();
       logger.debug("chainRequest: failure", e);
       responseMessage = new Message();
       populateMessageFromException(responseMessage, e, chainId);
       logger.info("An error occurred, sending back an error message with status {}", responseMessage.getStatus());
     }
-    return new AsyncResult<Message>(responseMessage);
+    return new AsyncResult<>(responseMessage);
   }
 
   /**

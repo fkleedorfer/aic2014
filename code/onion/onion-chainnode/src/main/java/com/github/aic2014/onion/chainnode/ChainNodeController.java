@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.io.IOException;
@@ -46,7 +45,6 @@ public class ChainNodeController {
     @Value("${messageTimeout}")
     long messageTimeout;
 
-    RestTemplate restTemplate = new RestTemplate();
 
     private ChainNodeStatsCollector chainNodeStatsCollector = new ChainNodeStatsCollector();
 
@@ -60,71 +58,93 @@ public class ChainNodeController {
     @ResponseBody
     public DeferredResult<Message> routeRequest(final @RequestBody Message msg)
             throws IOException {
-        chainNodeStatsCollector.onMessageReceived();
-        logger.debug("received request with message {}", msg);
-        String payload = msg.getPayload();
-        String decryptedPayload = cryptoService.decrypt(payload);
-        if (msg.getHopsToGo() < 0) {
-            throw new IllegalArgumentException("hopsToGo must not be <0");
+        try {
+          chainNodeStatsCollector.onMessageReceived();
+          logger.debug("received request with message {}", msg);
+          String payload = msg.getPayload();
+          String decryptedPayload = cryptoService.decrypt(payload);
+          if (msg.getHopsToGo() < 0) {
+              throw new IllegalArgumentException("hopsToGo must not be <0");
+          }
+          ListenableFuture<Message> msgFuture = null;
+          Message timeoutMessage = null; //if we hit a timeout, send this message (if not null)
+
+          if (msg.getHopsToGo() == 0) {
+              logger.info("received exit request from {}", msg.getSender());
+              //last hop: we expect that the decrypted string is a http request.
+              logger.debug("/request: last hop, received payload {}", decryptedPayload);
+              logger.debug("/request: sending exit request asynchronously");
+              updateRoutingInfoForRequest(msg, null);
+              msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(msg.getRecipient(), msg.getChainId(),msg.getPublicKey(),decryptedPayload);
+              timeoutMessage = new Message();
+              timeoutMessage.setChainId(msg.getChainId());
+              timeoutMessage.setStatus(OnionStatus.TARGET_TIMEOUT);
+              timeoutMessage.setMisbehavingNode(msg.getRecipient());
+          } else {
+              Message nextMsg = JsonUtils.fromJSON(decryptedPayload);
+              logger.info("received chain request from {} to {}", msg.getSender(), nextMsg.getRecipient());
+              logger.debug("/request: sending chain request asynchronously (hops to go: {})", nextMsg.getHopsToGo());
+              updateRoutingInfoForRequest(msg, nextMsg);
+              msgFuture = this.asyncRequestService.sendChainRequest(nextMsg);
+              //if sending nextMsg yields a timeout, send the follwing message back through the chain
+              timeoutMessage = new Message();
+              timeoutMessage.setChainId(msg.getChainId());
+              timeoutMessage.setStatus(OnionStatus.CHAIN_TIMEOUT);
+              timeoutMessage.setMisbehavingNode(nextMsg.getRecipient());
+          }
+
+          //DeferredResult treats a new Object as no object
+          final DeferredResult deferredResult = new DeferredResult<Message>(messageTimeout * (msg.getHopsToGo() + 1), timeoutMessage);
+          msgFuture.addCallback(new ListenableFutureCallback<Message>() {
+              @Override
+              public void onFailure(Throwable ex) {
+                  logger.debug("/request: failure", ex);
+                  Message responseMessage = new Message();
+                  responseMessage.setChainId(msg.getChainId());
+                  if (ex instanceof OnionRoutingRequestException){
+                      responseMessage.setMisbehavingNode(((OnionRoutingRequestException)ex).getMisbehavingNode());
+                      responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
+                  } else if (ex instanceof OnionRoutingTargetRequestException) {
+                      responseMessage.setStatus(OnionStatus.TARGET_ERROR);
+                  } else {
+                      responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
+                  }
+                  //set a result (not an errorResult) so that the message is propagated back normally
+                  logger.info("An error occurred during request processing, sending back an error message");
+                  updateRoutingInfoForResponse(msg, responseMessage);
+                  chainNodeStatsCollector.onMessageProcessed();
+                  deferredResult.setResult(responseMessage);
+              }
+
+              @Override
+              public void onSuccess(Message responseMessage) {
+                  //if an exception is thrown here, the framework calls onFailure() above
+                  logger.info("received response, routing it back");
+                  logger.debug("/request: done. result: {}", responseMessage);
+                  updateRoutingInfoForResponse(msg, responseMessage);
+                  chainNodeStatsCollector.onMessageProcessed();
+                  deferredResult.setResult(responseMessage);
+              }
+          });
+          return deferredResult;
+        } catch (Throwable t) {
+          if (logger.isDebugEnabled()){
+            logger.debug("/request: error - caught throwable during chain request:",t);
+          } else  {
+            logger.info(String.format("/request: error - caught throwable during chain request: %s (more info on loglevel DEBUG",t.getMessage()));
+          }
+          DeferredResult<Message> errorResult = new DeferredResult<Message>();
+          Message responseMessage = new Message();
+          responseMessage.setChainId(msg.getChainId());
+          responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
+          responseMessage.setMisbehavingNode(msg.getRecipient()); //should be this chain node
+          responseMessage.setSender(msg.getRecipient());
+          responseMessage.setRecipient(msg.getSender());
+          errorResult.setResult(responseMessage);
+          updateRoutingInfoForResponse(msg, responseMessage);
+          chainNodeStatsCollector.onMessageProcessed();
+          return errorResult;
         }
-        ListenableFuture<Message> msgFuture = null;
-        Message timeoutMessage = null; //if we hit a timeout, send this message (if not null)
-
-        if (msg.getHopsToGo() == 0) {
-            logger.info("received exit request from {}", msg.getSender());
-            //last hop: we expect that the decrypted string is a http request.
-            logger.debug("/request: last hop, received payload {}", decryptedPayload);
-            logger.debug("/request: sending exit request asynchronously");
-            updateRoutingInfoForRequest(msg, null);
-            msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(msg.getRecipient(), msg.getChainId(),msg.getPublicKey(),decryptedPayload);
-        } else {
-            Message nextMsg = JsonUtils.fromJSON(decryptedPayload);
-            logger.info("received chain request from {} to {}", msg.getSender(), nextMsg.getRecipient());
-            logger.debug("/request: sending chain request asynchronously");
-            updateRoutingInfoForRequest(msg, nextMsg);
-            msgFuture = this.asyncRequestService.sendChainRequest(nextMsg);
-            //if sending nextMsg yields a timeout, send the follwing message back through the chain
-            timeoutMessage = new Message();
-            timeoutMessage.setChainId(msg.getChainId());
-            timeoutMessage.setStatus(OnionStatus.CHAIN_TIMEOUT);
-            timeoutMessage.setMisbehavingNode(nextMsg.getRecipient());
-        }
-
-        //DeferredResult treats a new Object as no object
-        Object timeoutObject = timeoutMessage == null ? new Object() : timeoutMessage;
-        final DeferredResult deferredResult = new DeferredResult<Message>(messageTimeout * (msg.getHopsToGo() + 1), timeoutObject);
-        msgFuture.addCallback(new ListenableFutureCallback<Message>() {
-            @Override
-            public void onFailure(Throwable ex) {
-                logger.debug("/request: failure", ex);
-                Message responseMessage = new Message();
-                responseMessage.setChainId(msg.getChainId());
-                if (ex instanceof OnionRoutingRequestException){
-                    responseMessage.setMisbehavingNode(((OnionRoutingRequestException)ex).getMisbehavingNode());
-                    responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
-                } else if (ex instanceof OnionRoutingTargetRequestException) {
-                    responseMessage.setStatus(OnionStatus.TARGET_ERROR);
-                } else {
-                    responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
-                }
-                //set a result (not an errorResult) so that the message is propagated back normally
-                logger.info("An error occurred during request processing, sending back an error message");
-                updateRoutingInfoForResponse(msg, responseMessage);
-                chainNodeStatsCollector.onMessageProcessed();
-                deferredResult.setResult(responseMessage);
-            }
-
-            @Override
-            public void onSuccess(Message responseMessage) {
-                //if an exception is thrown here, the framework calls onFailure() above
-                logger.info("received response, routing it back");
-                logger.debug("/request: done. result: {}", responseMessage);
-                updateRoutingInfoForResponse(msg, responseMessage);
-                chainNodeStatsCollector.onMessageProcessed();
-                deferredResult.setResult(responseMessage);
-            }
-        });
-        return deferredResult;
     }
 
     private void updateRoutingInfoForRequest(Message inMessage, Message outMessage){

@@ -29,7 +29,7 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
                 break;
 
             } catch (OnionRoutedRequestException e) {
-
+                logger.debug("routing failed: ", e.getMessage());
                 // chain is defunct: fetch a new chain and retry
                 if (e.getStatus() == OnionStatus.CHAIN_ERROR || e.getStatus() == OnionStatus.CHAIN_TIMEOUT) {
                     logger.info("Chain error {}: {}", e.getStatus(), e.getFailedNode());
@@ -90,10 +90,11 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
     }
 
     private String decryptResponse(Message msg) throws OnionRoutedRequestException {
-        int i;
-
+      int i = 0;
+        logger.debug("removing {} layers of encryption on response", usedChain.length);
         // decrypt payload, starting from first chain node to last
         for (i = 1; i < usedChain.length; i++) {
+            logger.debug("removing encryption layer {} on response", i);
             if (msg.getStatus() != OnionStatus.OK) {
                 break;
             }
@@ -102,6 +103,7 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
         }
 
         if (msg.getStatus() == OnionStatus.OK) {
+            logger.debug("removing last encryption layer on response");
             return this.cryptoService.decrypt(msg.getPayload());
         }
 
