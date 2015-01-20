@@ -13,6 +13,15 @@ import java.util.*;
  */
 public class ChainNodeInstaller extends Observable {
 
+    /**
+     * FYI: http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/InstanceState.html#getCode()
+     * 0 : pending
+     * 16 : running
+     * 32 : shutting-down
+     * 48 : terminated
+     * 64 : stopping
+     * 80 : stopped
+     */
     private class IsReadyCheckTask extends TimerTask {
 
         @Override
@@ -47,7 +56,7 @@ public class ChainNodeInstaller extends Observable {
                 } else if ((state.getCode() == 16) && (!awsCN.isScriptDone())) {
                     //
                     // Chainnode is ready. Run deployment script
-                    logger.info(awsCN.getId() + " is yet ready! Run install script");
+                    logger.info(awsCN.getId() + " is ready! Run install script");
                     awsCN.setScriptDone(true);
                     runScriptFor(awsCN);
 
@@ -68,8 +77,6 @@ public class ChainNodeInstaller extends Observable {
                     awsConnector.createAWSChainNodes(awsCNToRestart.size(), restart);
                 }
             }
-
-
         }
     }
 
@@ -133,36 +140,12 @@ public class ChainNodeInstaller extends Observable {
                     sbError.append(s.nextLine());
                 logger.info("Error-Respones of command: " + sbError.toString());
 
-                Thread.sleep(2000);
-
-                rawCommand = String.format(startChainCommand, awsChainNode.getPublicIP());
-                logger.info("Executing Command: " + rawCommand);
-
-                cmdSplitted = rawCommand.split(" ");
-                pb = new ProcessBuilder(Arrays.asList(cmdSplitted));
-                p = pb.start();
-
-                s = new Scanner(p.getInputStream());
-                sbInput = new StringBuilder();
-                while (s.hasNextLine())
-                    sbInput.append(s.nextLine());
-                logger.info("Respones of command: " + sbInput.toString());
-
-                s = new Scanner(p.getErrorStream());
-                while (s.hasNextLine())
-                    sbError.append(s.nextLine());
-                logger.info("Error-Respones of command: " + sbError.toString());
-
             } catch (Exception e) {
                 logger.warn("Process to run the deployment script could not be started.", e);
             }
        }){{ setName("Run-Script-Thread (aws-id=" + awsChainNode.getId()+")"); }}.start();
 
-
         setChanged();
         notifyObservers(awsChainNode.getId());
     }
-
-
-
 }
