@@ -9,23 +9,24 @@ import org.apache.http.impl.io.DefaultHttpRequestWriter;
 import org.apache.http.impl.io.HttpTransportMetricsImpl;
 import org.apache.http.impl.io.SessionOutputBufferImpl;
 import org.apache.http.io.HttpMessageWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OnionClientCommandLineRunner implements CommandLineRunner
 {
-
+  private final Logger logger = LoggerFactory.getLogger(getClass());
   private Shell shell;
   private static ExecutorService executor;
-
   @Autowired
   private OnionClient client;
 
@@ -57,37 +58,37 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   @Command
   public String send() throws Exception {
 
-      String requestString = buildRequestString();
-      shell.writeLine("Sending Request: " + requestString);
-
-      ChainNodeInfo[] chain = client.getChain();
-      shell.writeLine("-------------------------------");
-
-      shell.writeLine("Used Chain:");
-      for(int i = 0; i < 3; i++) {
-          shell.writeLine("ChainNode"+i+": " + chain[i].getPublicIP() + ":" + chain[i].getPort());
-      }
-      shell.writeLine("-------------------------------");
-
-      long start = System.nanoTime();
-      // print
-      String response = client.executeOnionRoutedHttpRequest(requestString, chain);
-
-      return String.format("Response in %s msec: %s", (System.nanoTime() - start) / 1000 / 1000, response);
+    String requestString = buildRequestString();
+    shell.writeLine("Sending Request: " + requestString);
+    OnionRoutedHttpRequest request = client.getHttpRequest();
+    String response = request.execute(requestString);
+    shell.writeLine(request.printUsedChain());
+    return String.format("Response in %s ms: %s", request.getRoundTripTime(), response);
   }
 
   @Command
   public String bomb(int messageCount) throws Exception {
       final String requestString = buildRequestString();
       final CountDownLatch latch = new CountDownLatch(messageCount);
+      final AtomicInteger requestSentCounter = new AtomicInteger(0);
+      final AtomicInteger responseReceivedCounter = new AtomicInteger(0);
       Runnable sendTask = new Runnable(){
           @Override
+
+
           public void run() {
               try {
-                  ChainNodeInfo[] chain = client.getChain();
-                  String response = client.executeOnionRoutedHttpRequest(requestString, chain);
-              } catch (Exception e) {
-                  e.printStackTrace();
+                shell.writeLine(String.format("sent a request (sent %s in total, %s to go)", requestSentCounter.addAndGet(1), messageCount-requestSentCounter.get()));
+                OnionRoutedHttpRequest request = client.getHttpRequest();
+                String response = request.execute(requestString);
+                shell.writeLine(String.format("received a response (received %s in total, %s to go)", responseReceivedCounter.addAndGet(1), messageCount-responseReceivedCounter.get()));
+              } catch (Throwable e) {
+                  try {
+                      shell.writeLine(String.format("** CHAIN REQUEST ERROR : %s - full exception is printed at loglevel 'DEBUG'", e.getMessage()));
+                  } catch (IOException e1) {
+                      e1.printStackTrace();
+                  }
+                  logger.debug("caught throwable when sending chain request", e);
               } finally {
                   latch.countDown();
               }
@@ -99,7 +100,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
           executor.execute(sendTask);
       }
       latch.await();
-      return "Received all responses";
+      return "done bombing";
   }
 
     private String buildRequestString() throws java.io.IOException, org.apache.http.HttpException {
