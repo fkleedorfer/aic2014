@@ -111,9 +111,8 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         logger.info("Created/found " + latestNodeNumber + " chain nodes within AWS.");
 
         //6. Run setup-script for new chainnodes
-        ChainNodeInstaller cnInstaller = new ChainNodeInstaller(env, awsConnector);
+        new ChainNodeInstaller(env, awsConnector);
         //der Thread  läuft Liste wird vom Connector geladen
-        //cnInstaller.runInstallerFor(awsChainNodes);
     }
 
     //TODO neue Chainode über Connector starten und in Liste speichern
@@ -189,7 +188,6 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         }
     }
 
-
     @Override
     public void unregisterChainNode(String id) {
         /*
@@ -263,7 +261,6 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         terminateExisting = Boolean.parseBoolean(env.getProperty("aws.terminateExisting"));
     }
 
-
     @Scheduled(fixedDelay=5000)
     public void LifeCheck() {
 
@@ -312,5 +309,4 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     16 : running
 
     */
-
 }

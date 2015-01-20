@@ -91,7 +91,6 @@ public class ChainNodeInstaller extends Observable {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final String installationCommand;
-    private final String startChainCommand;
     private AWSConnector awsConnector;
     private int timeoutPending;
     private Timer isReadyCheckTimer;
@@ -100,7 +99,6 @@ public class ChainNodeInstaller extends Observable {
     public ChainNodeInstaller(Environment env, AWSConnector awsConnector) {
         timeoutPending = 0;
         installationCommand = env.getProperty("aws.chainnode.deploymentCommand");
-        startChainCommand = env.getProperty("aws.chainnode.startChainCommand");
         this.awsConnector = awsConnector;
 
         checkTask = new IsReadyCheckTask();
