@@ -99,17 +99,17 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                 existingChainNodes.forEach(cni -> awsConnector.terminateChainNode(cni.getId(), true));
 
             }
-                //5. create new chain nodes
-                String[] chainNodeNames = new String[numberOfChainNodes];
-                for (int i = 0; i < numberOfChainNodes; i++) {
-                    int serial = latestNodeNumber + i;
-                    chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), serial);
-                }
-                latestNodeNumber += numberOfChainNodes;
-                awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
+            //5. create new chain nodes
+            String[] chainNodeNames = new String[numberOfChainNodes];
+            for (int i = 0; i < numberOfChainNodes; i++) {
+                int serial = latestNodeNumber + i;
+                chainNodeNames[i] = String.format("%s%d", env.getProperty("aws.chainnode.prefix"), serial);
+            }
+            latestNodeNumber += numberOfChainNodes;
+            awsConnector.createAWSChainNodes(numberOfChainNodes, chainNodeNames);
 
         }
-        logger.info("Created/found " + latestNodeNumber+1 + " chain nodes within AWS.");
+        logger.info("Created/found " + latestNodeNumber + " chain nodes within AWS.");
 
         //6. Run setup-script for new chainnodes
         ChainNodeInstaller cnInstaller = new ChainNodeInstaller(env, awsConnector);
@@ -186,8 +186,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
             props.store(new FileOutputStream(path), null);
         }
         catch ( Exception e ) {
-            logger.error("IP of Directorynode could not be set in Config of Chainnode.");
-
+            logger.error("IP of Directorynode could not be set in Config of Chainnode.", e);
         }
     }
 
