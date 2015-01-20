@@ -164,6 +164,9 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
             // Try loading properties from the file (if found)
             props.load( is );
 
+            //
+            // Code-Snippet for IP-check from: http://stackoverflow.com/a/14541376
+            //
             String ip;
             URL whatismyip = new URL("http://checkip.amazonaws.com");
             BufferedReader in = null;
