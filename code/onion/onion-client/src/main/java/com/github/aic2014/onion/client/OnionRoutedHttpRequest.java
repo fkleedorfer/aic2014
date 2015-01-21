@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 public class OnionRoutedHttpRequest extends OnionRoutedRequest {
@@ -18,29 +20,26 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
     }
 
     public String execute(String request) throws OnionRoutedRequestException {
-        String response = "";
+        int retry = 0;
 
-        for (int retry = 0; retry <= chainErrorRetries || chainErrorRetries < 1; retry++) {
+        do {
             try {
-                if (retry > 0)
-                    logger.info("Fetching new chain and retrying request ({}/{})...", retry, chainErrorRetries);
-
-                response = executeSingleRequest(request);
-                break;
-
+                return executeSingleRequest(request);
             } catch (OnionRoutedRequestException e) {
                 logger.debug("routing failed: ", e.getMessage());
                 // chain is defunct: fetch a new chain and retry
                 if (e.getStatus() == OnionStatus.CHAIN_ERROR || e.getStatus() == OnionStatus.CHAIN_TIMEOUT) {
-                    logger.info("Chain error {}: {}", e.getStatus(), e.getFailedNode());
-                    continue;
+                    if (++retry <= chainErrorRetries) {
+                        logger.info(e.getMessage());
+                        logger.info("Fetching new chain and retrying request ({}/{})...", retry, chainErrorRetries);
+                        continue;
+                    }
                 }
 
+                // throw other (or ultimate) exception
                 throw e;
             }
-        }
-
-        return response;
+        } while (true);
     }
 
     private String executeSingleRequest(String request) throws OnionRoutedRequestException {
@@ -58,9 +57,7 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
             return responseString;
 
         } catch (RestClientException e) {
-            OnionRoutedRequestException o = new OnionRoutedRequestException(OnionStatus.CHAIN_ERROR, e);
-            o.setFailedNode(usedChain[0]);
-            throw o;
+            throw new OnionRoutedRequestException(OnionStatus.CHAIN_ERROR, Optional.of(usedChain[0]), e);
         }
     }
 
@@ -90,15 +87,8 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
     }
 
     private String decryptResponse(Message msg) throws OnionRoutedRequestException {
-      int i = 0;
-        logger.debug("received this response {}", msg);
-        logger.debug("removing {} layers of encryption on response", usedChain.length);
         // decrypt payload, starting from first chain node to last
-        for (i = 1; i < usedChain.length; i++) {
-            logger.debug("removing encryption layer {} on response", i);
-            if (msg.getStatus() != OnionStatus.OK) {
-                break;
-            }
+        for (int i = 1; i < usedChain.length && msg.getStatus() == OnionStatus.OK; i++) {
             String payload = this.cryptoService.decrypt(msg.getPayload());
             msg = JsonUtils.fromJSON(payload);
         }
@@ -108,8 +98,15 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
             return this.cryptoService.decrypt(msg.getPayload());
         }
 
-        OnionRoutedRequestException e = new OnionRoutedRequestException(msg.getStatus());
-        e.setFailedNode(usedChain[i - 1]);
-        throw e;
+        Optional<ChainNodeInfo> misbehavingNode = Optional.empty();
+        if (msg.getMisbehavingNode() != null) {
+            final URI nodeURI = msg.getMisbehavingNode();
+            misbehavingNode = Arrays
+                    .stream(usedChain)
+                    .filter(n -> n.getUri().equals(nodeURI))
+                    .findFirst();
+        }
+
+        throw new OnionRoutedRequestException(msg.getStatus(), misbehavingNode);
     }
 }
