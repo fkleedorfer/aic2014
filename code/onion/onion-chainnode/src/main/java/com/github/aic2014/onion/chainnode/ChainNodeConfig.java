@@ -45,7 +45,7 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(20);
-        executor.setQueueCapacity(50);
+        executor.setQueueCapacity(150);
         executor.initialize();
         return executor;
     }

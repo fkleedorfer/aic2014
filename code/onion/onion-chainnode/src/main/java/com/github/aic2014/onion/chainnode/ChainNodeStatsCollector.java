@@ -56,6 +56,11 @@ public class ChainNodeStatsCollector {
         this.messagesProcessed.getAndIncrement();
         this.lastMessageProcessedTimestamp.set(System.currentTimeMillis());
     }
+
+    public int getMessagesPending(){
+      return this.messagesPending.get();
+    }
+
     public ChainNodeRoutingStats getChainNodeRoutingStats(){
         ChainNodeRoutingStats stats = new ChainNodeRoutingStats();
         stats.setTimeWindowSize(diffToNow(this.collectionStartTimeStamp.get()));

@@ -121,7 +121,7 @@ public class ChainNodeController {
                   //if an exception is thrown here, the framework calls onFailure() above
                   logger.info("received response, routing it back");
                   logger.debug("/request: done. result: {}", responseMessage);
-                  responseMessage.setDebugInfo(responseMessage.getDebugInfo()+"| CNC:routeRequest:msgFuture.onSuccess");
+                  responseMessage.setDebugInfo(responseMessage.getDebugInfo() + "| CNC:routeRequest:msgFuture.onSuccess");
                   updateRoutingInfoForResponse(msg, responseMessage);
                   chainNodeStatsCollector.onMessageProcessed();
                   deferredResult.setResult(responseMessage);
@@ -147,9 +147,10 @@ public class ChainNodeController {
           chainNodeStatsCollector.onMessageProcessed();
           return errorResult;
         }
-    }
+    }  
 
-    private void updateRoutingInfoForRequest(Message inMessage, Message outMessage){
+
+  private void updateRoutingInfoForRequest(Message inMessage, Message outMessage){
         RoutingInfo info = new RoutingInfo(
                 inMessage.getChainId(),
                 inMessage.getSender(),

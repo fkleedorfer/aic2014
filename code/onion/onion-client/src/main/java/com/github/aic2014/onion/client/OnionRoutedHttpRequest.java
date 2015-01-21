@@ -87,8 +87,12 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
     }
 
     private String decryptResponse(Message msg) throws OnionRoutedRequestException {
+        logger.debug("received this response {}", msg);
+        logger.debug("removing {} layers of encryption on response", usedChain.length);
+
         // decrypt payload, starting from first chain node to last
         for (int i = 1; i < usedChain.length && msg.getStatus() == OnionStatus.OK; i++) {
+            logger.debug("removing encryption layer {} on response", i);
             String payload = this.cryptoService.decrypt(msg.getPayload());
             msg = JsonUtils.fromJSON(payload);
         }

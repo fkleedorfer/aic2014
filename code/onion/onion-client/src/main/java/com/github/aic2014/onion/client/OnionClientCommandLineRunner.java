@@ -40,7 +40,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   public void run(final String... strings) throws Exception {
       shell = new Shell("Client", System.in, System.out);
       shell.register(this);
-      executor = Executors.newFixedThreadPool(20);
+      executor = Executors.newFixedThreadPool(5);
       executor.execute(shell);
       printUsage();
   }
