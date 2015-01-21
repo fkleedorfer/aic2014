@@ -68,6 +68,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
 
   @Command
   public String bomb(int messageCount) throws Exception {
+      long start = System.currentTimeMillis();
       final String requestString = buildRequestString();
       final CountDownLatch latch = new CountDownLatch(messageCount);
       final AtomicInteger requestSentCounter = new AtomicInteger(0);
@@ -112,7 +113,9 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
           executor.execute(sendTask);
       }
       latch.await();
-      return "done bombing";
+      double time = (System.currentTimeMillis() - start) / 1000.0;
+      return String.format("done bombing. Sent %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
+              messageCount, time, responseSuccessfulCounter.get(), responseFailedCounter.get(), messageCount/time);
   }
 
     private String buildRequestString() throws java.io.IOException, org.apache.http.HttpException {
