@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+/**
+ * Service that always returns the same chain. Only for debugging.
+ */
 public class ConstantChainInMemoryDirectoryService implements DirectoryNodeService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int CHAIN_LENGTH = 3;

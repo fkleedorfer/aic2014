@@ -42,6 +42,9 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
 
     @Override
     public Executor getAsyncExecutor() {
+        //important: the number of threads should be greater than
+        //the number of threads allowed by the application server
+        //controlled by ${server.tomcat.max-threads}
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(20);

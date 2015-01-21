@@ -71,19 +71,23 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
       final String requestString = buildRequestString();
       final CountDownLatch latch = new CountDownLatch(messageCount);
       final AtomicInteger requestSentCounter = new AtomicInteger(0);
-      final AtomicInteger responseReceivedCounter = new AtomicInteger(0);
+      final AtomicInteger responseSuccessfulCounter = new AtomicInteger(0);
+      final AtomicInteger responseFailedCounter = new AtomicInteger(0);
       Runnable sendTask = new Runnable(){
           @Override
 
 
           public void run() {
               try {
-                shell.writeLine(String.format("sent a request (sent %s in total, %s to go)", requestSentCounter.addAndGet(1), messageCount-requestSentCounter.get()));
+                requestSentCounter.addAndGet(1);
+                reportStatus("Sent request... ");
                 OnionRoutedHttpRequest request = client.getHttpRequest();
                 String response = request.execute(requestString);
-                shell.writeLine(String.format("received a response (received %s in total, %s to go)", responseReceivedCounter.addAndGet(1), messageCount-responseReceivedCounter.get()));
+                responseSuccessfulCounter.addAndGet(1);
+                reportStatus("Success! ");
               } catch (Throwable e) {
                   try {
+                     reportStatus("Failure! ");
                       shell.writeLine(String.format("** CHAIN REQUEST ERROR : %s - full exception is printed at loglevel 'DEBUG'", e.getMessage()));
                   } catch (IOException e1) {
                       e1.printStackTrace();
@@ -93,6 +97,14 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
                   latch.countDown();
               }
           }
+
+        private void reportStatus(String message) throws IOException {
+          shell.writeLine(String.format("%20s (successful: %s, failed: %s, %s still to go)", message,
+                  responseSuccessfulCounter.get(), responseFailedCounter.get(),
+                  messageCount - responseSuccessfulCounter.get() - responseFailedCounter.get()));
+        }
+
+
       };
       shell.writeLine("-------------------------------");
       shell.writeLine(String.format("Sending %s messages...", messageCount));
