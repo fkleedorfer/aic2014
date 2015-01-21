@@ -76,7 +76,7 @@ public class ChainNodeController {
               logger.debug("/request: sending exit request asynchronously");
               updateRoutingInfoForRequest(msg, null);
               msgFuture = this.asyncRequestService.sendExitRequestAndTunnelResponse(msg.getRecipient(), msg.getChainId(),msg.getPublicKey(),decryptedPayload);
-              timeoutMessage = new Message();
+              timeoutMessage = new Message("CNC:routeRequest:hopsToGo==0,timeoutmsg");
               timeoutMessage.setChainId(msg.getChainId());
               timeoutMessage.setStatus(OnionStatus.TARGET_TIMEOUT);
               timeoutMessage.setMisbehavingNode(msg.getRecipient());
@@ -87,7 +87,7 @@ public class ChainNodeController {
               updateRoutingInfoForRequest(msg, nextMsg);
               msgFuture = this.asyncRequestService.sendChainRequest(nextMsg);
               //if sending nextMsg yields a timeout, send the follwing message back through the chain
-              timeoutMessage = new Message();
+              timeoutMessage = new Message("CNC:routeRequest:hopsToGo>0,timeoutmsg");
               timeoutMessage.setChainId(msg.getChainId());
               timeoutMessage.setStatus(OnionStatus.CHAIN_TIMEOUT);
               timeoutMessage.setMisbehavingNode(nextMsg.getRecipient());
@@ -99,7 +99,7 @@ public class ChainNodeController {
               @Override
               public void onFailure(Throwable ex) {
                   logger.debug("/request: failure", ex);
-                  Message responseMessage = new Message();
+                  Message responseMessage = new Message("CNC:routeRequest:msgFuture.onFailure");
                   responseMessage.setChainId(msg.getChainId());
                   if (ex instanceof OnionRoutingRequestException){
                       responseMessage.setMisbehavingNode(((OnionRoutingRequestException)ex).getMisbehavingNode());
@@ -121,6 +121,7 @@ public class ChainNodeController {
                   //if an exception is thrown here, the framework calls onFailure() above
                   logger.info("received response, routing it back");
                   logger.debug("/request: done. result: {}", responseMessage);
+                  responseMessage.setDebugInfo(responseMessage.getDebugInfo()+"| CNC:routeRequest:msgFuture.onSuccess");
                   updateRoutingInfoForResponse(msg, responseMessage);
                   chainNodeStatsCollector.onMessageProcessed();
                   deferredResult.setResult(responseMessage);
@@ -134,12 +135,13 @@ public class ChainNodeController {
             logger.info(String.format("/request: error - caught throwable during chain request: %s (more info on loglevel DEBUG",t.getMessage()));
           }
           DeferredResult<Message> errorResult = new DeferredResult<Message>();
-          Message responseMessage = new Message();
+          Message responseMessage = new Message("CNC:routeRequest:finalCatch");
           responseMessage.setChainId(msg.getChainId());
           responseMessage.setStatus(OnionStatus.CHAIN_ERROR);
           responseMessage.setMisbehavingNode(msg.getRecipient()); //should be this chain node
           responseMessage.setSender(msg.getRecipient());
           responseMessage.setRecipient(msg.getSender());
+          responseMessage.setErrorMessage(t.getMessage());
           errorResult.setResult(responseMessage);
           updateRoutingInfoForResponse(msg, responseMessage);
           chainNodeStatsCollector.onMessageProcessed();

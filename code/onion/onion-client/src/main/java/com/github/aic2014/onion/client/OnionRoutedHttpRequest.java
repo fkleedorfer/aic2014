@@ -73,7 +73,7 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
         //add it encrypted as payload to the one before.
         //start by building the outermost
         for (int idx = chain.length - 1; idx >= 0; idx--) {
-            msg = new Message();
+            msg = new Message("ORHR:buildMessage:idx=" + idx);
             msg.setChainId(chainId);
             msg.setRecipient(chain[idx].getUri());
             if (idx > 0) {
@@ -91,6 +91,7 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
 
     private String decryptResponse(Message msg) throws OnionRoutedRequestException {
       int i = 0;
+        logger.debug("received this response {}", msg);
         logger.debug("removing {} layers of encryption on response", usedChain.length);
         // decrypt payload, starting from first chain node to last
         for (i = 1; i < usedChain.length; i++) {
