@@ -19,6 +19,8 @@ public class ChainNodeStatsCollector {
     private AtomicInteger messagesProcessed = new AtomicInteger();
     //number of messages that were received and for which the response has not yet been returned
     private AtomicInteger messagesPending = new AtomicInteger();
+    //number of processing errors
+    private AtomicInteger errors = new AtomicInteger();
     //number of milliseconds since the last message was received
     private AtomicLong lastMessageReceivedTimestamp = new AtomicLong();
     //number of milliseconds since the last message was returned
@@ -51,6 +53,10 @@ public class ChainNodeStatsCollector {
         this.lastMessageReceivedTimestamp.set(System.currentTimeMillis());
     }
 
+    public void onMessageProcessingError(){
+        this.errors.getAndIncrement();
+    }
+
     public void onMessageProcessed(){
         this.messagesPending.getAndDecrement();
         this.messagesProcessed.getAndIncrement();
@@ -66,6 +72,7 @@ public class ChainNodeStatsCollector {
         stats.setTimeWindowSize(diffToNow(this.collectionStartTimeStamp.get()));
         stats.setMessagesPending(this.messagesPending.get());
         stats.setMessagesProcessed(this.messagesProcessed.get());
+        stats.setErrors(this.errors.get());
         stats.setMillisSinceLastMessageIn(diffToNow(this.lastMessageReceivedTimestamp.get()));
         stats.setMillisSinceLastMessageProcessed(diffToNow(this.lastMessageProcessedTimestamp.get()));
         resetIfNecessary();

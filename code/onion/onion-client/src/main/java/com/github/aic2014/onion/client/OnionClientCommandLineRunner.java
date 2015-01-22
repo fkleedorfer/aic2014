@@ -88,8 +88,8 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
                 reportStatus("Success! ");
               } catch (Throwable e) {
                   try {
+                     responseFailedCounter.addAndGet(1);
                      reportStatus("Failure! ");
-                      shell.writeLine(String.format("** CHAIN REQUEST ERROR : %s - full exception is printed at loglevel 'DEBUG'", e.getMessage()));
                   } catch (IOException e1) {
                       e1.printStackTrace();
                   }
@@ -114,7 +114,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
       }
       latch.await();
       double time = (System.currentTimeMillis() - start) / 1000.0;
-      return String.format("done bombing. Sent %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
+      return String.format("Done bombing. Attempted to send %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
               messageCount, time, responseSuccessfulCounter.get(), responseFailedCounter.get(), messageCount/time);
   }
 

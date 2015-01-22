@@ -10,6 +10,8 @@ public class ChainNodeRoutingStats {
     private int messagesProcessed;
     //number of messages that were received and for which the response has not yet been returned
     private int messagesPending;
+    //number of errors#
+    private int errors;
     //number of milliseconds since the last message was received
     private long millisSinceLastMessageIn;
     //number of milliseconds since the last message was returned
@@ -39,6 +41,14 @@ public class ChainNodeRoutingStats {
         this.messagesPending = messagesPending;
     }
 
+    public int getErrors() {
+      return errors;
+    }
+
+    public void setErrors(int errors) {
+      this.errors = errors;
+    }
+
     public long getMillisSinceLastMessageIn() {
         return millisSinceLastMessageIn;
     }
@@ -55,41 +65,44 @@ public class ChainNodeRoutingStats {
         this.millisSinceLastMessageProcessed = millisSinceLastMessageProcessed;
     }
 
-    @Override
-    public String toString() {
-        return "ChainNodeRoutingStats{" +
-                "timeWindowSize=" + timeWindowSize +
-                ", messagesProcessed=" + messagesProcessed +
-                ", messagesPending=" + messagesPending +
-                ", millisSinceLastMessageIn=" + millisSinceLastMessageIn +
-                ", millisSinceLastMessageProcessed=" + millisSinceLastMessageProcessed +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "ChainNodeRoutingStats{" +
+            "timeWindowSize=" + timeWindowSize +
+            ", messagesProcessed=" + messagesProcessed +
+            ", messagesPending=" + messagesPending +
+            ", errors=" + errors +
+            ", millisSinceLastMessageIn=" + millisSinceLastMessageIn +
+            ", millisSinceLastMessageProcessed=" + millisSinceLastMessageProcessed +
+            '}';
+  }
 
-    @Override
-    public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
 
-        if (this == o) return true;
-        if (!(o instanceof ChainNodeRoutingStats)) return false;
+    if (this == o) return true;
+    if (!(o instanceof ChainNodeRoutingStats)) return false;
 
-        ChainNodeRoutingStats that = (ChainNodeRoutingStats) o;
+    ChainNodeRoutingStats that = (ChainNodeRoutingStats) o;
 
-        if (messagesPending != that.messagesPending) return false;
-        if (messagesProcessed != that.messagesProcessed) return false;
-        if (millisSinceLastMessageIn != that.millisSinceLastMessageIn) return false;
-        if (millisSinceLastMessageProcessed != that.millisSinceLastMessageProcessed) return false;
-        if (timeWindowSize != that.timeWindowSize) return false;
+    if (errors != that.errors) return false;
+    if (messagesPending != that.messagesPending) return false;
+    if (messagesProcessed != that.messagesProcessed) return false;
+    if (millisSinceLastMessageIn != that.millisSinceLastMessageIn) return false;
+    if (millisSinceLastMessageProcessed != that.millisSinceLastMessageProcessed) return false;
+    if (timeWindowSize != that.timeWindowSize) return false;
 
-        return true;
-    }
+    return true;
+  }
 
-    @Override
-    public int hashCode() {
-        int result = (int) (timeWindowSize ^ (timeWindowSize >>> 32));
-        result = 31 * result + messagesProcessed;
-        result = 31 * result + messagesPending;
-        result = 31 * result + (int) (millisSinceLastMessageIn ^ (millisSinceLastMessageIn >>> 32));
-        result = 31 * result + (int) (millisSinceLastMessageProcessed ^ (millisSinceLastMessageProcessed >>> 32));
-        return result;
-    }
+  @Override
+  public int hashCode() {
+    int result = (int) (timeWindowSize ^ (timeWindowSize >>> 32));
+    result = 31 * result + messagesProcessed;
+    result = 31 * result + messagesPending;
+    result = 31 * result + errors;
+    result = 31 * result + (int) (millisSinceLastMessageIn ^ (millisSinceLastMessageIn >>> 32));
+    result = 31 * result + (int) (millisSinceLastMessageProcessed ^ (millisSinceLastMessageProcessed >>> 32));
+    return result;
+  }
 }

@@ -10,6 +10,15 @@
 <div class="container-fluid">
 <h1>Chainnode status page</h1>
 This table shows the most recent routing information.
+<div ng-model="">
+    <h2>Error Simulation</h2>
+    Select error simulation mode of this chainnode:
+    <label><input type="radio" ng-model="errorSimulationMode" value="NO_ERROR" ng-change="setErrSim()" ng-disabled="isRequesting">No error</label>
+    <label><input type="radio" ng-model="errorSimulationMode" value="RETURN_404" ng-change="setErrSim()" ng-disabled="isRequesting">Always return a 404 error</label>
+    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_ACCEPT" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before forwarding the request</label>
+    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_RESPONSE" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before returning the response</label>
+</div>
+<h2> Overview of the latest 20 messages: </h2>
 <table class="table table-striped">
     <thead>
         <td>Latest Update</td>

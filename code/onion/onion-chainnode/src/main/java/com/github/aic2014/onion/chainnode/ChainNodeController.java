@@ -15,12 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
@@ -45,8 +43,24 @@ public class ChainNodeController {
     @Value("${messageTimeout}")
     long messageTimeout;
 
+    private ErrorSimulationMode errorSimulationMode = ErrorSimulationMode.NO_ERROR;
+
 
     private ChainNodeStatsCollector chainNodeStatsCollector = new ChainNodeStatsCollector();
+
+    @RequestMapping(value = "/errSim", method = RequestMethod.GET)
+    public ResponseEntity<ErrorSimulationMode> getErrorSimulationMode(){
+      return new ResponseEntity<>(this.errorSimulationMode,HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/errSim", method = RequestMethod.PUT)
+    public ResponseEntity<String> setErrorSimulationMode(@RequestParam(required = true, value = "mode") ErrorSimulationMode newMode){
+      if (newMode == null){
+        return new ResponseEntity<>("Required errorSimulationMode missing in body", HttpStatus.BAD_REQUEST);
+      }
+      this.errorSimulationMode = newMode;
+      return new ResponseEntity<>("new errorSimulationMode: " + this.errorSimulationMode, HttpStatus.OK);
+    }
 
     @RequestMapping(value="/ping", method = RequestMethod.GET)
     public ResponseEntity<ChainNodeRoutingStats> ping(){
@@ -56,8 +70,16 @@ public class ChainNodeController {
 
     @RequestMapping(value = "/request", method = RequestMethod.POST)
     @ResponseBody
-    public DeferredResult<Message> routeRequest(final @RequestBody Message msg)
+    public DeferredResult<Message> routeRequest(final @RequestBody Message msg, HttpServletResponse response)
             throws IOException {
+
+        //simulate a 404 error?
+        if (this.errorSimulationMode == ErrorSimulationMode.RETURN_404){
+          response.setStatus(HttpStatus.NOT_FOUND.value());
+          this.chainNodeStatsCollector.onMessageProcessingError();
+          return null;
+        }
+
         try {
           chainNodeStatsCollector.onMessageReceived();
           logger.debug("received request with message {}", msg);
@@ -68,6 +90,10 @@ public class ChainNodeController {
           }
           ListenableFuture<Message> msgFuture = null;
           Message timeoutMessage = null; //if we hit a timeout, send this message (if not null)
+
+          if (this.errorSimulationMode == ErrorSimulationMode.SLOW_ACCEPT){
+            Thread.sleep(5000);
+          }
 
           if (msg.getHopsToGo() == 0) {
               logger.info("received exit request from {}", msg.getSender());
@@ -112,6 +138,8 @@ public class ChainNodeController {
                   //set a result (not an errorResult) so that the message is propagated back normally
                   logger.info("An error occurred during request processing, sending back an error message");
                   updateRoutingInfoForResponse(msg, responseMessage);
+                  //don't count this as an error of this node,
+                  //rather, the error happened at the next node in the chain.
                   chainNodeStatsCollector.onMessageProcessed();
                   deferredResult.setResult(responseMessage);
               }
@@ -124,11 +152,20 @@ public class ChainNodeController {
                   responseMessage.setDebugInfo(responseMessage.getDebugInfo() + "| CNC:routeRequest:msgFuture.onSuccess");
                   updateRoutingInfoForResponse(msg, responseMessage);
                   chainNodeStatsCollector.onMessageProcessed();
+                  if (errorSimulationMode == ErrorSimulationMode.SLOW_ACCEPT){
+                    try {
+                      Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                      logger.debug("caught exception during SLOW_ACCEPT sleep", e);
+
+                    }
+                  }
                   deferredResult.setResult(responseMessage);
               }
           });
           return deferredResult;
         } catch (Throwable t) {
+          this.chainNodeStatsCollector.onMessageProcessingError();
           if (logger.isDebugEnabled()){
             logger.debug("/request: error - caught throwable during chain request:",t);
           } else  {
@@ -144,7 +181,6 @@ public class ChainNodeController {
           responseMessage.setErrorMessage(t.getMessage());
           errorResult.setResult(responseMessage);
           updateRoutingInfoForResponse(msg, responseMessage);
-          chainNodeStatsCollector.onMessageProcessed();
           return errorResult;
         }
     }  
