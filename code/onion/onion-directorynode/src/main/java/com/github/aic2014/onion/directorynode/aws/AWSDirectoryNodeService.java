@@ -23,6 +23,7 @@ import java.util.*;
 public class AWSDirectoryNodeService implements DirectoryNodeService {
 
 
+
     class AWSChainNodeChainedComparator implements Comparator<AWSChainNode> {
 
         private List<Comparator<AWSChainNode>> listComparators;
@@ -71,6 +72,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     private int latestNodeNumber = 0;
     private int numberOfChainNodes;
     private int minNumberOfChainNodes;
+    public String IPAddressDirectoryNode ="";
 
     /**
      * Initializes the AWS Directory Node Service
@@ -115,35 +117,22 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         //der Thread  läuft Liste wird vom Connector geladen
     }
 
-    //TODO neue Chainode über Connector starten und in Liste speichern
     @Override
     public String registerChainNode(ChainNodeInfo remoteChainNodeInfo) {
 
-        if (remoteChainNodeInfo == null) {
-            logger.warn("'null' chain-node tried to register. Ignore!");
-            return null;
-        }
+        String id= "";
+         synchronized (this.awsConnector){
+             AWSChainNode awsChainNode = this.awsConnector.findChainNodeByIP(remoteChainNodeInfo.getPublicIP());
+             awsChainNode.setPublicKey(remoteChainNodeInfo.getPublicKey());
+             id = awsChainNode.getId();
+         }
+        logger.info(String.format("Register awsChainNode.id " + id + "  chain node with IP %s.", remoteChainNodeInfo.getPublicIP()));
+        return id;
+    }
 
-        Collection<AWSChainNode> awsChainNodes = getAllAWSChainNodes();
-
-        AWSChainNode equivalentAWSCN = null;
-        for (AWSChainNode awsCN : awsChainNodes) {
-            if (awsCN.getPublicIP() == null || remoteChainNodeInfo.getPublicIP() == null) {
-                continue;
-            }
-            if (awsCN.getPublicIP().equals(remoteChainNodeInfo.getPublicIP())) {
-                equivalentAWSCN = awsCN;
-                break;
-            }
-        }
-
-        if (equivalentAWSCN == null) {
-            logger.warn(String.format("Unknown chain node with IP %s tried to register. Ignore!", remoteChainNodeInfo.getPublicIP()));
-            return null;
-        }
-
-        logger.info(String.format("Register chain node with IP %s.", remoteChainNodeInfo.getPublicIP()));
-        return equivalentAWSCN.getId();
+    @Override
+    public String getIPAddress(){
+        return this.IPAddressDirectoryNode;
     }
 
     private void setIpInChainNodeConf(){
@@ -180,6 +169,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                     }
                 }
             }
+            this.IPAddressDirectoryNode = ip;
             props.setProperty("directorynode.hostname", "http://" + ip);
             props.store(new FileOutputStream(path), null);
         }
@@ -222,7 +212,8 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
         List<AWSChainNode> awsChainNodes;
 
-        //TODO: why synchronized? It doesn't seem to be necessary here.
+        //TODO: why synchronized? It doesn't seem to be necessary here. =====
+        // because 2 threads access same list- !!!! one deletes entries if those chainnodes are not running any longer!!!
         synchronized (this.awsConnector) {
             awsChainNodes = this.awsConnector.getAllChainNodes(false);
         }

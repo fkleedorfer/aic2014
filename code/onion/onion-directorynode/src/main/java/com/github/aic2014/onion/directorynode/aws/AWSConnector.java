@@ -62,8 +62,8 @@ public class AWSConnector {
     }
 
 
-    private AWSChainNode findChainNodeByName(String name) {
-        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getInstanceName().equals(name)).findAny();
+    public AWSChainNode findChainNodeByIP(String ip) {
+        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getPublicIP().equals(ip)).findAny();
         return result.isPresent() ? result.get() : null;
     }
 
