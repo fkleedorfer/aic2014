@@ -9,23 +9,24 @@ import org.apache.http.impl.io.DefaultHttpRequestWriter;
 import org.apache.http.impl.io.HttpTransportMetricsImpl;
 import org.apache.http.impl.io.SessionOutputBufferImpl;
 import org.apache.http.io.HttpMessageWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OnionClientCommandLineRunner implements CommandLineRunner
 {
-
+  private final Logger logger = LoggerFactory.getLogger(getClass());
   private Shell shell;
   private static ExecutorService executor;
-
   @Autowired
   private OnionClient client;
 
@@ -39,7 +40,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   public void run(final String... strings) throws Exception {
       shell = new Shell("Client", System.in, System.out);
       shell.register(this);
-      executor = Executors.newFixedThreadPool(20);
+      executor = Executors.newFixedThreadPool(5);
       executor.execute(shell);
       printUsage();
   }
@@ -57,41 +58,54 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   @Command
   public String send() throws Exception {
 
-      String requestString = buildRequestString();
-      shell.writeLine("Sending Request: " + requestString);
-
-      ChainNodeInfo[] chain = client.getChain();
-      shell.writeLine("-------------------------------");
-
-      shell.writeLine("Used Chain:");
-      for(int i = 0; i < 3; i++) {
-          shell.writeLine("ChainNode"+i+": " + chain[i].getPublicIP() + ":" + chain[i].getPort());
-      }
-      shell.writeLine("-------------------------------");
-
-      long start = System.nanoTime();
-      // print
-      String response = client.executeOnionRoutedHttpRequest(requestString, chain);
-
-      return String.format("Response in %s msec: %s", (System.nanoTime() - start) / 1000 / 1000, response);
+    String requestString = buildRequestString();
+    shell.writeLine("Sending Request: " + requestString);
+    OnionRoutedHttpRequest request = client.getHttpRequest();
+    String response = request.execute(requestString);
+    shell.writeLine(request.printUsedChain());
+    return String.format("Response in %s ms: %s", request.getRoundTripTime(), response);
   }
 
   @Command
   public String bomb(int messageCount) throws Exception {
+      long start = System.currentTimeMillis();
       final String requestString = buildRequestString();
       final CountDownLatch latch = new CountDownLatch(messageCount);
+      final AtomicInteger requestSentCounter = new AtomicInteger(0);
+      final AtomicInteger responseSuccessfulCounter = new AtomicInteger(0);
+      final AtomicInteger responseFailedCounter = new AtomicInteger(0);
       Runnable sendTask = new Runnable(){
           @Override
+
+
           public void run() {
               try {
-                  ChainNodeInfo[] chain = client.getChain();
-                  String response = client.executeOnionRoutedHttpRequest(requestString, chain);
-              } catch (Exception e) {
-                  e.printStackTrace();
+                requestSentCounter.addAndGet(1);
+                reportStatus("Sent request... ");
+                OnionRoutedHttpRequest request = client.getHttpRequest();
+                String response = request.execute(requestString);
+                responseSuccessfulCounter.addAndGet(1);
+                reportStatus("Success! ");
+              } catch (Throwable e) {
+                  try {
+                     responseFailedCounter.addAndGet(1);
+                     reportStatus("Failure! ");
+                  } catch (IOException e1) {
+                      e1.printStackTrace();
+                  }
+                  logger.debug("caught throwable when sending chain request from client", e);
               } finally {
                   latch.countDown();
               }
           }
+
+        private void reportStatus(String message) throws IOException {
+          shell.writeLine(String.format("%20s (successful: %s, failed: %s, %s still to go)", message,
+                  responseSuccessfulCounter.get(), responseFailedCounter.get(),
+                  messageCount - responseSuccessfulCounter.get() - responseFailedCounter.get()));
+        }
+
+
       };
       shell.writeLine("-------------------------------");
       shell.writeLine(String.format("Sending %s messages...", messageCount));
@@ -99,7 +113,9 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
           executor.execute(sendTask);
       }
       latch.await();
-      return "Received all responses";
+      double time = (System.currentTimeMillis() - start) / 1000.0;
+      return String.format("Done bombing. Attempted to send %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
+              messageCount, time, responseSuccessfulCounter.get(), responseFailedCounter.get(), messageCount/time);
   }
 
     private String buildRequestString() throws java.io.IOException, org.apache.http.HttpException {

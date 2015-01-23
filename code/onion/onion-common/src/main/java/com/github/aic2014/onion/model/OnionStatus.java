@@ -6,6 +6,8 @@ package com.github.aic2014.onion.model;
 public enum OnionStatus {
     //ok
     OK,
+    //no chain could be obtained from the directory node
+    DIRECTORY_ERROR,
     //an error occurred inside the chain
     CHAIN_TIMEOUT,
     //an error occurred when sending the request to the target

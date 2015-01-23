@@ -24,7 +24,6 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 
 @Configuration
@@ -43,10 +42,13 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
 
     @Override
     public Executor getAsyncExecutor() {
+        //important: the number of threads should be greater than
+        //the number of threads allowed by the application server
+        //controlled by ${server.tomcat.max-threads}
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(10);
+        executor.setMaxPoolSize(20);
+        executor.setQueueCapacity(150);
         executor.initialize();
         return executor;
     }
