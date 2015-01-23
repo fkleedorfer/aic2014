@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StopWatch;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.bind.annotation.*;
@@ -72,11 +73,13 @@ public class ChainNodeController {
     @ResponseBody
     public DeferredResult<Message> routeRequest(final @RequestBody Message msg, HttpServletResponse response)
             throws IOException {
-
+        final StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         //simulate a 404 error?
         if (this.errorSimulationMode == ErrorSimulationMode.RETURN_404){
           response.setStatus(HttpStatus.NOT_FOUND.value());
-          this.chainNodeStatsCollector.onMessageProcessingError();
+          stopWatch.stop();
+          this.chainNodeStatsCollector.onMessageProcessingError(stopWatch.getTotalTimeMillis());
           return null;
         }
 
@@ -140,7 +143,8 @@ public class ChainNodeController {
                   updateRoutingInfoForResponse(msg, responseMessage);
                   //don't count this as an error of this node,
                   //rather, the error happened at the next node in the chain.
-                  chainNodeStatsCollector.onMessageProcessed();
+                  stopWatch.stop();
+                  chainNodeStatsCollector.onMessageProcessed(stopWatch.getLastTaskTimeMillis());
                   deferredResult.setResult(responseMessage);
               }
 
@@ -151,7 +155,6 @@ public class ChainNodeController {
                   logger.debug("/request: done. result: {}", responseMessage);
                   responseMessage.setDebugInfo(responseMessage.getDebugInfo() + "| CNC:routeRequest:msgFuture.onSuccess");
                   updateRoutingInfoForResponse(msg, responseMessage);
-                  chainNodeStatsCollector.onMessageProcessed();
                   if (errorSimulationMode == ErrorSimulationMode.SLOW_ACCEPT){
                     try {
                       Thread.sleep(5000);
@@ -160,12 +163,13 @@ public class ChainNodeController {
 
                     }
                   }
-                  deferredResult.setResult(responseMessage);
+                  stopWatch.stop();
+                  chainNodeStatsCollector.onMessageProcessed(stopWatch.getLastTaskTimeMillis());
+                deferredResult.setResult(responseMessage);
               }
           });
           return deferredResult;
         } catch (Throwable t) {
-          this.chainNodeStatsCollector.onMessageProcessingError();
           if (logger.isDebugEnabled()){
             logger.debug("/request: error - caught throwable during chain request:",t);
           } else  {
@@ -179,6 +183,8 @@ public class ChainNodeController {
           responseMessage.setSender(msg.getRecipient());
           responseMessage.setRecipient(msg.getSender());
           responseMessage.setErrorMessage(t.getMessage());
+          stopWatch.stop();
+          this.chainNodeStatsCollector.onMessageProcessingError(stopWatch.getLastTaskTimeMillis());
           errorResult.setResult(responseMessage);
           updateRoutingInfoForResponse(msg, responseMessage);
           return errorResult;

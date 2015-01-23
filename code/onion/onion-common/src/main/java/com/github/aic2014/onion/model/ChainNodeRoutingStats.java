@@ -4,66 +4,84 @@ package com.github.aic2014.onion.model;
  * Model for simple statistics collected by a chain node about its operation.
  */
 public class ChainNodeRoutingStats {
-    //length of the time window that the statistics were collected in
-    private long timeWindowSize;
-    //number of messages processed (correctly or with error) within the timeframe
-    private int messagesProcessed;
-    //number of messages that were received and for which the response has not yet been returned
-    private int messagesPending;
-    //number of errors#
-    private int errors;
-    //number of milliseconds since the last message was received
-    private long millisSinceLastMessageIn;
-    //number of milliseconds since the last message was returned
-    private long millisSinceLastMessageProcessed;
+  //length of the time window that the statistics were collected in
+  private long timeWindowSize;
+  //number of messages processed (correctly or with error) within the timeframe
+  private int messagesProcessed;
+  //number of messages that were received and for which the response has not yet been returned
+  private int messagesPending;
+  //number of errors#
+  private int errors;
+  //number of milliseconds since the last message was received
+  private long millisSinceLastMessageIn;
+  //number of milliseconds since the last message was returned
+  private long millisSinceLastMessageProcessed;
+  private long timeSpentInFailedRequests;
+  private long timeSpentInSuccessfulRequests;
 
-    public long getTimeWindowSize() {
-        return timeWindowSize;
-    }
+  public long getTimeWindowSize() {
+    return timeWindowSize;
+  }
 
-    public void setTimeWindowSize(long timeWindowSize) {
-        this.timeWindowSize = timeWindowSize;
-    }
+  public void setTimeWindowSize(long timeWindowSize) {
+    this.timeWindowSize = timeWindowSize;
+  }
 
-    public int getMessagesProcessed() {
-        return messagesProcessed;
-    }
+  public int getMessagesProcessed() {
+    return messagesProcessed;
+  }
 
-    public void setMessagesProcessed(int messagesProcessed) {
-        this.messagesProcessed = messagesProcessed;
-    }
+  public void setMessagesProcessed(int messagesProcessed) {
+    this.messagesProcessed = messagesProcessed;
+  }
 
-    public int getMessagesPending() {
-        return messagesPending;
-    }
+  public int getMessagesPending() {
+    return messagesPending;
+  }
 
-    public void setMessagesPending(int messagesPending) {
-        this.messagesPending = messagesPending;
-    }
+  public void setMessagesPending(int messagesPending) {
+    this.messagesPending = messagesPending;
+  }
 
-    public int getErrors() {
-      return errors;
-    }
+  public int getErrors() {
+    return errors;
+  }
 
-    public void setErrors(int errors) {
-      this.errors = errors;
-    }
+  public void setErrors(int errors) {
+    this.errors = errors;
+  }
 
-    public long getMillisSinceLastMessageIn() {
-        return millisSinceLastMessageIn;
-    }
+  public long getMillisSinceLastMessageIn() {
+    return millisSinceLastMessageIn;
+  }
 
-    public void setMillisSinceLastMessageIn(long millisSinceLastMessageIn) {
-        this.millisSinceLastMessageIn = millisSinceLastMessageIn;
-    }
+  public void setMillisSinceLastMessageIn(long millisSinceLastMessageIn) {
+    this.millisSinceLastMessageIn = millisSinceLastMessageIn;
+  }
 
-    public long getMillisSinceLastMessageProcessed() {
-        return millisSinceLastMessageProcessed;
-    }
+  public long getMillisSinceLastMessageProcessed() {
+    return millisSinceLastMessageProcessed;
+  }
 
-    public void setMillisSinceLastMessageProcessed(long millisSinceLastMessageProcessed) {
-        this.millisSinceLastMessageProcessed = millisSinceLastMessageProcessed;
-    }
+  public void setMillisSinceLastMessageProcessed(long millisSinceLastMessageProcessed) {
+    this.millisSinceLastMessageProcessed = millisSinceLastMessageProcessed;
+  }
+
+  public void setTimeSpentInFailedRequests(long timeSpentInFailedRequests) {
+    this.timeSpentInFailedRequests = timeSpentInFailedRequests;
+  }
+
+  public long getTimeSpentInFailedRequests() {
+    return timeSpentInFailedRequests;
+  }
+
+  public void setTimeSpentInSuccessfulRequests(long timeSpentInSuccessfulRequests) {
+    this.timeSpentInSuccessfulRequests = timeSpentInSuccessfulRequests;
+  }
+
+  public long getTimeSpentInSuccessfulRequests() {
+    return timeSpentInSuccessfulRequests;
+  }
 
   @Override
   public String toString() {
@@ -74,6 +92,8 @@ public class ChainNodeRoutingStats {
             ", errors=" + errors +
             ", millisSinceLastMessageIn=" + millisSinceLastMessageIn +
             ", millisSinceLastMessageProcessed=" + millisSinceLastMessageProcessed +
+            ", timeSpentInFailedRequests=" + timeSpentInFailedRequests +
+            ", timeSpentInSuccessfulRequests=" + timeSpentInSuccessfulRequests +
             '}';
   }
 
@@ -90,6 +110,8 @@ public class ChainNodeRoutingStats {
     if (messagesProcessed != that.messagesProcessed) return false;
     if (millisSinceLastMessageIn != that.millisSinceLastMessageIn) return false;
     if (millisSinceLastMessageProcessed != that.millisSinceLastMessageProcessed) return false;
+    if (timeSpentInFailedRequests != that.timeSpentInFailedRequests) return false;
+    if (timeSpentInSuccessfulRequests != that.timeSpentInSuccessfulRequests) return false;
     if (timeWindowSize != that.timeWindowSize) return false;
 
     return true;
@@ -103,6 +125,8 @@ public class ChainNodeRoutingStats {
     result = 31 * result + errors;
     result = 31 * result + (int) (millisSinceLastMessageIn ^ (millisSinceLastMessageIn >>> 32));
     result = 31 * result + (int) (millisSinceLastMessageProcessed ^ (millisSinceLastMessageProcessed >>> 32));
+    result = 31 * result + (int) (timeSpentInFailedRequests ^ (timeSpentInFailedRequests >>> 32));
+    result = 31 * result + (int) (timeSpentInSuccessfulRequests ^ (timeSpentInSuccessfulRequests >>> 32));
     return result;
   }
 }
