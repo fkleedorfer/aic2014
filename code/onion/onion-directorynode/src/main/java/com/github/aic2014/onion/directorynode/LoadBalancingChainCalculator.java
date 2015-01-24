@@ -15,6 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LoadBalancingChainCalculator  {
     private ConcurrentHashMap<String, StatsInfoHolder> idsTostats = new ConcurrentHashMap<>();
 
+    public void registerChainNode(ChainNodeInfo chainNodeInfo){
+        this.idsTostats.put(chainNodeInfo.getId(), new StatsInfoHolder(null, chainNodeInfo));
+    }
+
     public void updateStats(ChainNodeRoutingStats stats , ChainNodeInfo chainNodeInfo){
         this.idsTostats.put(chainNodeInfo.getId(), new StatsInfoHolder(stats, chainNodeInfo));
     }
@@ -28,14 +32,16 @@ public class LoadBalancingChainCalculator  {
         for (StatsInfoHolder statsInfoHolder: allHolders) {
             ChainNodeRoutingStats stats = statsInfoHolder.getStats();
             double currentWeight = 1; //start with weight 1
-            if (stats.getErrors() > 0){
-                currentWeight = currentWeight / (double) stats.getErrors();
-            }
-            if (stats.getMessagesProcessed() > 0){
-                currentWeight = currentWeight * (double) stats.getMessagesProcessed();
-            }
-            if (stats.getTimeSpentInSuccessfulRequests() > 0){
-                currentWeight = currentWeight / (double) stats.getTimeSpentInSuccessfulRequests();
+            if (stats != null){
+                if (stats.getErrors() > 0){
+                    currentWeight = currentWeight / (double) stats.getErrors();
+                }
+                if (stats.getMessagesProcessed() > 0){
+                    currentWeight = currentWeight * (double) stats.getMessagesProcessed();
+                }
+                if (stats.getTimeSpentInSuccessfulRequests() > 0){
+                    currentWeight = currentWeight / (double) stats.getTimeSpentInSuccessfulRequests();
+                }
             }
             sum += currentWeight;
             weights.add(currentWeight);
@@ -46,7 +52,7 @@ public class LoadBalancingChainCalculator  {
         for (int i = 0; i < length; i++){
             ChainNodeInfo newChainNode = null;
             while (newChainNode == null){
-                ChainNodeInfo candidate = getChainNode(weights, allHolders, rnd.nextDouble());
+                ChainNodeInfo candidate = getChainNode(weights, allHolders, rnd.nextDouble() * sum);
                 if (!chainNodeInfos.contains(candidate)){
                     newChainNode = candidate;
                 }
