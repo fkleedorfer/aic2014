@@ -5,6 +5,7 @@ package com.github.aic2014.onion.quoteserver;
  */
 public class Quote {
     private String text;
+    private String timestamp;
 
     public Quote(String text) {
         this.text = text;
@@ -17,6 +18,10 @@ public class Quote {
     public void setText(String text) {
         this.text = text;
     }
+
+    public String getTimestamp() { return timestamp; }
+
+    public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
 
     @Override
     public String toString() {
