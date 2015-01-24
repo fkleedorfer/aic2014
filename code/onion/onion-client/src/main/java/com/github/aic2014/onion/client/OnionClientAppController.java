@@ -111,7 +111,7 @@ public class OnionClientAppController {
         Calendar cal = Calendar.getInstance();
         String res = "";
         try {
-            String requestString = dateFormat.format(cal.getTime()) + " - " + buildRequestString();
+            String requestString = buildRequestString();
             res = dateFormat.format(cal.getTime()) + " - Sending Request: " + requestString + "\n";
             OnionRoutedHttpRequest request = client.getHttpRequest();
             String response = request.execute(requestString);
