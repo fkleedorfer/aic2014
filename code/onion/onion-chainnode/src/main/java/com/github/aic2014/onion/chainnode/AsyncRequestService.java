@@ -4,6 +4,7 @@ import com.github.aic2014.onion.crypto.CryptoService;
 import com.github.aic2014.onion.exception.OnionRoutingException;
 import com.github.aic2014.onion.exception.OnionRoutingRequestException;
 import com.github.aic2014.onion.exception.OnionRoutingTargetRequestException;
+import com.github.aic2014.onion.json.JsonUtils;
 import com.github.aic2014.onion.model.Message;
 import com.github.aic2014.onion.model.OnionStatus;
 import org.apache.http.*;
@@ -58,40 +59,44 @@ public class AsyncRequestService {
   @Value("${outgoingRequest.socketTimeout}")
   private int outgoingRequestSocketTimeout;
 
+
   @Async
   public ListenableFuture<Message> sendChainRequest(Message msg) {
-    Message responseMessage = new Message();
+    Message responseMessage = new Message("ARS:sendChainRequest:ok");
     try {
       logger.debug("sending chain request message: {}", msg);
       ResponseEntity<String> msgEntity = restTemplate.postForEntity(msg.getRecipient() + "/request", msg, String.class);
       responseMessage.setChainId(msg.getChainId());
+      Message receivedMessage = JsonUtils.fromJSON(msgEntity.getBody());
+      responseMessage.setDebugInfo(receivedMessage.getDebugInfo()+"|"+ responseMessage.getDebugInfo());
       responseMessage.setPayload(cryptoService.encrypt(msgEntity.getBody(), msg.getPublicKey()));
     } catch (Exception e) {
       logger.debug("chainRequest: failure", e);
-      responseMessage = new Message();
+      responseMessage = new Message("ARS:sendChainRequest:error");
       UUID chainId = msg.getChainId();
       populateMessageFromException(responseMessage, e, chainId);
       logger.info("An error occurred, sending back an error message with status {}", responseMessage.getStatus());
     }
-    return new AsyncResult<Message>(responseMessage);
+    return new AsyncResult<>(responseMessage);
   }
 
   @Async
+
   public ListenableFuture<Message> sendExitRequestAndTunnelResponse(URI sender, UUID chainId, String publicKey, String request) throws OnionRoutingException {
-    Message responseMessage = new Message();
+    Message responseMessage = new Message("ARS:sendExitRequestAndTunnelResponse:ok");
     logger.debug("sending tunneled http request {}", request);
     try {
       String httpResponse = sendRequestSynchronously(sender, request);
+      logger.debug("received external response");
       responseMessage.setChainId(chainId);
       responseMessage.setPayload(cryptoService.encrypt(httpResponse, publicKey));
     } catch (Exception e) {
-      responseMessage = new Message();
       logger.debug("chainRequest: failure", e);
-      responseMessage = new Message();
+      responseMessage = new Message("ARS:sendExitRequestAndTunnelResponse:error");
       populateMessageFromException(responseMessage, e, chainId);
       logger.info("An error occurred, sending back an error message with status {}", responseMessage.getStatus());
     }
-    return new AsyncResult<Message>(responseMessage);
+    return new AsyncResult<>(responseMessage);
   }
 
   /**

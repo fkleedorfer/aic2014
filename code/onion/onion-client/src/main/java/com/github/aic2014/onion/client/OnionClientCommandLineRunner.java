@@ -40,7 +40,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
   public void run(final String... strings) throws Exception {
       shell = new Shell("Client", System.in, System.out);
       shell.register(this);
-      executor = Executors.newFixedThreadPool(20);
+      executor = Executors.newFixedThreadPool(5);
       executor.execute(shell);
       printUsage();
   }
@@ -68,31 +68,44 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
 
   @Command
   public String bomb(int messageCount) throws Exception {
+      long start = System.currentTimeMillis();
       final String requestString = buildRequestString();
       final CountDownLatch latch = new CountDownLatch(messageCount);
       final AtomicInteger requestSentCounter = new AtomicInteger(0);
-      final AtomicInteger responseReceivedCounter = new AtomicInteger(0);
+      final AtomicInteger responseSuccessfulCounter = new AtomicInteger(0);
+      final AtomicInteger responseFailedCounter = new AtomicInteger(0);
       Runnable sendTask = new Runnable(){
           @Override
 
 
           public void run() {
               try {
-                shell.writeLine(String.format("sent a request (sent %s in total, %s to go)", requestSentCounter.addAndGet(1), messageCount-requestSentCounter.get()));
+                requestSentCounter.addAndGet(1);
+                reportStatus("Sent request... ");
                 OnionRoutedHttpRequest request = client.getHttpRequest();
                 String response = request.execute(requestString);
-                shell.writeLine(String.format("received a response (received %s in total, %s to go)", responseReceivedCounter.addAndGet(1), messageCount-responseReceivedCounter.get()));
+                responseSuccessfulCounter.addAndGet(1);
+                reportStatus("Success! ");
               } catch (Throwable e) {
                   try {
-                      shell.writeLine(String.format("** CHAIN REQUEST ERROR : %s - full exception is printed at loglevel 'DEBUG'", e.getMessage()));
+                     responseFailedCounter.addAndGet(1);
+                     reportStatus("Failure! ");
                   } catch (IOException e1) {
                       e1.printStackTrace();
                   }
-                  logger.debug("caught throwable when sending chain request", e);
+                  logger.debug("caught throwable when sending chain request from client", e);
               } finally {
                   latch.countDown();
               }
           }
+
+        private void reportStatus(String message) throws IOException {
+          shell.writeLine(String.format("%20s (successful: %s, failed: %s, %s still to go)", message,
+                  responseSuccessfulCounter.get(), responseFailedCounter.get(),
+                  messageCount - responseSuccessfulCounter.get() - responseFailedCounter.get()));
+        }
+
+
       };
       shell.writeLine("-------------------------------");
       shell.writeLine(String.format("Sending %s messages...", messageCount));
@@ -100,7 +113,9 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
           executor.execute(sendTask);
       }
       latch.await();
-      return "done bombing";
+      double time = (System.currentTimeMillis() - start) / 1000.0;
+      return String.format("Done bombing. Attempted to send %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
+              messageCount, time, responseSuccessfulCounter.get(), responseFailedCounter.get(), messageCount/time);
   }
 
     private String buildRequestString() throws java.io.IOException, org.apache.http.HttpException {

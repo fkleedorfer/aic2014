@@ -9,6 +9,7 @@ import com.amazonaws.services.ec2.model.*;
 import com.github.aic2014.onion.model.ChainNodeInfo;
 import org.springframework.core.env.Environment;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -61,8 +62,8 @@ public class AWSConnector {
     }
 
 
-    private AWSChainNode findChainNodeByName(String name) {
-        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getInstanceName().equals(name)).findAny();
+    public AWSChainNode findChainNodeByIP(String ip) {
+        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getPublicIP().equals(ip)).findAny();
         return result.isPresent() ? result.get() : null;
     }
 
@@ -76,6 +77,7 @@ public class AWSConnector {
         synchronized (this) {
 
             DescribeInstancesResult result = ec2.describeInstances();
+            SimpleDateFormat format = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
             for (Reservation reservation : result.getReservations()) {
                 for (Instance instance : reservation.getInstances()) {
 
@@ -116,6 +118,7 @@ public class AWSConnector {
                         if (awsCN != null) {
                             awsCN.setState(state);
                             awsCN.setPublicIP(publicIP);
+                            awsCN.setLastLifeCheck(format.format(new Date()));
                         }
                     }
                 }
@@ -166,6 +169,7 @@ public class AWSConnector {
 
         RunInstancesResult result = ec2.runInstances(request);
         int counter = 0;
+        SimpleDateFormat format = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
         for (Instance instance : result.getReservation().getInstances()) {
             String instanceName = counter >= names.length ? "#undef#" : names[counter];
             counter++;
@@ -184,6 +188,8 @@ public class AWSConnector {
                 awsCN.setInstanceName(instanceName);
                 awsCN.setScriptDone(false);
                 awsCN.setState(instance.getState());
+                awsCN.setLaunchedDate(format.format(new Date()));
+                awsCN.setPort(Integer.parseInt(env.getProperty("aws.chainnode.port")));
                 awsChainNodes.add(awsCN);
             }
         }

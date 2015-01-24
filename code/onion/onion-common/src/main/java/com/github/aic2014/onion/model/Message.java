@@ -31,8 +31,29 @@ public class Message {
     //if the routing failed due to a node that misbehaved (timed out, returned error)
     //its URI is passed here.
     URI misbehavingNode;
+    //information for debugging
+    String debugInfo;
 
-    public UUID getChainId() {
+  /**
+   * Constructor that sets the debuginfo.
+   * @param debugInfo
+   */
+  public Message(String debugInfo) {
+    this.debugInfo = debugInfo;
+  }
+
+  public Message() {
+  }
+
+  public String getDebugInfo() {
+    return debugInfo;
+  }
+
+  public void setDebugInfo(String debugInfo) {
+    this.debugInfo = debugInfo;
+  }
+
+  public UUID getChainId() {
         return chainId;
     }
 
@@ -140,18 +161,25 @@ public class Message {
         return result;
     }
 
-    @Override
-    public String toString() {
-        return "Message{" +
-                "chainId=" + chainId +
-                ", payload='" + payload + '\'' +
-                ", sender=" + sender +
-                ", recipient=" + recipient +
-                ", publicKey='" + publicKey + '\'' +
-                ", hopsToGo=" + hopsToGo +
-                ", status=" + status +
-                ", errorMessage='" + errorMessage + '\'' +
-                ", misbehavingNode=" + misbehavingNode +
-                '}';
-    }
+  private String abbreviate(String original, int length) {
+    if (original == null) return "null";
+    if (original.length() <= length) return original;
+    return original.substring(0,length) + "...";
+  }
+
+  @Override
+  public String toString() {
+    return "Message{" +
+            "chainId=" + abbreviate(chainId.toString(),20) +
+            ", payload='" + abbreviate(payload,20) +'\'' +
+            ", sender=" + sender +
+            ", recipient=" + recipient +
+            ", publicKey='" + abbreviate(publicKey,20) + '\'' +
+            ", hopsToGo=" + hopsToGo +
+            ", status=" + status +
+            ", errorMessage='" + errorMessage + '\'' +
+            ", misbehavingNode=" + misbehavingNode +
+            ", debugInfo='" + debugInfo + '\'' +
+            '}';
+  }
 }
