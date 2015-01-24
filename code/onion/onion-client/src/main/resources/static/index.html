@@ -1,25 +1,25 @@
 <!doctype html>
-<html lang="en" ng-app="chainNodeApp">
+<html lang="en" ng-app="clientApp">
 <head>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <script src="js/angular.min.js"></script>
-    <script src="js/ClientApp.js"></script>
+    <script src="js/clientApp.js"></script>
     <title>ClientApp</title>
 </head>
 <body ng-controller="onionClientAppController">
 <div class="container-fluid">
 <h1>Client Status</h1>
-This table shows the most recent routing information.
 <br>
-<textarea ng-model='response' rows="15" cols="75"></textarea>
-    <br>
+<textarea rows="15" cols="75">
+{{response.text}}
+</textarea>
+<br>
 <button ng-click="sendRequest()" ng-disabled="isRequesting">
     Send Request
 </button>
 <button ng-click="sendBomb()" ng-disabled="isRequesting">
     BombN
 </button>
-    <!-- -->
 <button ng-click="sendHelp()" ng-disabled="isRequesting">
     Help
 </button>

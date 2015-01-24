@@ -1,33 +1,34 @@
-var onionClientApp = angular.module('onionClientApp', []);
+var clientApp = angular.module('clientApp', []);
 
-onionClientApp.controller('onionClientController', function ($scope, $http) {
+clientApp.controller('onionClientAppController', function ($scope, $http) {
 
     $scope.response = "";
+    $scope.isRequesting = false;
 
     $scope.sendRequest = function sendRequest(){
-               $scope.isRequesting = true;
-               $http.get('/sendRequest').
-                    success(function(data, status, headers, config) {
-                        $scope.response = data;
-                        $scope.isRequesting = false;
-                    }).
-                    error(function(data, status, headers, config) {
-                        $scope.response = "error";
-                        $scope.isRequesting = false;
-                    });
-         }
-//
-    $scope.sendBomb = function sendBomb(){
           $scope.isRequesting = true;
-          $http.get('/sendBomb').
+          $http.get('/sendRequest').
                success(function(data, status, headers, config) {
-                   $scope.response = data;
-                   $scope.isRequesting = false;
+                    $scope.response = data;
+                    $scope.isRequesting = false;
                }).
                error(function(data, status, headers, config) {
-                   $scope.response = "error";
-                   $scope.isRequesting = false;
+                    $scope.response = data;
+                    $scope.isRequesting = false;
                });
+    }
+
+    $scope.sendBomb = function sendBomb(){
+        $scope.isRequesting = true;
+        $http.get('/sendBomb').
+            success(function(data, status, headers, config) {
+                $scope.response = data;
+                $scope.isRequesting = false;
+            }).
+            error(function(data, status, headers, config) {
+                $scope.response = data;
+                $scope.isRequesting = false;
+        });
     }
 
     $scope.sendHelp = function sendHelp(){
@@ -38,26 +39,21 @@ onionClientApp.controller('onionClientController', function ($scope, $http) {
                    $scope.isRequesting = false;
                }).
                error(function(data, status, headers, config) {
-                   $scope.response = "error";
+                   $scope.response = data;
                    $scope.isRequesting = false;
                });
     }
 
     $scope.sendExit = function sendExit(){
+              $scope.response = "Client stopped...";
               $scope.isRequesting = true;
               $http.get('/sendExit').
                    success(function(data, status, headers, config) {
-                   $scope.response = data;
                    $scope.isRequesting = false;
               }).
               error(function(data, status, headers, config) {
-                   $scope.response = "error";
                    $scope.isRequesting = false;
               });
     }
 
-    $scope.sendRequest();
-    $scope.sendBomb();
-    $scope.sendHelp();
-    $scope.sendExit();
 });
