@@ -157,7 +157,7 @@ public class ChainNodeController {
                   logger.debug("/request: done. result: {}", responseMessage);
                   responseMessage.setDebugInfo(responseMessage.getDebugInfo() + "| CNC:routeRequest:msgFuture.onSuccess");
                   updateRoutingInfoForResponse(msg, responseMessage);
-                  if (errorSimulationMode == ErrorSimulationMode.SLOW_ACCEPT){
+                  if (errorSimulationMode == ErrorSimulationMode.SLOW_RESPONSE){
                     try {
                       logger.debug("simulating slow response (SLOW_RESPONSE)");
                       Thread.sleep(5000);
