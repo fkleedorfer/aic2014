@@ -6,7 +6,6 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.*;
-import com.github.aic2014.onion.model.ChainNodeInfo;
 import org.springframework.core.env.Environment;
 
 import java.text.SimpleDateFormat;
@@ -118,7 +117,7 @@ public class AWSConnector {
                         if (awsCN != null) {
                             awsCN.setState(state);
                             awsCN.setPublicIP(publicIP);
-                            awsCN.setLastLifeCheck(format.format(new Date()));
+                            awsCN.setLastLifeCheck(new Date());
                         }
                     }
                 }
@@ -188,7 +187,7 @@ public class AWSConnector {
                 awsCN.setInstanceName(instanceName);
                 awsCN.setScriptDone(false);
                 awsCN.setState(instance.getState());
-                awsCN.setLaunchedDate(format.format(new Date()));
+                awsCN.setLaunchedDate(new Date());
                 awsCN.setPort(Integer.parseInt(env.getProperty("aws.chainnode.port")));
                 awsChainNodes.add(awsCN);
             }

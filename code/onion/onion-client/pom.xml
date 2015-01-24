@@ -56,6 +56,11 @@
   <dependencies>
     <dependency>
       <groupId>com.github.aic2014</groupId>
+      <artifactId>onion-webcommon</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.aic2014</groupId>
       <artifactId>onion-common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -67,6 +72,10 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

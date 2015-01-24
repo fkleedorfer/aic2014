@@ -132,3 +132,16 @@ In order to run the application the onion "system", do the following:
   ```
   java -DONION_CONF_DIR=/home/onion/client/conf.local -Dlogging.config=/home/onion/client/conf.local/logback.xml -Dquoteserver.baseUri= -Dquoteserver.hostnamePort=54.67.23.87:20140 -jar /home/onion/client/onion-client-1.0-SNAPSHOT-allinone.jar
   ```
+
+3 Deployment/Setup/Startup/Usage
+--------------------------
+
+The following section will provide a step-by-step guide on how to build, deploy, and start the onion service and all its components. The guides can be applied to each component individually. 
+
+3.1 Preparation
+Make sure you have access to the following:
+* Access to AWS EC2 Management Console (given by course administration)
+* Access to the key file `G6-T3-id_rsa.pem`
+* `PuTTY` and `maven` installed on your local machine
+* 
+WIP...

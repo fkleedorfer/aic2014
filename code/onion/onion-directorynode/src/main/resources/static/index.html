@@ -17,16 +17,18 @@
         <td>Port</td>
         <td>Launched At</td>
         <td>Last Life Check At</td>
-        <td>messages routed</td>
+        <td>Messages Routed</td>
+        <td>Load Balancing Weight</td>
     </thead>
     <tbody>
         <tr ng-repeat="ci in chainNodeInfos">
             <td><a href="{{'http://'+ ci.publicIP + ':' +ci.port + '/'}}">{{ci.id}}</a></td>
             <td>{{ci.publicIP}}</td>
             <td>{{ci.port}}</td>
-            <td>{{ci.launchedDate}}</td>
-            <td>{{ci.lastLifeCheck}}</td>
+            <td>{{ci.launchedDate | date:'short' }}</td>
+            <td>{{ci.lastLifeCheck | date:'short' }}</td>
             <td>{{ci.sentMessages}}</td>
+            <td>{{ci.lastLoadBalancingWeight | number:6 }}</td>
         </tr>
     </tbody>
 </table>

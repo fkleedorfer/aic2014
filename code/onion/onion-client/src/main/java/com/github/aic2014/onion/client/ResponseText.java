@@ -1,13 +1,10 @@
-package com.github.aic2014.onion.quoteserver;
+package com.github.aic2014.onion.client;
 
-/**
- * Created by Gertie on 04.12.2014.
- */
-public class Quote {
-    private String text;
-    private String timestamp;
+public class ResponseText {
 
-    public Quote(String text) {
+    private String text = "";
+
+    public ResponseText(String text) {
         this.text = text;
     }
 
@@ -19,13 +16,9 @@ public class Quote {
         this.text = text;
     }
 
-    public String getTimestamp() { return timestamp; }
-
-    public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
-
     @Override
     public String toString() {
-        return "Quote{" +
+        return "ResponseText{" +
                 "text='" + text + '\'' +
                 '}';
     }
@@ -35,9 +28,9 @@ public class Quote {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Quote quote = (Quote) o;
+        ResponseText res = (ResponseText) o;
 
-        if (text != null ? !text.equals(quote.text) : quote.text != null) return false;
+        if (text != null ? !text.equals(res.text) : res.text != null) return false;
 
         return true;
     }
@@ -46,4 +39,5 @@ public class Quote {
     public int hashCode() {
         return text != null ? text.hashCode() : 0;
     }
+
 }
