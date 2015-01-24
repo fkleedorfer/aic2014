@@ -9,12 +9,14 @@ clientApp.controller('onionClientAppController', function ($scope, $http) {
           $scope.isRequesting = true;
           $http.get('/sendRequest').
                success(function(data, status, headers, config) {
-                    $scope.response = data;
+                    $scope.response = data.text + $scope.response;
                     $scope.isRequesting = false;
+                    makeLog();
                }).
                error(function(data, status, headers, config) {
-                    $scope.response = data;
+                    $scope.response = data.text + $scope.response;
                     $scope.isRequesting = false;
+                    makeLog();
                });
     }
 
@@ -22,12 +24,14 @@ clientApp.controller('onionClientAppController', function ($scope, $http) {
         $scope.isRequesting = true;
         $http.get('/sendBomb').
             success(function(data, status, headers, config) {
-                $scope.response = data;
-                $scope.isRequesting = false;
+                    $scope.response = data.text + $scope.response;
+                    $scope.isRequesting = false;
+                    makeLog();
             }).
             error(function(data, status, headers, config) {
-                $scope.response = data;
-                $scope.isRequesting = false;
+                    $scope.response = data.text + $scope.response;
+                    $scope.isRequesting = false;
+                    makeLog();
         });
     }
 
@@ -35,25 +39,27 @@ clientApp.controller('onionClientAppController', function ($scope, $http) {
           $scope.isRequesting = true;
           $http.get('/sendHelp').
                success(function(data, status, headers, config) {
-                   $scope.response = data;
-                   $scope.isRequesting = false;
+                    $scope.response = data.text + $scope.response;
+                    $scope.isRequesting = false;
+                    $('#textview').scrollTop($('#textview')[0].scrollHeight);
                }).
                error(function(data, status, headers, config) {
-                   $scope.response = data;
-                   $scope.isRequesting = false;
+                    $scope.response = data.text + $scope.response;
+                    $scope.isRequesting = false;
+                    $('#textview').scrollTop($('#textview')[0].scrollHeight);
                });
     }
 
     $scope.sendExit = function sendExit(){
-              $scope.response = "Client stopped...";
               $scope.isRequesting = true;
               $http.get('/sendExit').
                    success(function(data, status, headers, config) {
+                   $scope.response = data.text + $scope.response;
                    $scope.isRequesting = false;
               }).
               error(function(data, status, headers, config) {
+                   $scope.response = data.text + $scope.response;
                    $scope.isRequesting = false;
               });
     }
-
 });

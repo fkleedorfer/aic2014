@@ -22,6 +22,9 @@ import com.github.aic2014.onion.client.OnionClientCommandLineRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +51,9 @@ public class OnionClientAppController {
 
     @RequestMapping(value = "/sendBomb", method = RequestMethod.GET)
     public ResponseEntity<ResponseText> sendBomb() throws Exception {
+
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss:SSS");
+        Calendar cal = Calendar.getInstance();
 
         final String[] res = {""};
         int messageCount = 20;
@@ -82,52 +88,58 @@ public class OnionClientAppController {
             }
 
             private void reportStatus(String message) throws IOException {
-                res[0] = String.format("%20s (successful: %s, failed: %s, %s still to go)", message,
+                res[0] = dateFormat.format(cal.getTime()) + " - " + String.format("%20s (successful: %s, failed: %s, %s still to go)", message,
                         responseSuccessfulCounter.get(), responseFailedCounter.get(),
                         messageCount - responseSuccessfulCounter.get() - responseFailedCounter.get()) + "\n";
             }
         };
-        res[0] = res[0] + "--------------------------------------------------------------\n" + String.format("Sending %s messages...", messageCount) + "\n";
+        res[0] = res[0] + "--------------------------------------------------------------------------------------------\n" + String.format("Sending %s messages...", messageCount) + "\n";
         for (int i = 0; i < messageCount; i++) {
             executor.execute(sendTask);
         }
         latch.await();
         double time = (System.currentTimeMillis() - start) / 1000.0;
-        res[0] = res[0] + String.format("Done bombing. Attempted to send %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
+        res[0] = res[0] + dateFormat.format(cal.getTime()) + " - " + String.format("Done bombing. Attempted to send %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
                 messageCount, time, responseSuccessfulCounter.get(), responseFailedCounter.get(), messageCount/time) + "\n";
-        res[0] = res [0] + "--------------------------------------------------------------\n";
+        res[0] = res [0] + "--------------------------------------------------------------------------------------------\n";
         return new ResponseEntity<ResponseText>(new ResponseText(res[0]), HttpStatus.OK);
     }
 
     @RequestMapping(value="/sendRequest", method = RequestMethod.GET)
     public ResponseEntity<ResponseText> sendRequest() {
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss:SSS");
+        Calendar cal = Calendar.getInstance();
         String res = "";
         try {
-            String requestString = buildRequestString();
-            res = "Sending Request: " + requestString + "\n";
+            String requestString = dateFormat.format(cal.getTime()) + " - " + buildRequestString();
+            res = dateFormat.format(cal.getTime()) + " - Sending Request: " + requestString + "\n";
             OnionRoutedHttpRequest request = client.getHttpRequest();
             String response = request.execute(requestString);
-            res = res + request.printUsedChain() + "\n";
-            res = res + String.format("Response in %s ms: %s", request.getRoundTripTime(), response) + "\n";
-            res = res + "--------------------------------------------------------------\n";
+            res = res + dateFormat.format(cal.getTime()) + " - " + request.printUsedChain() + "\n";
+            res = res + dateFormat.format(cal.getTime()) + " - " + String.format("Response in %s ms: %s", request.getRoundTripTime(), response) + "\n";
+            res = res + "--------------------------------------------------------------------------------------------\n";
             return new ResponseEntity<ResponseText>(new ResponseText(res), HttpStatus.OK);
         } catch(Exception e) {
             e.printStackTrace();
-            res = "Request Sending failed!\n"+
-                    "--------------------------------------------------------------\n";
+            res = dateFormat.format(cal.getTime()) + " - Request Sending failed!\n"+
+                    "--------------------------------------------------------------------------------------------\n";
             return new ResponseEntity<ResponseText>(new ResponseText(res), HttpStatus.OK);
         }
     }
 
     @RequestMapping(value="/sendHelp", method = RequestMethod.GET)
     public ResponseEntity<ResponseText> sendHelp(){
-        String a = "Welcome to the Onion Routing Demo! :)\n" +
-                "This are your commands:\n" +
-                "send ... sends a request and prints the response to the Console\n" +
-                "bomb N ... sends N requests multiple parallel threads\n" +
-                "help ... shows this usage notice\n" +
-                "exit ... stops the Client\n" +
-                "--------------------------------------------------------------\n";
+
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss:SSS");
+        Calendar cal = Calendar.getInstance();
+
+        String a = dateFormat.format(cal.getTime()) + " - Welcome to the Onion Routing Demo! :)\n" +
+                dateFormat.format(cal.getTime()) + " - This are your commands:\n" +
+                dateFormat.format(cal.getTime()) + " - send ... sends a request and prints the response to the Console\n" +
+                dateFormat.format(cal.getTime()) + " - bomb N ... sends N requests multiple parallel threads\n" +
+                dateFormat.format(cal.getTime()) + " - help ... shows this usage notice\n" +
+                dateFormat.format(cal.getTime()) + " - exit ... stops the Client\n" +
+                "--------------------------------------------------------------------------------------------\n";
         return new ResponseEntity<ResponseText>(new ResponseText(a), HttpStatus.OK);
     }
 
@@ -150,5 +162,4 @@ public class OnionClientAppController {
         sessionOutputBuffer.flush();
         return new String(out.toByteArray());
     }
-
 }

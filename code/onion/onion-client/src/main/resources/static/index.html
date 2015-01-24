@@ -10,8 +10,13 @@
 <div class="container-fluid">
 <h1>Client Status</h1>
 <br>
-<textarea rows="15" cols="75">
-{{response.text}}
+<!--
+<pre>
+{{response}}
+</pre>
+-->
+<textarea id="textview" rows="15" cols="150">
+{{response}}
 </textarea>
 <br>
 <button ng-click="sendRequest()" ng-disabled="isRequesting">
@@ -23,8 +28,7 @@
 <button ng-click="sendHelp()" ng-disabled="isRequesting">
     Help
 </button>
-<button ng-click="sendExit()" ng-disabled
-        ="isRequesting">
+<button ng-click="sendExit()" ng-disabled="isRequesting">
     Exit
 </button>
 </div>
