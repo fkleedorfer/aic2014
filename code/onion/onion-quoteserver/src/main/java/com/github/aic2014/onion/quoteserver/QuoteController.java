@@ -14,7 +14,10 @@ import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
@@ -33,7 +36,11 @@ public class QuoteController {
             value = "/quote",
             method = RequestMethod.GET)
     public ResponseEntity<Quote> getQuote() {
-        return new ResponseEntity<Quote>(getRandomQuote(), HttpStatus.OK);
+        Quote quote = getRandomQuote();
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss:SSS");
+        Calendar cal = Calendar.getInstance();
+        quote.setTimestamp(""+dateFormat.format(cal.getTime()));
+        return new ResponseEntity<Quote>(quote, HttpStatus.OK);
     }
 
     /**
