@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ChainNodeStatsCollector {
     public static final long DEFAULT_RESET_TIMEOUT = 30000;
     //timestamp when we started collecting data
-    private AtomicLong collectionStartTimeStamp = new AtomicLong();
+    private AtomicLong collectionStartTimeStamp = new AtomicLong(System.currentTimeMillis());
     //number of messages processed (correctly or with error) within the timeframe
     private AtomicInteger messagesProcessed = new AtomicInteger();
     //number of messages that were received and for which the response has not yet been returned
@@ -25,7 +25,9 @@ public class ChainNodeStatsCollector {
     private AtomicLong lastMessageReceivedTimestamp = new AtomicLong();
     //number of milliseconds since the last message was returned
     private AtomicLong lastMessageProcessedTimestamp = new AtomicLong();
+    //milliseconds spent processing successful requests
     private AtomicLong timeSpentInSuccessfulRequests = new AtomicLong();
+    //milliseconds spent processing failed requests
     private AtomicLong timeSpentInFailedRequests = new AtomicLong();
 
     private long resetAfterMillis = DEFAULT_RESET_TIMEOUT;
@@ -44,10 +46,7 @@ public class ChainNodeStatsCollector {
         this.lastMessageReceivedTimestamp.set(-1);
         this.lastMessageProcessedTimestamp.set(-1);
         this.timeSpentInFailedRequests.set(0);
-        this.timeSpentInSuccessfulRequests
-
-
-                .set(0);
+        this.timeSpentInSuccessfulRequests.set(0);
     }
 
     private void resetIfNecessary(){

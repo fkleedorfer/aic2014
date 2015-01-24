@@ -4,13 +4,13 @@ import com.github.aic2014.onion.model.ChainNodeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 
 public class InMemoryDirectoryService implements DirectoryNodeService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int CHAIN_LENGTH = 3;
     private List<ChainNodeInfo> chainNodeInfos = Collections.synchronizedList(new ArrayList<ChainNodeInfo>());
+    private Object lock = new Object();
 
     @Override
     public String registerChainNode(final ChainNodeInfo chainNodeInfo) {
@@ -68,7 +68,15 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
         chain.add(this.chainNodeInfos.get(first));
         chain.add(this.chainNodeInfos.get(second));
         chain.add(this.chainNodeInfos.get(third));
-
+        updateSentMessages(this.chainNodeInfos.get(first));
+        updateSentMessages(this.chainNodeInfos.get(second));
+        updateSentMessages(this.chainNodeInfos.get(third));
         return chain;
     }
+
+  private void updateSentMessages(ChainNodeInfo chainNodeInfo) {
+    synchronized (lock){
+      chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages()+1);
+    }
+  }
 }

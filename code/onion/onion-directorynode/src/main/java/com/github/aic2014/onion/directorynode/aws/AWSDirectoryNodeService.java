@@ -22,6 +22,7 @@ import java.util.*;
 @EnableScheduling
 public class AWSDirectoryNodeService implements DirectoryNodeService {
 
+    private final Object lock = new Object();
 
     class AWSChainNodeChainedComparator implements Comparator<AWSChainNode> {
 
@@ -235,16 +236,24 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         }
 
         Collections.sort(awsChainNodes, new AWSChainNodeChainedComparator(
+
                         new AWSChainNodeSentMessagesComparator(),
                         new AWSChainNodePingTimeComparator()
         ));
 
         for (int i = 0;i < minNumberOfChainNodes; i++) {
-            awsChainNodes.get(i).setSentMessages(awsChainNodes.get(i).getSentMessages()+1);
+
+            updateSentMessages(awsChainNodes.get(i));
             chain.add(awsChainNodes.get(i));
         }
 
         return chain;
+    }
+
+    private void updateSentMessages(ChainNodeInfo chainNodeInfo) {
+        synchronized (lock){
+            chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages()+1);
+        }
     }
 
     /**
