@@ -16,7 +16,9 @@ public class ChainNodeRoutingStats {
   private long millisSinceLastMessageIn;
   //number of milliseconds since the last message was returned
   private long millisSinceLastMessageProcessed;
+  //milliesconds spent processing requests that ultimately failed
   private long timeSpentInFailedRequests;
+  //milliesconds spent processing successful requests
   private long timeSpentInSuccessfulRequests;
 
   public long getTimeWindowSize() {
