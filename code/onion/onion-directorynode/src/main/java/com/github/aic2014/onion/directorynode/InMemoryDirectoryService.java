@@ -90,10 +90,13 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
             try {
                 ChainNodeRoutingStats stats = restTemplate.getForObject(node.getUri().toString() + "/ping", ChainNodeRoutingStats.class);
                 this.loadBalancingChainCalculator.updateStats(stats, node);
+                node.setLastLifeCheck(new Date());
             } catch (Exception e){
                 logger.debug("caught exception while trying to ping node "+node.getId(),e);
+                logger.info("could not ping node %s, unregistering it", node.getId());
+                this.unregisterChainNode(node.getId());
             }
-
         }
     }
+
 }

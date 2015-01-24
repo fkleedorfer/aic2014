@@ -15,8 +15,8 @@ public class ChainNodeInfo {
     private String id = null;
     private String publicIP = null;
     private int port = 0;
-    private String lastLifeCheck = null;
-    private String launchedDate = null;
+    private Date lastLifeCheck = null;
+    private Date launchedDate = null;
     private String publicKey = null;
     private long pingTime = 0;
     private int sentMessages = 0;
@@ -59,19 +59,20 @@ public class ChainNodeInfo {
         this.port = port;
     }
 
-    public String getLastLifeCheck() {
+
+    public Date getLastLifeCheck() {
         return lastLifeCheck;
     }
 
-    public void setLastLifeCheck(String lastLifeCheck) {
+    public void setLastLifeCheck(Date lastLifeCheck) {
         this.lastLifeCheck = lastLifeCheck;
     }
 
-    public String getLaunchedDate() {
+    public Date getLaunchedDate() {
         return launchedDate;
     }
 
-    public void setLaunchedDate(String launchedAt) {
+    public void setLaunchedDate(Date launchedDate) {
         this.launchedDate = launchedDate;
     }
 

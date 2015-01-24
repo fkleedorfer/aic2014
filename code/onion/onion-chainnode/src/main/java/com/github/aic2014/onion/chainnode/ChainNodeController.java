@@ -77,6 +77,7 @@ public class ChainNodeController {
         stopWatch.start();
         //simulate a 404 error?
         if (this.errorSimulationMode == ErrorSimulationMode.RETURN_404){
+          logger.debug("simulating a 404 error (ERROR_404)");
           response.setStatus(HttpStatus.NOT_FOUND.value());
           stopWatch.stop();
           this.chainNodeStatsCollector.onMessageProcessingError(stopWatch.getTotalTimeMillis());
@@ -95,6 +96,7 @@ public class ChainNodeController {
           Message timeoutMessage = null; //if we hit a timeout, send this message (if not null)
 
           if (this.errorSimulationMode == ErrorSimulationMode.SLOW_ACCEPT){
+            logger.debug("simulating slow accept (SLOW_ACCEPT)");
             Thread.sleep(5000);
           }
 
@@ -157,9 +159,10 @@ public class ChainNodeController {
                   updateRoutingInfoForResponse(msg, responseMessage);
                   if (errorSimulationMode == ErrorSimulationMode.SLOW_ACCEPT){
                     try {
+                      logger.debug("simulating slow response (SLOW_RESPONSE)");
                       Thread.sleep(5000);
                     } catch (InterruptedException e) {
-                      logger.debug("caught exception during SLOW_ACCEPT sleep", e);
+                      logger.debug("caught exception during SLOW_RESPONSE sleep", e);
 
                     }
                   }
