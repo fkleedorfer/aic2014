@@ -50,6 +50,7 @@ public class OnionRoutedHttpRequest extends OnionRoutedRequest {
 
         try {
             long start = System.nanoTime();
+
             ResponseEntity<Message> responseEntity = restTemplate.postForEntity(usedChain[0].getUri().toString() + "/request", msg, Message.class);
             Message responseMessage = responseEntity.getBody();
             String responseString = decryptResponse(responseMessage);

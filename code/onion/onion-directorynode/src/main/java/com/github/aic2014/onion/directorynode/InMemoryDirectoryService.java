@@ -1,16 +1,29 @@
 package com.github.aic2014.onion.directorynode;
 
 import com.github.aic2014.onion.model.ChainNodeInfo;
+import com.github.aic2014.onion.model.ChainNodeRoutingStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+@EnableScheduling
 public class InMemoryDirectoryService implements DirectoryNodeService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private static final int CHAIN_LENGTH = 3;
     private List<ChainNodeInfo> chainNodeInfos = Collections.synchronizedList(new ArrayList<ChainNodeInfo>());
+    private RestTemplate restTemplate = new RestTemplate();
     private Object lock = new Object();
+    private LoadBalancingChainCalculator loadBalancingChainCalculator = new LoadBalancingChainCalculator();
+
+    public InMemoryDirectoryService() {
+        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setConnectTimeout(1000);
+        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(1000);
+    }
 
     @Override
     public String registerChainNode(final ChainNodeInfo chainNodeInfo) {
@@ -19,6 +32,7 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
 
         chainNodeInfos.add(chainNodeInfo);
         chainNodeInfo.setId(UUID.randomUUID().toString());
+        loadBalancingChainCalculator.registerChainNode(chainNodeInfo);
         return chainNodeInfo.getId();
     }
 
@@ -52,30 +66,11 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
 
     @Override
     public List<ChainNodeInfo> getChain() {
-        List<ChainNodeInfo> chain = new ArrayList<ChainNodeInfo>(3);
-        if (this.chainNodeInfos.size() < CHAIN_LENGTH) {
-            throw new IllegalStateException("At least " + CHAIN_LENGTH +
-                    " chain nodes must be registered to build a chain. " +
-                    "Currently registered: " + this.chainNodeInfos.size());
+        ChainNodeInfo[] chainNodes = loadBalancingChainCalculator.getChain(CHAIN_LENGTH);
+        for (int i = 0; i < chainNodes.length; i++){
+            updateSentMessages(chainNodes[i]);
         }
-
-        //when using one RandomGenerator - it will not us numbers more than once
-        Random randomGenerator = new Random();
-        int first = randomGenerator.nextInt(this.chainNodeInfos.size());
-        int second = randomGenerator.nextInt(this.chainNodeInfos.size());
-        while (second == first)
-            second = randomGenerator.nextInt(this.chainNodeInfos.size());
-        int third = randomGenerator.nextInt(this.chainNodeInfos.size());
-        while ((third == first) || (third == second))
-            third = randomGenerator.nextInt(this.chainNodeInfos.size());
-
-        chain.add(this.chainNodeInfos.get(first));
-        chain.add(this.chainNodeInfos.get(second));
-        chain.add(this.chainNodeInfos.get(third));
-        updateSentMessages(this.chainNodeInfos.get(first));
-        updateSentMessages(this.chainNodeInfos.get(second));
-        updateSentMessages(this.chainNodeInfos.get(third));
-        return chain;
+        return Arrays.asList(chainNodes);
     }
 
   private void updateSentMessages(ChainNodeInfo chainNodeInfo) {
@@ -83,4 +78,22 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
       chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages()+1);
     }
   }
+
+    @Scheduled(fixedDelay=5000)
+    public void LifeCheck() {
+
+        //es müssen mindestens
+        int countAlive = 0;
+        Collection<ChainNodeInfo> myChainNodes = this.getAllChainNodes();
+
+        for(ChainNodeInfo node: myChainNodes){
+            try {
+                ChainNodeRoutingStats stats = restTemplate.getForObject(node.getUri().toString() + "/ping", ChainNodeRoutingStats.class);
+                this.loadBalancingChainCalculator.updateStats(stats, node);
+            } catch (Exception e){
+                logger.debug("caught exception while trying to ping node "+node.getId(),e);
+            }
+
+        }
+    }
 }

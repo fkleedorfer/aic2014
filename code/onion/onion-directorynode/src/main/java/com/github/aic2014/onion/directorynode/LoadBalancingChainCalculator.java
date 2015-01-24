@@ -74,10 +74,10 @@ public class LoadBalancingChainCalculator  {
         int i = 0;
         for (Double weight: weights){
             cumulWeight += weight;
-            i++;
             if (cumulWeight > randomValue){
                 return statsInfoHolders.get(i).getInfo();
             }
+            i++;
         }
         return statsInfoHolders.get(statsInfoHolders.size()).getInfo();
     }
