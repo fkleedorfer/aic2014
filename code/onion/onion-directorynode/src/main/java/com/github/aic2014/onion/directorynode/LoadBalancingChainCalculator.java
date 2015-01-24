@@ -38,16 +38,17 @@ public class LoadBalancingChainCalculator  {
             ChainNodeRoutingStats stats = statsInfoHolder.getStats();
             double currentWeight = 1; //start with weight 1
             if (stats != null){
-                if (stats.getErrors() > 0){
-                    currentWeight = currentWeight / (double) stats.getErrors();
+                if (stats.getErrors() > 0 && stats.getTimeWindowSize() > 0){
+                    currentWeight = currentWeight / (double) stats.getErrors() / (double) stats.getTimeWindowSize();
                 }
-                if (stats.getMessagesProcessed() > 0){
-                    currentWeight = currentWeight * (double) stats.getMessagesProcessed();
+                if (stats.getMessagesProcessed() > 0 && stats.getTimeWindowSize() > 0){
+                    currentWeight = currentWeight * (double) stats.getMessagesProcessed() / (double) stats.getTimeWindowSize();
                 }
-                if (stats.getTimeSpentInSuccessfulRequests() > 0){
-                    currentWeight = currentWeight / (double) stats.getTimeSpentInSuccessfulRequests();
+                if (stats.getTimeSpentInSuccessfulRequests() > 0 && stats.getMessagesProcessed() > 0){
+                    currentWeight = currentWeight /  ((double) stats.getTimeSpentInSuccessfulRequests() / (double) stats.getMessagesProcessed());
                 }
             }
+            statsInfoHolder.getInfo().setLastLoadBalancingWeight(currentWeight);
             weightSum += currentWeight;
             weights.add(currentWeight);
         }

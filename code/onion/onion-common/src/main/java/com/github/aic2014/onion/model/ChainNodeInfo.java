@@ -20,6 +20,7 @@ public class ChainNodeInfo {
     private String publicKey = null;
     private long pingTime = 0;
     private int sentMessages = 0;
+    private double lastLoadBalancingWeight = 0.0;
 
     /**
      * Gets the ID of this chain node.
@@ -93,6 +94,14 @@ public class ChainNodeInfo {
 
     public void setSentMessages(int sentMessages) {
         this.sentMessages = sentMessages;
+    }
+
+    public double getLastLoadBalancingWeight() {
+        return lastLoadBalancingWeight;
+    }
+
+    public void setLastLoadBalancingWeight(double lastLoadBalancingWeight) {
+        this.lastLoadBalancingWeight = lastLoadBalancingWeight;
     }
 
     @JsonIgnore
