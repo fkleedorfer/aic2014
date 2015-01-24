@@ -21,8 +21,8 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
     private LoadBalancingChainCalculator loadBalancingChainCalculator = new LoadBalancingChainCalculator();
 
     public InMemoryDirectoryService() {
-        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setConnectTimeout(1000);
-        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(1000);
+        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setConnectTimeout(5000);
+        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(5000);
     }
 
     @Override
@@ -40,6 +40,7 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
     public void unregisterChainNode(String id) {
         assert id == null : "id must be non-null";
         this.chainNodeInfos.remove(findChainNodeInfo(id));
+        this.loadBalancingChainCalculator.deleteChainNode(id);
     }
     @Override
     public String getIPAddress(){

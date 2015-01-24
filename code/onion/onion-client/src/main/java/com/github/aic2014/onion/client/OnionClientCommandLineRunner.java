@@ -80,6 +80,7 @@ public class OnionClientCommandLineRunner implements CommandLineRunner
 
           public void run() {
               try {
+                Thread.sleep(300);
                 requestSentCounter.addAndGet(1);
                 reportStatus("Sent request... ");
                 OnionRoutedHttpRequest request = client.getHttpRequest();

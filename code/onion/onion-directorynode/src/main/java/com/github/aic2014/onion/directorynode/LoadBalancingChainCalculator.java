@@ -15,6 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LoadBalancingChainCalculator  {
     private ConcurrentHashMap<String, StatsInfoHolder> idsTostats = new ConcurrentHashMap<>();
 
+    public void deleteChainNode(String id){
+        this.idsTostats.remove(id);
+    }
+
     public void registerChainNode(ChainNodeInfo chainNodeInfo){
         this.idsTostats.put(chainNodeInfo.getId(), new StatsInfoHolder(null, chainNodeInfo));
     }
@@ -24,11 +28,12 @@ public class LoadBalancingChainCalculator  {
     }
 
     public ChainNodeInfo[] getChain(int length) {
+
         if (length > this.idsTostats.size()) throw new IllegalArgumentException(String.format("Cannot compute chain of length %s from %s nodes", length, this.idsTostats.size()));
         List<StatsInfoHolder> allHolders = new ArrayList<>(idsTostats.size());
         allHolders.addAll(idsTostats.values());
         List<Double> weights = new ArrayList(allHolders.size());
-        double sum = 0;
+        double weightSum = 0;
         for (StatsInfoHolder statsInfoHolder: allHolders) {
             ChainNodeRoutingStats stats = statsInfoHolder.getStats();
             double currentWeight = 1; //start with weight 1
@@ -43,21 +48,21 @@ public class LoadBalancingChainCalculator  {
                     currentWeight = currentWeight / (double) stats.getTimeSpentInSuccessfulRequests();
                 }
             }
-            sum += currentWeight;
+            weightSum += currentWeight;
             weights.add(currentWeight);
         }
         //now, select [length] nodes based on weights:
         Random rnd = new Random(System.currentTimeMillis()+length);
         List<ChainNodeInfo> chainNodeInfos = new ArrayList<ChainNodeInfo>(length);
         for (int i = 0; i < length; i++){
-            ChainNodeInfo newChainNode = null;
-            while (newChainNode == null){
-                ChainNodeInfo candidate = getChainNode(weights, allHolders, rnd.nextDouble() * sum);
-                if (!chainNodeInfos.contains(candidate)){
-                    newChainNode = candidate;
-                }
-            }
-            chainNodeInfos.add(newChainNode);
+            //now select a chain node (actually, its index)
+            int index = getChainNodeIndex(weights, allHolders, rnd.nextDouble() * weightSum);
+            //add the chain node to the output and remove it from the allHolders and weights lists
+            //(so we can't select it again)
+            double weightLost = weights.remove(index);
+            chainNodeInfos.add(allHolders.get(index).getInfo());
+            allHolders.remove(index);
+            weightSum -= weightLost;
         }
         return chainNodeInfos.toArray(new ChainNodeInfo[length]);
     }
@@ -69,17 +74,17 @@ public class LoadBalancingChainCalculator  {
      * @param randomValue
      * @return
      */
-    private ChainNodeInfo getChainNode(List<Double> weights, List<StatsInfoHolder> statsInfoHolders, double randomValue) {
+    private int getChainNodeIndex(List<Double> weights, List<StatsInfoHolder> statsInfoHolders, double randomValue) {
         double cumulWeight = 0.0;
         int i = 0;
         for (Double weight: weights){
             cumulWeight += weight;
             if (cumulWeight > randomValue){
-                return statsInfoHolders.get(i).getInfo();
+                return i;
             }
             i++;
         }
-        return statsInfoHolders.get(statsInfoHolders.size()).getInfo();
+        return statsInfoHolders.size();
     }
 
     private class StatsInfoHolder {

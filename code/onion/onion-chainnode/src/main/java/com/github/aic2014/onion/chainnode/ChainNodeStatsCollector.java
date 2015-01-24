@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * the collectionStartTimeStamp.
  */
 public class ChainNodeStatsCollector {
-    public static final long DEFAULT_RESET_TIMEOUT = 30000;
+    public static final long DEFAULT_RESET_TIMEOUT = 60*1000;
     //timestamp when we started collecting data
     private AtomicLong collectionStartTimeStamp = new AtomicLong(System.currentTimeMillis());
     //number of messages processed (correctly or with error) within the timeframe
