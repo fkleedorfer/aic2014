@@ -25,6 +25,11 @@ public class ConstantChainInMemoryDirectoryService implements DirectoryNodeServi
     }
 
     @Override
+    public String getIPAddress(){
+        return "127.0.0.1";
+    }
+
+    @Override
     public void unregisterChainNode(String id) {
         assert id == null : "id must be non-null";
         this.chainNodeInfos.remove(findChainNodeInfo(id));

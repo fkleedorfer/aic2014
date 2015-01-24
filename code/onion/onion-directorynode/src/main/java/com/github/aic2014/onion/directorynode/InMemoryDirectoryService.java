@@ -27,6 +27,10 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
         assert id == null : "id must be non-null";
         this.chainNodeInfos.remove(findChainNodeInfo(id));
     }
+    @Override
+    public String getIPAddress(){
+        return "127.0.0.1";
+    }
 
     private ChainNodeInfo findChainNodeInfo(String id) {
         Optional<ChainNodeInfo> result = chainNodeInfos.stream().filter(cni -> cni.getId().equals(id)).findAny();

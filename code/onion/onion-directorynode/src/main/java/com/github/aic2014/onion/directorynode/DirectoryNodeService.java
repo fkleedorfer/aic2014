@@ -9,6 +9,14 @@ import java.util.List;
  * Registry for chain nodes.
  */
 public interface DirectoryNodeService {
+
+
+    /**
+     * IP-Address from Direcotrynode
+     *
+     */
+    public String getIPAddress();
+
     /**
      * Registers a chain node. Returns the internal id assigned to it.
      *
