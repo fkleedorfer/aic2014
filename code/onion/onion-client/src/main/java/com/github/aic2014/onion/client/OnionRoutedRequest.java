@@ -82,8 +82,9 @@ public abstract class OnionRoutedRequest {
     public String printUsedChain() {
         String out = "-------------------------------\n";
         out += String.format("Used Chain (%s):\n", getUsedChainID());
-        for (int i = 0; i < 3; i++) {
-            out += String.format("ChainNode%d: %s:%d\n", i, getUsedChain()[i].getPublicIP(), getUsedChain()[i].getPort());
+        ChainNodeInfo[] chain = getUsedChain();
+        for (int i = 0; i < chain.length; i++) {
+            out += String.format("ChainNode%d: %s:%d\n", i, chain[i].getPublicIP(), chain[i].getPort());
         }
         out += "-------------------------------";
         return out;

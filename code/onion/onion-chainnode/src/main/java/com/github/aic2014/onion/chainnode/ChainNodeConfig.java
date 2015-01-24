@@ -20,13 +20,7 @@ import org.springframework.scheduling.annotation.AsyncConfigurerSupport;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.Executor;
 
@@ -78,6 +72,7 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
                             //wir benütigen die public ip um zu wissen um welchen chainnode es geht und den public key
                             ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
                             chainNodeInfo.setPublicIP(client.getIPAdress());
+                            chainNodeInfo.setPort(port);
                             chainNodeInfo.setPublicKey(getCryptoService().getPublicKey());
                             chainNodeUri = client.registerChainNode(chainNodeInfo);
                             logger.info("chain node registered, obtained this URI: {}", chainNodeUri);
