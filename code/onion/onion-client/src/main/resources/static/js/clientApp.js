@@ -26,12 +26,10 @@ clientApp.controller('onionClientAppController', function ($scope, $http) {
             success(function(data, status, headers, config) {
                     $scope.response = data.text + $scope.response;
                     $scope.isRequesting = false;
-                    makeLog();
             }).
             error(function(data, status, headers, config) {
                     $scope.response = data.text + $scope.response;
                     $scope.isRequesting = false;
-                    makeLog();
         });
     }
 
@@ -41,17 +39,18 @@ clientApp.controller('onionClientAppController', function ($scope, $http) {
                success(function(data, status, headers, config) {
                     $scope.response = data.text + $scope.response;
                     $scope.isRequesting = false;
-                    $('#textview').scrollTop($('#textview')[0].scrollHeight);
                }).
                error(function(data, status, headers, config) {
                     $scope.response = data.text + $scope.response;
                     $scope.isRequesting = false;
-                    $('#textview').scrollTop($('#textview')[0].scrollHeight);
                });
     }
 
     $scope.sendExit = function sendExit(){
               $scope.isRequesting = true;
+              $scope.response = "Client has stopped!" +
+                                "\n--------------------------------------------------------------------------------------------\n" +
+                                $scope.response;
               $http.get('/sendExit').
                    success(function(data, status, headers, config) {
                    $scope.response = data.text + $scope.response;

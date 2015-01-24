@@ -147,7 +147,7 @@ public class OnionClientAppController {
     public ResponseEntity<ResponseText> sendExit(){
         executor.shutdownNow();
         System.exit(0);
-        return new ResponseEntity<ResponseText>(new ResponseText(""), HttpStatus.OK);
+        return new ResponseEntity<ResponseText>(new ResponseText("nix"), HttpStatus.OK);
     }
 
     private String buildRequestString() throws java.io.IOException, org.apache.http.HttpException {
