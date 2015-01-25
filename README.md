@@ -188,7 +188,7 @@ quoteserver.baseUri=http://${quoteserver.hostnamePort}
 server.port=0
 ```
 
-**3.4 Configuration - AWS
+**3.4 Configuration - AWS**
 If you want to execute all onion components (except client) within the AWS EC2 environment, use the following configuration setup:
 * Create an empty folder "conf.local"
 * Copy all default property files from the repository `code/onion/conf/`
@@ -209,6 +209,10 @@ aws.chainnode.securitygroup=### login ut AWS-EC2 and select the "Group-ID" of th
 aws.chainnode.subnet=subnet-7aa0631f
 aws.chainnode.quantity=6
 aws.chainnode.minQuantity=3
+
+aws.chainnode.deploymentCommand=sh /home/onion/directorynode/deployment/chainnode-deployment.sh %s
+aws.chainnode.port=20142
+aws.chainnode.deploymentConfPath=/home/onion/directorynode/deployment/chainnode/conf.local/chainnode.properties
 ```
 * Adapt the following values of `chainnode.properties`:
 ```
@@ -233,12 +237,29 @@ quoteserver.baseUri=http://${quoteserver.hostnamePort}
 
 server.port=20143
 ```
+* Adapt the following values of `logback.xml`:
+```
+<root level="INFO">
+	<appender-ref ref="FILE" />
+	<!--<appender-ref ref="STDOUT" />-->
+</root>
+```
 
+Next to the configuration folder containing all property files, an additional deployment folder is necessary.
+* Create a new folder `deployment`
+* Copy the file `code/onion/deployment/chainnode-deployment.sh` into this folder
+* Adapt the following shell variables: 
+```
+IDFILE='/home/onion/directorynode/deployment/G6-T3-id_rsa.pem'
+SOURCEDIR='deployment/chainnode/*'
+```
+* Copy key file `G6-T3-id_rsa.pem` into the folder `deployment`
+* Create a subfolder called `chainnode` and `chainnode/conf.local`
+* Copy `onion-chainnode-1.0-SNAPSHOT-allinone.jar` into `chainnode`
+* Copy `conf.local/logback.xml` into `deployment/chainnode/conf.local/`
+* Copy `conf.local/chainnode.properties` into `deployment/chainnode/conf.local/`
 
-
-
-
-
+**3.3 Deployment - AWS**
 
 
 
