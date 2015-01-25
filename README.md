@@ -105,7 +105,6 @@ The classes to run are:
 
 If you want to run an application directly (without Spring), you need to add an additional VM argument to your Run Configuration:
  -Dlogback.configurationFile=../conf.local/logback.xml
-  ```
 
 3 Deployment/Setup/Startup/Usage
 --------------------------------
