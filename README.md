@@ -105,32 +105,6 @@ The classes to run are:
 
 If you want to run an application directly (without Spring), you need to add an additional VM argument to your Run Configuration:
  -Dlogback.configurationFile=../conf.local/logback.xml
-
-2.3 Running the AWS demo
-------------------------
-_Disclaimer: (I know, this is not a sufficiently designed How-to.)_
-In order to run the application the onion "system", do the following:
-* Login to AWS-EC2. Switch to Region **US West (N. California)**
-* Start the instances: 
-  * G6-T3-chainnode-0
-  * G6-T3-chainnode-1
-  * G6-T3-chainnode-2
-  * G6-T3-directorynode
-  * G6-T3-quoteserver
-* If any of the chainnode-instances is already RUNNING. Stop the instance and start it again. (The directorynode is in charge of starting the onion-service)
-* Connect to G6-T3-directorynode (user=onion), run the following command:
-  ```
-  nohup java -DONION_CONF_DIR=/home/onion/directorynode/conf.local -Dlogging.config=/home/onion/directorynode/conf.local/logback.xml -jar /home/onion/directorynode/onion-directorynode-1.0-SNAPSHOT-allinone.jar >/dev/null 2>&1 &
-  ```
-  Check http://54.67.23.238:20141/ after about 10-20 seconds (you may also want to check ~/onion.log). Three chain nodes should have registered with the directory node
-* Connect to G6-T3-quoteserver (user=onion), run the following command:
-  ```
-  nohup java -DONION_CONF_DIR=/home/onion/quoteserver/conf.local -Dlogging.config=/home/onion/quoteserver/conf.local/logback.xml -jar /home/onion/quoteserver/onion-quoteserver-1.0-SNAPSHOT-allinone.jar >/dev/null 2>&1 &
-  ```
-  Check http://54.67.23.87:20140/quote.
-* Connect to G6-T3-directorynode again and run the client (this can also be execute from another server within AWS):
-  ```
-  java -DONION_CONF_DIR=/home/onion/client/conf.local -Dlogging.config=/home/onion/client/conf.local/logback.xml -Dquoteserver.baseUri= -Dquoteserver.hostnamePort=54.67.23.87:20140 -jar /home/onion/client/onion-client-1.0-SNAPSHOT-allinone.jar
   ```
 
 3 Deployment/Setup/Startup/Usage
