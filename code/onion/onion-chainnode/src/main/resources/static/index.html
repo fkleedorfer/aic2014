@@ -10,13 +10,26 @@
 <div class="container-fluid">
 <h1>Chainnode status page</h1>
 This table shows the most recent routing information.
-<div ng-model="">
+<div class="row">
+<div class="
+col-md-4">
     <h2>Error Simulation</h2>
-    Select error simulation mode of this chainnode:
-    <label><input type="radio" ng-model="errorSimulationMode" value="NO_ERROR" ng-change="setErrSim()" ng-disabled="isRequesting">No error</label>
-    <label><input type="radio" ng-model="errorSimulationMode" value="RETURN_404" ng-change="setErrSim()" ng-disabled="isRequesting">Always return a 404 error</label>
-    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_ACCEPT" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before forwarding the request</label>
-    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_RESPONSE" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before returning the response</label>
+    Select error simulation mode of this chainnode:<br>
+    <label><input type="radio" ng-model="errorSimulationMode" value="NO_ERROR" ng-change="setErrSim()" ng-disabled="isRequesting">No error</label><br>
+    <label><input type="radio" ng-model="errorSimulationMode" value="RETURN_404" ng-change="setErrSim()" ng-disabled="isRequesting">Always return a 404 error</label><br>
+    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_ACCEPT" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before forwarding the request</label><br>
+    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_RESPONSE" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before returning the response</label><br>
+</div>
+<div ng-model="stats" class="col-md-4">
+    <h2>Current Stats</h2>
+    <table class="table table-striped">
+        <tr><td>Time Window (ms)</td> <td>{{stats.timeWindowSize }}</td></tr>
+        <tr><td>Pending msgs</td> <td>{{stats.messagesPending}}</td></tr>
+        <tr><td>Successful msgs</td> <td>{{stats.messagesProcessed}}</td></tr>
+        <tr><td>Failed msgs</td> <td>{{stats.errors}}</td></tr>
+        <tr><td>Time processing msgs:</td> <td>{{stats.timeSpentInSuccessfulRequests}}</td></tr>
+    </table>
+</div>
 </div>
 <h2> Overview of the latest 20 messages: </h2>
 <table class="table table-striped">
@@ -30,7 +43,7 @@ This table shows the most recent routing information.
     </thead>
     <tbody>
         <tr ng-repeat="ri in routingInfo">
-            <td>{{ ri.latestUpdate | date:'short' }}</td>
+            <td>{{ ri.latestUpdate | date:'mediumTime' }}</td>
             <td>{{ ri.chainId }}</td>
             <td>
                 <a ng-if="ri.requestSender" href="{{ri.requestSender}}">{{ri.requestSender}}</a>

@@ -94,7 +94,7 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
                 node.setLastLifeCheck(new Date());
             } catch (Exception e){
                 logger.debug("caught exception while trying to ping node "+node.getId(),e);
-                logger.info("could not ping node %s, unregistering it", node.getId());
+                logger.info("could not ping node {}, unregistering it", node.getId());
                 this.unregisterChainNode(node.getId());
             }
         }
