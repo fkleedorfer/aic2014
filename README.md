@@ -134,14 +134,128 @@ In order to run the application the onion "system", do the following:
   ```
 
 3 Deployment/Setup/Startup/Usage
---------------------------
-
+--------------------------------
 The following section will provide a step-by-step guide on how to build, deploy, and start the onion service and all its components. The guides can be applied to each component individually. 
 
-3.1 Preparation
+**3.1 Preparation**
+
 Make sure you have access to the following:
 * Access to AWS EC2 Management Console (given by course administration)
 * Access to the key file `G6-T3-id_rsa.pem`
 * `PuTTY` and `maven` installed on your local machine
-* 
-WIP...
+
+**3.2 Build**
+
+In order to build the all necessary binaries (JAR files), follow the following instructions:
+* Navigate into `code/onion` folder within your code repository
+* Execute the maven command `mvn clean install`
+* Find the corresponding JAR files of each component here:
+  * Directory Node: `code/onion//onion-directorynode/target/onion-directorynode-1.0-SNAPSHOT-allinone.jar`
+  * Chain Node: `code/onion/onion-chainnode/target/onion-chainnode-1.0-SNAPSHOT-allinone.jar`
+  * Quote Server: `code/onion/onion-quoteserver/target/onion-quoteserver-1.0-SNAPSHOT-allinone.jar`
+  * Client: `code/onion/onion-client/target/onion-client-1.0-SNAPSHOT-allinone.jar`
+
+**3.3 Configuration - localhost**
+
+If you want to execute all onion components (directory node, chain nodes, quote server, client) within your local environment, use the following configuration setup. 
+* Create an empty folder "conf.local"
+* Copy all default property files from the repository `code/onion/conf/`
+* Adapt the following values of `directorynode.properties`:
+```
+server.port=20141
+aws.enableautosetup=false
+aws.terminateExisting=false
+```
+* Adapt the following values of `chainnode.properties`:
+```
+directorynode.hostname=http://localhost
+directorynode.baseUri=${directorynode.hostname}:20141
+server.port=0
+```
+* Adapt the following values of `quoteserver.properties`:
+```
+server.port=20140
+quotesFilename=quotes.txt
+```
+* Adapt the following values of `client.properties`:
+```
+directorynode.hostname=http://localhost
+directorynode.baseUri=${directorynode.hostname}:20141
+
+quoteserver.hostnamePort=localhost:20140
+quoteserver.baseUri=http://${quoteserver.hostnamePort}
+
+server.port=0
+```
+
+**3.4 Configuration - AWS
+If you want to execute all onion components (except client) within the AWS EC2 environment, use the following configuration setup:
+* Create an empty folder "conf.local"
+* Copy all default property files from the repository `code/onion/conf/`
+* Adapt the following values of `directorynode.properties`:
+```
+server.port=20141
+aws.enableautosetup=true
+aws.terminateExisting=true
+
+aws.accesskeyid=### use given credentials###
+aws.secretaccesskey=### use given credentials###
+aws.region=us-west-1
+aws.chainnode.defaultami=ami-eb1003ae
+aws.chainnode.type=t2.micro
+aws.chainnode.prefix=G6-T3-chainnode-
+aws.chainnode.keyname=G6-T3-id
+aws.chainnode.securitygroup=### login ut AWS-EC2 and select the "Group-ID" of the security group "G6-T3-default-security-group"###
+aws.chainnode.subnet=subnet-7aa0631f
+aws.chainnode.quantity=6
+aws.chainnode.minQuantity=3
+```
+* Adapt the following values of `chainnode.properties`:
+```
+# keep the dnodes hostname "localhost". This will be replaced on startup
+directorynode.hostname=http://localhost
+directorynode.baseUri=${directorynode.hostname}:20141
+server.port=20142
+```
+* Adapt the following values of `quoteserver.properties`:
+```
+server.port=20140
+quotesFilename=quotes.txt
+```
+* Adapt the following values of `client.properties`:
+```
+### you may need to adapt the IP addresses, depending on the public IP of the instances
+directorynode.hostname=http://54.67.84.173
+directorynode.baseUri=${directorynode.hostname}:20141
+
+quoteserver.hostnamePort=54.67.42.60:20140
+quoteserver.baseUri=http://${quoteserver.hostnamePort}
+
+server.port=20143
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
