@@ -304,11 +304,11 @@ Perform the following tasks to start the client:
 java -DONION_CONF_DIR=../../conf.local -Dlogging=../../conf.local/logback.xml -jar onion-client-1.0-SNAPSHOT-allinone.jar
 ```
 
-**3.8 Use Cases/Testing - localhost **
+**3.8 Use Cases/Testing - localhost**
 
-TODO
+Todo
 
-**3.9 Use Cases/Testing - AWS **
+**3.9 Use Cases/Testing - AWS**
 
 **Check if remote services are ready:** After starting the directory node and quote server, it may take up to 1 minute until everything works fine. Check: 
 * http://54.67.84.173:20141/ Shows a list of all registered chain nodes. 
@@ -317,15 +317,3 @@ TODO
 
 **Send a message:**
 * Run/switch to the client and execute the command `!send`
-
-TODO
-
-
-
-
-
-
-
-
-
-
