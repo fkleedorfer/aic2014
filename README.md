@@ -290,26 +290,35 @@ Perform the following tasks to start the directory server:
 ```
 nohup java -DONION_CONF_DIR=/home/onion/directorynode/conf.local -Dlogging.config=/home/onion/directorynode/conf.local/logback.xml -jar /home/onion/directorynode/onion-directorynode-1.0-SNAPSHOT-allinone.jar >/dev/null 2>&1 &
 ```
+Perform the following tasks to start the quote server: 
 * Connect to quote server (via PuTTY) and switch to the home directory. 
 * Run the following command to start the directory server:
 ```
 nohup java -DONION_CONF_DIR=/home/onion/quoteserver/conf.local -Dlogging.config=/home/onion/quoteserver/conf.local/logback.xml -jar /home/onion/quoteserver/onion-quoteserver-1.0-SNAPSHOT-allinone.jar >/dev/null 2>&1 &
 ```
+Perform the following tasks to start the client:
+* (Optional) Run client from within IntelliJ. 
+* Switch to the directory `code/onion/onion-client/target`
+* Run the following command to start the client:
+```
+java -DONION_CONF_DIR=../../conf.local -Dlogging=../../conf.local/logback.xml -jar onion-client-1.0-SNAPSHOT-allinone.jar
+```
+
+**3.8 Use Cases/Testing - localhost **
 
 TODO
 
-** Use Cases/Testing - localhost **
+**3.9 Use Cases/Testing - AWS **
+
+**Check if remote services are ready:** After starting the directory node and quote server, it may take up to 1 minute until everything works fine. Check: 
+* http://54.67.84.173:20141/ Shows a list of all registered chain nodes. 
+* Click on one of the chain nodes. Shows (probably an empty) list of messages routed by this particular chain node. 
+* http://54.67.42.60:20140/ Shows a web page with a button to request random quotes.
+
+**Send a message:**
+* Run/switch to the client and execute the command `!send`
 
 TODO
-
-** Use Cases/Testing - AWS **
-
-TODO
-
-
-
-
-
 
 
 
