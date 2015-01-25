@@ -66,6 +66,7 @@ public class ChainNodeController {
     @RequestMapping(value="/ping", method = RequestMethod.GET)
     public ResponseEntity<ChainNodeRoutingStats> ping(){
         ChainNodeRoutingStats stats = this.chainNodeStatsCollector.getChainNodeRoutingStats();
+        logger.debug("ping request received");
         return new ResponseEntity<ChainNodeRoutingStats>(stats, HttpStatus.OK);
     }
 

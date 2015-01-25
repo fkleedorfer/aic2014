@@ -20,7 +20,9 @@ import org.springframework.scheduling.annotation.AsyncConfigurerSupport;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.Executor;
 
@@ -35,6 +37,9 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
 
     @Value("${directorynode.baseUri}")
     private String directoryNodeBaseUri;
+
+    @Value("${detectLocalIp.viaAmazonAWS}")
+    private boolean detectLocalIpViaAmazonAWS = true;
 
     private URI chainNodeUri;
 
@@ -68,16 +73,21 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
                         int port = container.getPort();
                         logger.info("servlet container initialized, port is {}", port);
                         try {
-
                             //wir benütigen die public ip um zu wissen um welchen chainnode es geht und den public key
                             ChainNodeInfo chainNodeInfo = new ChainNodeInfo();
-                            chainNodeInfo.setPublicIP(client.getIPAdress());
+                            if (detectLocalIpViaAmazonAWS){
+                                chainNodeInfo.setPublicIP(client.getIPAdress());
+                            } else  {
+                                chainNodeInfo.setPublicIP(InetAddress.getLocalHost().getHostAddress());
+                            }
                             chainNodeInfo.setPort(port);
                             chainNodeInfo.setPublicKey(getCryptoService().getPublicKey());
                             chainNodeUri = client.registerChainNode(chainNodeInfo);
                             logger.info("chain node registered, obtained this URI: {}", chainNodeUri);
                         } catch (GeneralSecurityException e) {
                             logger.warn("crypto service security error", e);
+                        } catch (UnknownHostException e) {
+                            logger.warn("could not obtain local ip address", e);
                         }
 
                     }
@@ -120,5 +130,6 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
     RoutingInfoService getRoutingInfoService() {
         return new RoutingInfoService();
     }
+
 
 }
