@@ -189,6 +189,7 @@ server.port=0
 ```
 
 **3.4 Configuration - AWS**
+
 If you want to execute all onion components (except client) within the AWS EC2 environment, use the following configuration setup:
 * Create an empty folder "conf.local"
 * Copy all default property files from the repository `code/onion/conf/`
@@ -198,14 +199,14 @@ server.port=20141
 aws.enableautosetup=true
 aws.terminateExisting=true
 
-aws.accesskeyid=### use given credentials###
-aws.secretaccesskey=### use given credentials###
+aws.accesskeyid=### use given credentials ###
+aws.secretaccesskey=### use given credentials ###
 aws.region=us-west-1
 aws.chainnode.defaultami=ami-eb1003ae
 aws.chainnode.type=t2.micro
 aws.chainnode.prefix=G6-T3-chainnode-
 aws.chainnode.keyname=G6-T3-id
-aws.chainnode.securitygroup=### login ut AWS-EC2 and select the "Group-ID" of the security group "G6-T3-default-security-group"###
+aws.chainnode.securitygroup=### login ut AWS-EC2 and select the "Group-ID" of the security group "G6-T3-default-security-group" ###
 aws.chainnode.subnet=subnet-7aa0631f
 aws.chainnode.quantity=6
 aws.chainnode.minQuantity=3
@@ -259,12 +260,39 @@ SOURCEDIR='deployment/chainnode/*'
 * Copy `conf.local/logback.xml` into `deployment/chainnode/conf.local/`
 * Copy `conf.local/chainnode.properties` into `deployment/chainnode/conf.local/`
 
-**3.3 Deployment - AWS**
+**3.5 Deployment - AWS**
 
+Before the onion system can be executed within the AWS EC2 infrastructure, it has to be deployed first. For any remote connectivity (e.g. via PuTTY or WinSCP), use the correct IP address (if in doubt check AWS EC2 web interface) and connect with the user `onion` and the given key file.
+* Deployment of the **Quote Server**:
+  * Connect to the quote server
+  * Create a folder `~/quoteserver`
+  * Create a subfolder `~/quoteserver/conf.local`
+  * Copy `onion-quoteserver-1.0-SNAPSHOT-allinone.jar` (see Build) to `~/quoteserver`
+  * Copy the `logback.xml` and `quotserver.properties` to `~/quoteserver/conf.local/`
 
+* Deployment of the **Directory Server**:
+  * Connect to the directory server
+  * Create a folder `~/directorynode`
+  * Create the subfolders `~/directorynode/conf.local` and `~/directorynode/deployment`
+  * Copy `onion-directorynode-1.0-SNAPSHOT-allinone.jar` (see Build) to `~/directorynode`
+  * Copy the `logback.xml` and `quotserver.properties` to `~/directorynode/conf.local/` (see Configuration - AWS)
+  * Copy the content of the folder `deployment` (see Configuration - AWS) to `~/directorynode/deployment`
 
+** Startup - localhost**
 
+TODO
 
+** Startup - AWS**
+
+TODO
+
+** Use Cases/Testing - localhost **
+
+TODO
+
+** Use Cases/Testing - AWS **
+
+TODO
 
 
 
