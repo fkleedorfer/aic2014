@@ -1,8 +1,9 @@
 var chainNodeApp = angular.module('chainNodeApp', []);
 
-chainNodeApp.controller('routingInfoController', function ($scope, $http) {
+chainNodeApp.controller('routingInfoController', function ($scope, $http, $interval) {
 
     $scope.routingInfo = []; //initialize to empty array
+    $scope.stats = {};
     $scope.isRequesting = false;
     $scope.errorSimulationMode = 'NO_ERROR';
 
@@ -45,7 +46,21 @@ chainNodeApp.controller('routingInfoController', function ($scope, $http) {
             });
     }
 
+    $scope.getStats = function getStats(){
+        $scope.isRequesting = true;
+        $http.get('/ping' ).
+            success(function(data, status, headers, config) {
+                $scope.stats = data;
+                $scope.isRequesting = false;
+            }).
+            error(function(data, status, headers, config) {
+                $scope.isRequesting = false;
+            });
+    }
+
+    $scope.getStats();
     $scope.reloadRoutingInfo();
     $scope.getErrSim();
+    $interval($scope.getStats,3000);
 
 });

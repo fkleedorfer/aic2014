@@ -1,6 +1,6 @@
 var directoryNodeApp = angular.module('directoryNodeApp', []);
 
-directoryNodeApp.controller('chainNodeInfoController', function ($scope, $http) {
+directoryNodeApp.controller('chainNodeInfoController', function ($scope, $http, $interval) {
 
     $scope.chainNodeInfos = []; //initialize to empty array
     $scope.isRequesting = false;
@@ -18,6 +18,7 @@ directoryNodeApp.controller('chainNodeInfoController', function ($scope, $http) 
             });
     }
 
-    $scope.reloadChainNodeInfo();
+    $interval($scope.reloadChainNodeInfo,3000);
+
 
 });

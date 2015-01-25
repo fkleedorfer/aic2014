@@ -25,8 +25,8 @@
             <td><a href="{{'http://'+ ci.publicIP + ':' +ci.port + '/'}}">{{ci.id}}</a></td>
             <td>{{ci.publicIP}}</td>
             <td>{{ci.port}}</td>
-            <td>{{ci.launchedDate | date:'short' }}</td>
-            <td>{{ci.lastLifeCheck | date:'short' }}</td>
+            <td>{{ci.launchedDate | date:'mediumTime' }}</td>
+            <td>{{ci.lastLifeCheck | date:'mediumTime' }}</td>
             <td>{{ci.sentMessages}}</td>
             <td>{{ci.lastLoadBalancingWeight | number:6 }}</td>
         </tr>
