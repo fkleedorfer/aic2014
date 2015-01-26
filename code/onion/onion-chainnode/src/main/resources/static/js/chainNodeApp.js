@@ -61,6 +61,9 @@ chainNodeApp.controller('routingInfoController', function ($scope, $http, $inter
     $scope.getStats();
     $scope.reloadRoutingInfo();
     $scope.getErrSim();
+    //load every 3 seconds
     $interval($scope.getStats,3000);
+    //load on startup
+    $scope.getStats();
 
 });

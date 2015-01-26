@@ -18,7 +18,10 @@ directoryNodeApp.controller('chainNodeInfoController', function ($scope, $http, 
             });
     }
 
+    //reload every 3 seconds
     $interval($scope.reloadChainNodeInfo,3000);
+    //load on startup
+    $scope.reloadChainNodeInfo();
 
 
 });
