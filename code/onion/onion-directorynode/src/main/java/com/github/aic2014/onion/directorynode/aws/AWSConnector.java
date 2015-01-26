@@ -76,6 +76,10 @@ public class AWSConnector {
 
     }
 
+    public void loadBalancerDeleteNode (String id){
+        this.loadBalancingChainCalculator.deleteChainNode(id);
+    }
+
     public void updateRoutingStatus (AWSChainNode awsCN , ChainNodeRoutingStats stats){
 
         this.loadBalancingChainCalculator.updateStats(stats, awsCN);

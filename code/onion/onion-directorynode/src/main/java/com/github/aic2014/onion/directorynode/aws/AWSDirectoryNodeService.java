@@ -251,6 +251,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                         logger.debug("caught exception while trying to ping node " + aWSChainNode.getId(), e.getMessage());
                         logger.info("could not ping node %s, unregistering it Error: " + e.getMessage(), aWSChainNode.getId() );
                         synchronized (this.awsConnector) {
+                            this.awsConnector.loadBalancerDeleteNode(aWSChainNode.getId());
                             this.awsConnector.terminateChainNode(aWSChainNode.getId(), false);
                         }
                     }
