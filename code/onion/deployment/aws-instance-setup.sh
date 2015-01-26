@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 
 # ----------------------------------------------
 # AWS Instance Setup
@@ -16,9 +16,12 @@
 
 USERNAME=onion
 JAVA_VERSION=1.8.0
-JAVA_PACKAGES=java-${JAVA_VERSION}-openjdk.x86_64 java-${JAVA_VERSION}-openjdk-devel
+JAVA_PACKAGES="java-${JAVA_VERSION}-openjdk.x86_64 java-${JAVA_VERSION}-openjdk-devel"
 MAVEN_VERSION=3.2.2
-MAVEN_REMOTE=http://mirror.olnevhost.net/pub/apache/maven/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz
+MAVEN_REMOTE="http://mirror.olnevhost.net/pub/apache/maven/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+
+# Update all packages
+yum --assumeyes update
 
 cd ~
 echo "" > /etc/profile.d/onion.sh
@@ -31,7 +34,7 @@ chmod -R 700 /home/${USERNAME}/.ssh/
 chown -R onion:onion /home/${USERNAME}/.ssh/
 
 # Install Java 
-yum --assumeyes install JAVA_PACKAGES
+yum --assumeyes install ${JAVA_PACKAGES}
 yum --assumeyes remove java-1.7.0-openjdk.x86_64
 echo "export JAVA_HOME=/usr/lib/jvm/jre" >> /etc/profile.d/onion.sh
 
@@ -43,7 +46,7 @@ tar xvf apache-maven-${MAVEN_VERSION}-bin.tar.gz
 rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
 chmod -R +rx *
 cd ~
-echo 'export M2_HOME=/opt/apache-maven/apache-maven-${MAVEN_VERSION}' >> /etc/profile.d/onion.sh
+echo "export M2_HOME=/opt/apache-maven/apache-maven-${MAVEN_VERSION}" >> /etc/profile.d/onion.sh
 echo 'export M2=${M2_HOME}/bin' >> /etc/profile.d/onion.sh
 echo 'export PATH=${M2}:$PATH' >> /etc/profile.d/onion.sh
 
