@@ -13,6 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * ChainNodeStats.
  */
 public class LoadBalancingChainCalculator  {
+
+    private Object lock = new Object();
+
     private ConcurrentHashMap<String, StatsInfoHolder> idsTostats = new ConcurrentHashMap<>();
 
     public void deleteChainNode(String id){
@@ -88,7 +91,16 @@ public class LoadBalancingChainCalculator  {
             allHolders.remove(index);
             weightSum -= weightLost;
         }
+        for (ChainNodeInfo info: chainNodeInfos){
+            updateSentMessages(info);
+        }
         return chainNodeInfos.toArray(new ChainNodeInfo[length]);
+    }
+
+    private void updateSentMessages(ChainNodeInfo chainNodeInfo) {
+        synchronized (lock){
+            chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages()+1);
+        }
     }
 
     /**
