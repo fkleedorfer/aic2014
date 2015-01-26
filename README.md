@@ -257,6 +257,7 @@ Before the onion system can be executed within the AWS EC2 infrastructure, it ha
   * Copy `onion-directorynode-1.0-SNAPSHOT-allinone.jar` (see Build) to `~/directorynode`
   * Copy the `logback.xml` and `quotserver.properties` to `~/directorynode/conf.local/` (see Configuration - AWS)
   * Copy the content of the folder `deployment` (see Configuration - AWS) to `~/directorynode/deployment`
+  * Run command `chmod 600 ~/directorynode/deployment/*.pem`
 
 **3.6 Startup - localhost**
 
@@ -265,16 +266,16 @@ Before the onion system can be executed within the AWS EC2 infrastructure, it ha
 **3.7 Startup - AWS**
 
 Perform the following tasks to start the directory server:
-* Connect to directory server (via SSH / user `onion`) and switch to the home directory. 
+* Connect to directory server (via SSH / user `ec2-user`) and switch to the home directory. 
 * Run the following command to start the directory server:
 ```
-nohup java -DONION_CONF_DIR=/home/onion/directorynode/conf.local -Dlogging.config=/home/onion/directorynode/conf.local/logback.xml -jar /home/onion/directorynode/onion-directorynode-1.0-SNAPSHOT-allinone.jar >/dev/null 2>&1 &
+sudo service directory restart
 ```
 Perform the following tasks to start the quote server: 
-* Connect to quote server (via SSH / user `onion`) and switch to the home directory. 
+* Connect to quote server (via SSH / user `ec2-user`) and switch to the home directory. 
 * Run the following command to start the quote server:
 ```
-nohup java -DONION_CONF_DIR=/home/onion/quoteserver/conf.local -Dlogging.config=/home/onion/quoteserver/conf.local/logback.xml -jar /home/onion/quoteserver/onion-quoteserver-1.0-SNAPSHOT-allinone.jar >/dev/null 2>&1 &
+sudo service quote restart
 ```
 Perform the following tasks to start the client:
 * (Either) Run client from within IntelliJ (see 2.2.3).
