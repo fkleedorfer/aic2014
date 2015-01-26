@@ -19,7 +19,7 @@
 #
 # Howto (DanAch):
 # 1. Set name after Provides below
-# 2. Set the following three variables dir/user/cmd
+# 2. Set the following variables name/dir/user/cmd
 # 3. Deploy to init scripts
 #    # cp $this /etc/init.d/$name
 #    # chmod +x /etc/init.d/$name
@@ -37,11 +37,11 @@
 # Description:       Enable service provided by daemon.
 ### END INIT INFO
 
+name="directory"
 dir="/home/onion"
 user="onion"
 cmd="java -DONION_CONF_DIR=directorynode/conf.local -Dlogging.config=directorynode/conf.local/logback.xml -jar directorynode/onion-directorynode-1.0-SNAPSHOT-allinone.jar"
 
-name=`basename $0`
 pid_file="/var/run/$name.pid"
 stdout_log="/var/log/$name.log"
 stderr_log="/var/log/$name.err"
