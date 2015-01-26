@@ -48,6 +48,7 @@ public class ChainNodeInstaller extends Observable {
                     // Terminate non-responding chainnode
                     logger.warn("AWS instance " + awsCN.getId() + " did not response in time. Terminate!");
                     synchronized (awsConnector) {
+                        awsConnector.loadBalancerDeleteNode(awsCN.getId());
                         awsConnector.terminateChainNode(awsCN.getId(), false);
                     }
                 }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
