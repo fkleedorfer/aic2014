@@ -6,6 +6,9 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.*;
+import com.github.aic2014.onion.directorynode.LoadBalancingChainCalculator;
+import com.github.aic2014.onion.model.ChainNodeInfo;
+import com.github.aic2014.onion.model.ChainNodeRoutingStats;
 import org.springframework.core.env.Environment;
 
 import java.text.SimpleDateFormat;
@@ -23,12 +26,14 @@ public class AWSConnector {
     private AmazonEC2 ec2;
     private Environment env;
     private List<AWSChainNode> awsChainNodes = Collections.synchronizedList(new ArrayList<AWSChainNode>());
+    private LoadBalancingChainCalculator loadBalancingChainCalculator;
 
     public AWSConnector(Environment env) {
         ec2 = new AmazonEC2Client(new BasicAWSCredentials(env.getProperty("aws.accesskeyid"),  env.getProperty("aws.secretaccesskey")));
         ec2.setRegion(Region.getRegion(Regions.fromName(env.getProperty("aws.region"))));
         this.env = env;
         this.awsChainNodes = new ArrayList<>();
+        this.loadBalancingChainCalculator = new LoadBalancingChainCalculator();
     }
 
 
@@ -64,6 +69,29 @@ public class AWSConnector {
     public AWSChainNode findChainNodeByIP(String ip) {
         Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getPublicIP().equals(ip)).findAny();
         return result.isPresent() ? result.get() : null;
+    }
+
+    public void registerRoutingStatus (AWSChainNode awsCN){
+            this.loadBalancingChainCalculator.registerChainNode(awsCN);
+
+    }
+
+    public void updateRoutingStatus (AWSChainNode awsCN , ChainNodeRoutingStats stats){
+
+        this.loadBalancingChainCalculator.updateStats(stats, awsCN);
+
+    }
+
+    public ChainNodeInfo[] getChain(int length){
+
+        ChainNodeInfo [] chainNodeInfos = this.loadBalancingChainCalculator.getChain(length);
+        ChainNodeInfo chainNodeInfo;
+        for (int i = 0; i < 3; i++){
+            chainNodeInfo = this.findChainNodeByIP(chainNodeInfos[i].getPublicIP());
+            chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages() + 1);
+        }
+
+        return this.loadBalancingChainCalculator.getChain(length);
     }
 
     /**
@@ -140,9 +168,9 @@ public class AWSConnector {
             add(instanceId);
         }});
 
-        TerminateInstancesResult result = ec2.terminateInstances(request);
+        ec2.terminateInstances(request);
 
-        //wenn die Node aufgrund von zu langem starten unregistriert wird muss sie natürlich nicht von der Liste entfernt werden
+        //when the instance is reloaded the element will be deleted, so information can still be received in time between
         if (removeFromList){
             AWSChainNode awsCN = this.getById(instanceId);
             this.awsChainNodes.remove(awsCN);
@@ -186,11 +214,14 @@ public class AWSConnector {
                 awsCN.setId(instance.getInstanceId());
                 awsCN.setInstanceName(instanceName);
                 awsCN.setScriptDone(false);
+                awsCN.setStartCopying(false);
                 awsCN.setState(instance.getState());
                 awsCN.setLaunchedDate(new Date());
                 awsCN.setPort(Integer.parseInt(env.getProperty("aws.chainnode.port")));
                 awsChainNodes.add(awsCN);
             }
+
+
         }
     }
 }

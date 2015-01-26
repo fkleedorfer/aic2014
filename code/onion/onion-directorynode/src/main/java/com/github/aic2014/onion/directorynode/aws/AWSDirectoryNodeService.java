@@ -1,17 +1,24 @@
 package com.github.aic2014.onion.directorynode.aws;
 
 import com.github.aic2014.onion.directorynode.DirectoryNodeService;
+import com.github.aic2014.onion.directorynode.LoadBalancingChainCalculator;
+import com.github.aic2014.onion.json.JsonUtils;
 import com.github.aic2014.onion.model.ChainNodeInfo;
+import com.github.aic2014.onion.model.ChainNodeRoutingStats;
+import com.github.aic2014.onion.model.RoutingInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -22,46 +29,8 @@ import java.util.*;
 @EnableScheduling
 public class AWSDirectoryNodeService implements DirectoryNodeService {
 
-    private final Object lock = new Object();
-
-
-    class AWSChainNodeChainedComparator implements Comparator<AWSChainNode> {
-
-        private List<Comparator<AWSChainNode>> listComparators;
-
-        @SafeVarargs
-        public AWSChainNodeChainedComparator(Comparator<AWSChainNode>... comparators) {
-            this.listComparators = Arrays.asList(comparators);
-        }
-
-        @Override
-        public int compare(AWSChainNode awsChainNode1, AWSChainNode awsChainNode2) {
-            for (Comparator<AWSChainNode> comparator : listComparators) {
-                int result = comparator.compare(awsChainNode1, awsChainNode2);
-                if (result != 0) {
-                    return result;
-                }
-            }
-            return 0;
-        }
-    }
-    class AWSChainNodeSentMessagesComparator implements Comparator<AWSChainNode> {
-
-        @Override
-        public int compare(AWSChainNode awsChainNode1, AWSChainNode awsChainNode2) {
-            return awsChainNode1.getSentMessages() - awsChainNode2.getSentMessages();
-        }
-    }
-    class AWSChainNodePingTimeComparator implements Comparator<AWSChainNode> {
-
-        @Override
-        public int compare(AWSChainNode awsChainNode1, AWSChainNode awsChainNode2) {
-            return (int)(awsChainNode1.getPingTime() - awsChainNode2.getPingTime());
-        }
-    }
-
     private final static int DEFAULT_NUM_CHAINS = 6;
-    private final static int DEFAULT_MIN_CHAIN_SIZE = 3;
+    public final static int DEFAULT_MIN_CHAIN_SIZE = 3;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -74,6 +43,9 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     private int numberOfChainNodes;
     private int minNumberOfChainNodes;
     public String IPAddressDirectoryNode ="";
+    private Boolean starting;
+    private ChainNodeInstaller cnInstaller;
+
 
     /**
      * Initializes the AWS Directory Node Service
@@ -81,6 +53,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     @PostConstruct
     public void onInit() {
 
+        starting = true;
         //
         //1. read configuration
         initConfiguration();
@@ -114,21 +87,27 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         logger.info("Created/found " + latestNodeNumber + " chain nodes within AWS.");
 
         //6. Run setup-script for new chainnodes
-        new ChainNodeInstaller(env, awsConnector);
+        cnInstaller =new ChainNodeInstaller(env, awsConnector);
+        starting = false;
         //der Thread  läuft Liste wird vom Connector geladen
     }
 
     @Override
     public String registerChainNode(ChainNodeInfo remoteChainNodeInfo) {
 
-        String id= "";
-         synchronized (this.awsConnector){
-             AWSChainNode awsChainNode = this.awsConnector.findChainNodeByIP(remoteChainNodeInfo.getPublicIP());
-             awsChainNode.setPublicKey(remoteChainNodeInfo.getPublicKey());
-             id = awsChainNode.getId();
-         }
+       String id = "";
+        synchronized (this.awsConnector) {
+            AWSChainNode awsChainNode = this.awsConnector.findChainNodeByIP(remoteChainNodeInfo.getPublicIP());
+            awsChainNode.setPublicKey(remoteChainNodeInfo.getPublicKey());
+            awsChainNode.setPort(remoteChainNodeInfo.getPort());
+            id = awsChainNode.getId();
+            //routing Status will be registered when public key has been received
+            this.awsConnector.registerRoutingStatus(awsChainNode);
+        }
+
         logger.info(String.format("Register awsChainNode.id " + id + "  chain node with IP %s.", remoteChainNodeInfo.getPublicIP()));
         return id;
+
     }
 
     @Override
@@ -184,6 +163,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
     @Override
     public void unregisterChainNode(String id) {
+
         /*
         synchronized(awsChain
         Nodes) {
@@ -213,42 +193,9 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
     @Override
     public List<ChainNodeInfo> getChain() {
-
-        List<AWSChainNode> awsChainNodes;
-
-        //TODO: why synchronized? It doesn't seem to be necessary here. =====
-        // because 2 threads access same list- !!!! one deletes entries if those chainnodes are not running any longer!!!
-        synchronized (this.awsConnector) {
-            awsChainNodes = this.awsConnector.getAllChainNodes(false);
-        }
-
-        List<ChainNodeInfo> chain = new ArrayList<>(minNumberOfChainNodes);
-        if (awsChainNodes.size() < minNumberOfChainNodes) {
-            throw new IllegalStateException("At least " + minNumberOfChainNodes +
-                    " chain nodes must be registered to build a chain. " +
-                    "Currently registered: " + awsChainNodes.size());
-        }
-
-        Collections.sort(awsChainNodes, new AWSChainNodeChainedComparator(
-
-                        new AWSChainNodeSentMessagesComparator(),
-                        new AWSChainNodePingTimeComparator()
-        ));
-
-        for (int i = 0;i < minNumberOfChainNodes; i++) {
-
-            updateSentMessages(awsChainNodes.get(i));
-            chain.add(awsChainNodes.get(i));
-        }
-
-        return chain;
+        return Arrays.asList(this.awsConnector.getChain(3));
     }
 
-    private void updateSentMessages(ChainNodeInfo chainNodeInfo) {
-        synchronized (lock){
-            chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages()+1);
-        }
-    }
 
     /**
      * Performs all configuration-related tasks.
@@ -264,48 +211,51 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         terminateExisting = Boolean.parseBoolean(env.getProperty("aws.terminateExisting"));
     }
 
+
     @Scheduled(fixedDelay=5000)
     public void LifeCheck() {
 
-        //es müssen mindestens
-        int countAlive = 0;
-        Collection<AWSChainNode> aWSChainNodes = (this).getAllAWSChainNodes();
+        if ( !starting) {
 
-        InetAddress inetAddress = null;
+            //es müssen mindestens
+            int countAlive = 0;
+            Collection<AWSChainNode> aWSChainNodes = (this).getAllAWSChainNodes();
 
-        Date start, stop;
-        Iterator itAwsChainNode = aWSChainNodes.iterator();
-        AWSChainNode aWSChainNode;
-        while (  itAwsChainNode.hasNext()) {
-            aWSChainNode = (AWSChainNode)itAwsChainNode.next();
+            InetAddress inetAddress = null;
 
-            //instance is running check responsetime  16 : running
-            if ((aWSChainNode.getState()!= null)&& (aWSChainNode.getState().getCode() == 16)) {
-                try {
-                    inetAddress = InetAddress.getByName(aWSChainNode.getPublicIP());
-                } catch (UnknownHostException e) {
-                    logger.error("LifeCheck Error: Unknown host ChainNode {} will be removed.", aWSChainNode.getInstanceName());
-                    //this.directoryNodeService.unregisterChainNode(chainNodeInfo.getId());
-                    continue;
-                }
+            Date start, stop;
+            Iterator itAwsChainNode = aWSChainNodes.iterator();
+            RestTemplate restTemplate = new RestTemplate();
+            AWSChainNode aWSChainNode;
+            ChainNodeRoutingStats chainNodeRoutingStats;
+            while (itAwsChainNode.hasNext()) {
+                aWSChainNode = (AWSChainNode) itAwsChainNode.next();
 
-                try {
-                    start = new Date();
-                    if (inetAddress.isReachable(5000)) {
-                        stop = new Date();
 
+                //instance is running check responsetime  16 : running
+                if ((aWSChainNode.getState() != null) && (aWSChainNode.getState().getCode() == 16) && (aWSChainNode.isScriptDone()) && (aWSChainNode.getPublicKey() != null)) {
+
+
+                    try {
+                        chainNodeRoutingStats = restTemplate.getForObject(aWSChainNode.getUri().toString() + "/ping", ChainNodeRoutingStats.class);
                         synchronized (this.awsConnector) {
-                            this.awsConnector.setPingTime(aWSChainNode.getId(),stop.getTime() - start.getTime() );
+                            this.awsConnector.updateRoutingStatus(aWSChainNode, chainNodeRoutingStats);
+                        }
+                        aWSChainNode.setLastLifeCheck(new Date());
+                    } catch (Exception e) {
+                        logger.debug("caught exception while trying to ping node " + aWSChainNode.getId(), e.getMessage());
+                        logger.info("could not ping node %s, unregistering it Error: " + e.getMessage(), aWSChainNode.getId() );
+                        synchronized (this.awsConnector) {
+                            this.awsConnector.terminateChainNode(aWSChainNode.getId(), false);
                         }
                     }
-                } catch (IOException | IllegalArgumentException e1) {
-                    logger.error("LifeCheck Error: An error has occurred, ChainNode {} will be removed.", aWSChainNode.getId());
-                    //this.directoryNodeService.unregisterChainNode(chainNodeInfo.getId());
-                    continue;
+
                 }
             }
         }
     }
+
+
      /* InstanceState; public java.lang.Integer getCode()
     The low byte represents the state. The high byte is an opaque internal value and should be ignored.
     0 : pending

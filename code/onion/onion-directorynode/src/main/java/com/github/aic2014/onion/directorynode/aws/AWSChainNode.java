@@ -9,7 +9,9 @@ import com.github.aic2014.onion.model.ChainNodeInfo;
 public class AWSChainNode extends ChainNodeInfo{
 
     private String instanceName;
+    private boolean StartCopying;
     private boolean isScriptDone;
+
 
     /**
      * InstanceState; public java.lang.Integer getCode()
@@ -36,6 +38,13 @@ public class AWSChainNode extends ChainNodeInfo{
         this.instanceName = instanceName;
     }
 
+    public boolean hasStartCopying() {
+        return StartCopying;
+    }
+
+    public void setStartCopying(boolean StartCopying) {
+        this.StartCopying = StartCopying;
+    }
     public boolean isScriptDone() {
         return isScriptDone;
     }

@@ -83,7 +83,7 @@ public class ChainNodeConfig extends AsyncConfigurerSupport {
                             chainNodeInfo.setPort(port);
                             chainNodeInfo.setPublicKey(getCryptoService().getPublicKey());
                             chainNodeUri = client.registerChainNode(chainNodeInfo);
-                            logger.info("chain node registered, obtained this URI: {}", chainNodeUri);
+                            logger.info("chain node registered, obtained this URI: {}" + " Port " + port, chainNodeUri);
                         } catch (GeneralSecurityException e) {
                             logger.warn("crypto service security error", e);
                         } catch (UnknownHostException e) {

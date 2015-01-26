@@ -27,8 +27,8 @@ public class ChainNodeInstaller extends Observable {
         @Override
         public void run() {
 
-            List<AWSChainNode> awsChainNodes = Collections.synchronizedList(new ArrayList<AWSChainNode>());
-            //des wern ma zuvü listen :)
+            List<AWSChainNode> awsChainNodes;
+
 
             // 2. Request updated information about the chain nodes
             synchronized (awsConnector) {
@@ -53,25 +53,20 @@ public class ChainNodeInstaller extends Observable {
                 }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
                 else if ((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)) {
                     awsCNToRestart.add(awsCN.getInstanceName());
-                } else if ((state.getCode() == 16) && (!awsCN.isScriptDone())) {
+                } else if ((state.getCode() == 16) && (!awsCN.hasStartCopying())) {
                     //
                     // Chainnode is ready. Run deployment script
                     logger.info(awsCN.getId() + " is ready! Run install script");
-                    awsCN.setScriptDone(true);
+                    awsCN.setStartCopying(true);
                     runScriptFor(awsCN);
 
                 }
-                }
+            }
 
 
             if (awsCNToRestart.size() > 0) {
-                //naja also da volle java freind bin i net :) haha
-                String [] restart = new String [awsCNToRestart.size()];
-                int i = 0;
-                for (String s : awsCNToRestart) {
-                    restart[i] = s;
-                    i ++;
-                }
+
+                String[] restart = awsCNToRestart.toArray(new String[awsCNToRestart.size()]);
 
                 synchronized (awsConnector) {
                     awsConnector.createAWSChainNodes(awsCNToRestart.size(), restart);
@@ -104,7 +99,7 @@ public class ChainNodeInstaller extends Observable {
         checkTask = new IsReadyCheckTask();
 
         isReadyCheckTimer = new Timer();
-        isReadyCheckTimer.scheduleAtFixedRate(checkTask, 0l, 1000l);
+        isReadyCheckTimer.scheduleAtFixedRate(checkTask, 0l, 5000);
     }
 
     //Liste wird immer neu geladen vom Connector.- neu Registrierungen werden im Connector geadded
@@ -137,6 +132,7 @@ public class ChainNodeInstaller extends Observable {
                 while (s.hasNextLine())
                     sbError.append(s.nextLine());
                 logger.info("Error-Respones of command: " + sbError.toString());
+                awsChainNode.setScriptDone(true);
 
             } catch (Exception e) {
                 logger.warn("Process to run the deployment script could not be started.", e);
@@ -145,5 +141,6 @@ public class ChainNodeInstaller extends Observable {
 
         setChanged();
         notifyObservers(awsChainNode.getId());
+
     }
 }
