@@ -9,16 +9,26 @@
 <body ng-controller="routingInfoController">
 <div class="container-fluid">
 <h1>Chainnode status page</h1>
-This table shows the most recent routing information.
 <div class="row">
 <div class="
 col-md-4">
     <h2>Error Simulation</h2>
     Select error simulation mode of this chainnode:<br>
-    <label><input type="radio" ng-model="errorSimulationMode" value="NO_ERROR" ng-change="setErrSim()" ng-disabled="isRequesting">No error</label><br>
-    <label><input type="radio" ng-model="errorSimulationMode" value="RETURN_404" ng-change="setErrSim()" ng-disabled="isRequesting">Always return a 404 error</label><br>
-    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_ACCEPT" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before forwarding the request</label><br>
-    <label><input type="radio" ng-model="errorSimulationMode" value="SLOW_RESPONSE" ng-change="setErrSim()" ng-disabled="isRequesting">Wait 5 seconds before returning the response</label><br>
+    <div class="btn-group-vertical" >
+        <label class="btn btn-primary active">
+            <input type="radio" ng-model="errorSimulationMode" value="NO_ERROR" ng-change="setErrSim()" ng-disabled="isRequesting"> No error
+        </label>
+        <label class="btn btn-primary">
+            <input type="radio" ng-model="errorSimulationMode" value="RETURN_404" ng-change="setErrSim()" ng-disabled="isRequesting"> Always return a 404 error
+        </label>
+        <label class="btn btn-primary">
+            <input type="radio" ng-model="errorSimulationMode" value="SLOW_ACCEPT" ng-change="setErrSim()" ng-disabled="isRequesting"> Wait 5 seconds before forwarding the request
+        </label>
+
+        <label class="btn btn-primary">
+            <input type="radio" ng-model="errorSimulationMode" value="SLOW_RESPONSE" ng-change="setErrSim()" ng-disabled="isRequesting"> Wait 5 seconds before returning the response
+        </label>
+    </div>
 </div>
 <div ng-model="stats" class="col-md-4">
     <h2>Current Stats</h2>

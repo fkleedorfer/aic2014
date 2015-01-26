@@ -34,9 +34,14 @@ public class LoadBalancingChainCalculator  {
         allHolders.addAll(idsTostats.values());
         List<Double> weights = new ArrayList(allHolders.size());
         double weightSum = 0;
+        //if we don't have data for load balancing, the algorithm will calculate a weight of 1, which is high.
+        //therefore, we build a list of indices where the weight was calculated as 1 and set them to the average
+        //afterwards.
+        List<Integer> nodesWithWeight1 = new ArrayList<>(allHolders.size());
+        int idx = 0;
         for (StatsInfoHolder statsInfoHolder: allHolders) {
             ChainNodeRoutingStats stats = statsInfoHolder.getStats();
-            double currentWeight = 1; //start with weight 1
+            double currentWeight = 1.0; //start with weight 1
             if (stats != null){
                 if (stats.getErrors() > 0 && stats.getTimeWindowSize() > 0){
                     currentWeight = currentWeight / (double) stats.getErrors() / (double) stats.getTimeWindowSize();
@@ -48,10 +53,28 @@ public class LoadBalancingChainCalculator  {
                     currentWeight = currentWeight /  ((double) stats.getTimeSpentInSuccessfulRequests() / (double) stats.getMessagesProcessed());
                 }
             }
+            if (currentWeight == 1.0){
+                //we rembember this idx so we can set its weight to the average of the other weights
+                nodesWithWeight1.add(idx);
+            }
             statsInfoHolder.getInfo().setLastLoadBalancingWeight(currentWeight);
             weightSum += currentWeight;
             weights.add(currentWeight);
+            idx++;
         }
+        if (nodesWithWeight1.size() > 0 && nodesWithWeight1.size() < weights.size()){
+            //adjust the weightSum
+            weightSum -= nodesWithWeight1.size(); //subtract 1 for each node that got a weight of 1
+            double averageWeight = weightSum / (weights.size() - nodesWithWeight1.size());
+            for (Integer index: nodesWithWeight1){
+                weights.set(index, averageWeight);
+                //set it in the chain node info so we can show it in the gui
+                allHolders.get(index).getInfo().setLastLoadBalancingWeight(averageWeight);
+                //adjust again: add the average for each node
+                weightSum += averageWeight;
+            }
+        }
+
         //now, select [length] nodes based on weights:
         Random rnd = new Random(System.currentTimeMillis()+length);
         List<ChainNodeInfo> chainNodeInfos = new ArrayList<ChainNodeInfo>(length);
