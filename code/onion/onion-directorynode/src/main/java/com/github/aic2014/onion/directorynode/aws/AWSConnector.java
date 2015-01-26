@@ -139,7 +139,7 @@ public class AWSConnector {
                             awsCN.setId(id);
                             awsCN.setInstanceName(instanceName);
                             awsCN.setPublicIP(publicIP);
-                            awsCN.setScriptDone(false);
+                            awsCN.setStarted(true);
                             awsCN.setState(state);
                             awsChainNodes.add(awsCN);
                         }
@@ -199,6 +199,8 @@ public class AWSConnector {
                 .withSubnetId(env.getProperty("aws.chainnode.subnet"));
 
         RunInstancesResult result = ec2.runInstances(request);
+
+
         int counter = 0;
         SimpleDateFormat format = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
         for (Instance instance : result.getReservation().getInstances()) {
@@ -217,8 +219,8 @@ public class AWSConnector {
                 awsCN = new AWSChainNode();
                 awsCN.setId(instance.getInstanceId());
                 awsCN.setInstanceName(instanceName);
-                awsCN.setScriptDone(false);
-                awsCN.setStartCopying(false);
+                awsCN.setStarted(false);
+                awsCN.setShuttingDown(false);
                 awsCN.setState(instance.getState());
                 awsCN.setLaunchedDate(new Date());
                 awsCN.setPort(Integer.parseInt(env.getProperty("aws.chainnode.port")));
@@ -227,5 +229,6 @@ public class AWSConnector {
 
 
         }
+
     }
 }

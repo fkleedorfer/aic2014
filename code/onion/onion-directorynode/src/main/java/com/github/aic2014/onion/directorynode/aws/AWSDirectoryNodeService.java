@@ -238,8 +238,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
 
                 //instance is running check responsetime  16 : running
-                if ((aWSChainNode.getState() != null) && (aWSChainNode.getState().getCode() == 16) && (aWSChainNode.isScriptDone()) && (aWSChainNode.getPublicKey() != null)) {
-
+                if ((aWSChainNode.getState() != null) && (aWSChainNode.getState().getCode() == 16) && (!aWSChainNode.isShuttingDown()) && (aWSChainNode.getPublicKey() != null)) {
 
                     try {
                         chainNodeRoutingStats = restTemplate.getForObject(aWSChainNode.getUri().toString() + "/ping", ChainNodeRoutingStats.class);
@@ -250,10 +249,8 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                     } catch (Exception e) {
                         logger.debug("caught exception while trying to ping node " + aWSChainNode.getId(), e.getMessage());
                         logger.info("could not ping node %s, unregistering it Error: " + e.getMessage(), aWSChainNode.getId() );
-                        synchronized (this.awsConnector) {
-                            this.awsConnector.loadBalancerDeleteNode(aWSChainNode.getId());
-                            this.awsConnector.terminateChainNode(aWSChainNode.getId(), false);
-                        }
+                        aWSChainNode.setShuttingDown(true);
+                        this.awsConnector.loadBalancerDeleteNode(aWSChainNode.getId());
                     }
 
                 }

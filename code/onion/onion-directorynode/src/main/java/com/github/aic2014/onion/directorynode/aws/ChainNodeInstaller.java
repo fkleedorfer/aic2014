@@ -44,21 +44,23 @@ public class ChainNodeInstaller extends Observable {
                 state = awsCN.getState();
 
                 //restart
-                if ((state.getCode() == 0) && timeoutPending > TIMEOUT_LIMIT) {
+                if (((state.getCode() == 0) && timeoutPending > TIMEOUT_LIMIT) || awsCN.isShuttingDown() )  {
                     // Terminate non-responding chainnode
                     logger.warn("AWS instance " + awsCN.getId() + " did not response in time. Terminate!");
                     synchronized (awsConnector) {
-                        awsConnector.loadBalancerDeleteNode(awsCN.getId());
+                        if (!awsCN.isShuttingDown())
+                            awsConnector.loadBalancerDeleteNode(awsCN.getId());
                         awsConnector.terminateChainNode(awsCN.getId(), false);
                     }
-                }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
-                else if ((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)) {
                     awsCNToRestart.add(awsCN.getInstanceName());
-                } else if ((state.getCode() == 16) && (!awsCN.hasStartCopying())) {
+                }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
+                else if (((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)&& !awsCN.isShuttingDown() )) {
+                    awsCNToRestart.add(awsCN.getInstanceName());
+                } else if ((state.getCode() == 16) && (!awsCN.isStarted())) {
                     //
                     // Chainnode is ready. Run deployment script
                     logger.info(awsCN.getId() + " is ready! Run install script");
-                    awsCN.setStartCopying(true);
+                    awsCN.setStarted(true);
                     runScriptFor(awsCN);
 
                 }
@@ -133,7 +135,6 @@ public class ChainNodeInstaller extends Observable {
                 while (s.hasNextLine())
                     sbError.append(s.nextLine());
                 logger.info("Error-Respones of command: " + sbError.toString());
-                awsChainNode.setScriptDone(true);
 
             } catch (Exception e) {
                 logger.warn("Process to run the deployment script could not be started.", e);
