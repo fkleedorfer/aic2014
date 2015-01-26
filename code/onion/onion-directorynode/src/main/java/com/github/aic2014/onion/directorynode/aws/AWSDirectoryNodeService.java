@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
@@ -45,6 +46,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     public String IPAddressDirectoryNode ="";
     private Boolean starting;
     private ChainNodeInstaller cnInstaller;
+    private RestTemplate restTemplate = new RestTemplate();
 
 
     /**
@@ -54,6 +56,10 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     public void onInit() {
 
         starting = true;
+
+        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setConnectTimeout(5000);
+        ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(5000);
+
         //
         //1. read configuration
         initConfiguration();
@@ -225,7 +231,6 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
             Date start, stop;
             Iterator itAwsChainNode = aWSChainNodes.iterator();
-            RestTemplate restTemplate = new RestTemplate();
             AWSChainNode aWSChainNode;
             ChainNodeRoutingStats chainNodeRoutingStats;
             while (itAwsChainNode.hasNext()) {
