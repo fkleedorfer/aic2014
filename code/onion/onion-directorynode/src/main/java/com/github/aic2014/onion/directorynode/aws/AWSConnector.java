@@ -87,14 +87,6 @@ public class AWSConnector {
     }
 
     public ChainNodeInfo[] getChain(int length){
-
-        ChainNodeInfo [] chainNodeInfos = this.loadBalancingChainCalculator.getChain(length);
-        ChainNodeInfo chainNodeInfo;
-        for (int i = 0; i < 3; i++){
-            chainNodeInfo = this.findChainNodeByIP(chainNodeInfos[i].getPublicIP());
-            chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages() + 1);
-        }
-
         return this.loadBalancingChainCalculator.getChain(length);
     }
 
