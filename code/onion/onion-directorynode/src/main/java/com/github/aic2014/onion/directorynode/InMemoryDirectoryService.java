@@ -17,7 +17,7 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
     private static final int CHAIN_LENGTH = 3;
     private List<ChainNodeInfo> chainNodeInfos = Collections.synchronizedList(new ArrayList<ChainNodeInfo>());
     private RestTemplate restTemplate = new RestTemplate();
-    private Object lock = new Object();
+
     private LoadBalancingChainCalculator loadBalancingChainCalculator = new LoadBalancingChainCalculator();
 
     public InMemoryDirectoryService() {
@@ -68,17 +68,10 @@ public class InMemoryDirectoryService implements DirectoryNodeService {
     @Override
     public List<ChainNodeInfo> getChain() {
         ChainNodeInfo[] chainNodes = loadBalancingChainCalculator.getChain(CHAIN_LENGTH);
-        for (int i = 0; i < chainNodes.length; i++){
-            updateSentMessages(chainNodes[i]);
-        }
         return Arrays.asList(chainNodes);
     }
 
-  private void updateSentMessages(ChainNodeInfo chainNodeInfo) {
-    synchronized (lock){
-      chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages()+1);
-    }
-  }
+
 
     @Scheduled(fixedDelay=5000)
     public void LifeCheck() {
