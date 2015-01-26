@@ -8,5 +8,6 @@ public enum ErrorSimulationMode {
   NO_ERROR,
   RETURN_404,
   SLOW_ACCEPT,
-  SLOW_RESPONSE
+  SLOW_RESPONSE,
+  SLOW_PING
 }

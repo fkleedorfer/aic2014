@@ -65,6 +65,14 @@ public class ChainNodeController {
 
     @RequestMapping(value="/ping", method = RequestMethod.GET)
     public ResponseEntity<ChainNodeRoutingStats> ping(){
+        if (this.errorSimulationMode == ErrorSimulationMode.SLOW_PING){
+            logger.debug("simulating slow ping (SLOW_PING)");
+            try {
+                Thread.sleep(30000);
+            } catch (InterruptedException e) {
+                logger.debug("error while simulating slow ping", e);
+            }
+        }
         ChainNodeRoutingStats stats = this.chainNodeStatsCollector.getChainNodeRoutingStats();
         logger.debug("ping request received");
         return new ResponseEntity<ChainNodeRoutingStats>(stats, HttpStatus.OK);

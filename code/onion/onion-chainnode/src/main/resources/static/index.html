@@ -24,9 +24,11 @@ col-md-4">
         <label class="btn btn-primary">
             <input type="radio" ng-model="errorSimulationMode" value="SLOW_ACCEPT" ng-change="setErrSim()" ng-disabled="isRequesting"> Wait 5 seconds before forwarding the request
         </label>
-
         <label class="btn btn-primary">
             <input type="radio" ng-model="errorSimulationMode" value="SLOW_RESPONSE" ng-change="setErrSim()" ng-disabled="isRequesting"> Wait 5 seconds before returning the response
+        </label>
+        <label class="btn btn-primary">
+            <input type="radio" ng-model="errorSimulationMode" value="SLOW_PING" ng-change="setErrSim()" ng-disabled="isRequesting">Respond to ping very slowly
         </label>
     </div>
 </div>
