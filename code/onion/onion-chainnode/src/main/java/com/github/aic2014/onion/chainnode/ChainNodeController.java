@@ -210,7 +210,8 @@ public class ChainNodeController {
                 inMessage.getSender(),
                 outMessage != null ? outMessage.getRecipient() : null,
                 inMessage.getStatus(),
-                RoutingDirection.REQUEST);
+                RoutingDirection.REQUEST,
+                inMessage, outMessage);
         this.routingInfoService.updateRoutingInfo(info);
     }
 
@@ -224,7 +225,7 @@ public class ChainNodeController {
                     oldInfo.getRequestSender(),
                     oldInfo.getRequestRecipient(),
                     returnMessage.getStatus(),
-                    RoutingDirection.RESPONSE);
+                    RoutingDirection.RESPONSE, inMessage, returnMessage);
             this.routingInfoService.updateRoutingInfo(info);
         }
     }
