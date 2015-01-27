@@ -40,22 +40,23 @@ public class ChainNodeInstaller extends Observable {
 
             InstanceState state;
             List<String> awsCNToRestart = new ArrayList<>();
+            String instancename;
             for (AWSChainNode awsCN : awsChainNodes) {
                 state = awsCN.getState();
-
+                instancename = awsCN.getInstanceName();
                 //restart
                 if (((state.getCode() == 0) && timeoutPending > TIMEOUT_LIMIT) || awsCN.isShuttingDown() )  {
+                    awsCNToRestart.add(instancename);
                     // Terminate non-responding chainnode
-                    logger.warn("AWS instance " + awsCN.getId() + " did not response in time. Terminate!");
+                    logger.warn("KILL AWS " + state.getCode() + " awsCN.isShuttingDown() " + awsCN.isShuttingDown());
                     synchronized (awsConnector) {
                         if (!awsCN.isShuttingDown())
                             awsConnector.loadBalancerDeleteNode(awsCN.getId());
                         awsConnector.terminateChainNode(awsCN.getId(), false);
                     }
-                    awsCNToRestart.add(awsCN.getInstanceName());
                 }//32 : shutting-down, 48 : terminated, 64 : stopping, 80 : stopped = restart Chainnode
-                else if (((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)&& !awsCN.isShuttingDown() )) {
-                    awsCNToRestart.add(awsCN.getInstanceName());
+                else if (((state.getCode() == 32) || (state.getCode() == 48) || (state.getCode() == 64) || (state.getCode() == 80)) && !awsCN.isShuttingDown()) {
+                    awsCNToRestart.add(instancename);
                 } else if ((state.getCode() == 16) && (!awsCN.isStarted())) {
                     //
                     // Chainnode is ready. Run deployment script
