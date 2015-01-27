@@ -2,6 +2,8 @@ package com.github.aic2014.onion.directorynode;
 
 import com.github.aic2014.onion.model.ChainNodeInfo;
 import com.github.aic2014.onion.model.ChainNodeRoutingStats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,13 +15,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * ChainNodeStats.
  */
 public class LoadBalancingChainCalculator  {
-
+    private Logger logger = LoggerFactory.getLogger(getClass());
     private Object lock = new Object();
 
     private ConcurrentHashMap<String, StatsInfoHolder> idsTostats = new ConcurrentHashMap<>();
 
     public void deleteChainNode(String id){
-        this.idsTostats.remove(id);
+        logger.info("removed chain node with id {} from load balancing", id);
+        StatsInfoHolder holder = this.idsTostats.remove(id);
+        if (holder == null){
+            logger.info("tried to remove node {} but node was not managed by load balancer", id);
+        }
     }
 
     public void registerChainNode(ChainNodeInfo chainNodeInfo){

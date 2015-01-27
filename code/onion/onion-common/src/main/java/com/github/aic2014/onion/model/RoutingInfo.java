@@ -14,16 +14,20 @@ public class RoutingInfo {
     private OnionStatus status;
     private Date latestUpdate;
     private RoutingDirection direction;
+    private Message lastInMessage;
+    private Message lastOutMessage;
 
 
 
-    public RoutingInfo(UUID chainId, URI requestSender, URI requestRecipient, OnionStatus status, RoutingDirection direction) {
+    public RoutingInfo(UUID chainId, URI requestSender, URI requestRecipient, OnionStatus status, RoutingDirection direction, Message lastInMessage, Message lastOutMessage) {
         this.chainId = chainId;
         this.requestSender = requestSender;
         this.requestRecipient = requestRecipient;
         this.status = status;
         this.direction = direction;
         this.latestUpdate = new Date();
+        this.lastInMessage = lastInMessage;
+        this.lastOutMessage = lastOutMessage;
     }
 
     public UUID getChainId() {
@@ -48,6 +52,14 @@ public class RoutingInfo {
 
     public RoutingDirection getDirection() {
         return direction;
+    }
+
+    public Message getLastInMessage() {
+        return lastInMessage;
+    }
+
+    public Message getLastOutMessage() {
+        return lastOutMessage;
     }
 
     @Override

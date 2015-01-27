@@ -2,7 +2,10 @@
 <html lang="en" ng-app="chainNodeApp">
 <head>
     <link rel="stylesheet" href="css/bootstrap.min.css">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="js/angular.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
     <script src="js/chainNodeApp.js"></script>
     <title>Chainnode</title>
 </head>
@@ -44,8 +47,13 @@ col-md-4">
 </div>
 </div>
 <h2> Overview of the latest 20 messages: </h2>
+<button ng-click="reloadRoutingInfo()" ng-disabled="isRequesting">
+    Reload
+</button>
+
 <table class="table table-striped">
     <thead>
+        <td>Inspect</td>
         <td>Latest Update</td>
         <td>ChainId</td>
         <td>Sender</td>
@@ -55,6 +63,51 @@ col-md-4">
     </thead>
     <tbody>
         <tr ng-repeat="ri in routingInfo">
+            <td>
+                <!-- trigger modal with message content -->
+                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#lastInMessageModal{{$index}}">
+                    {{ ri.direction === 'REQUEST' ? 'Message In' : 'Original Message In' }}
+                </button>
+                <!-- Modal for lastInMessage -->
+                <div class="modal fade" id="lastInMessageModal{{$index}}" tabindex="-1" role="dialog" aria-labelledby="lastMessageInLabel{{$index}}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" id="lastMessageInLabel{{$index}}">{{ ri.direction === 'REQUEST' ? 'Message In' : 'Original Message In' }}</h4>
+                            </div>
+                            <div class="modal-body" style="word-wrap: break-word; width: 100%">
+                                {{ ri.lastInMessage | json:4 }}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- trigger modal with message content -->
+                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#lastOutMessageModal{{$index}}">
+                    {{ ri.direction === 'REQUEST' ? 'Message Out' : 'Response Out' }}
+                </button>
+                <!-- Modal for lastInMessage -->
+                <div class="modal fade" id="lastOutMessageModal{{$index}}" tabindex="-1" role="dialog" aria-labelledby="lastOutMessageLabel{{$index}}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" id="lastOutMessageLabel{{$index}}">{{ ri.direction === 'REQUEST' ? 'Message Out' : 'Response Out' }}</h4>
+                            </div>
+                            <div class="modal-body" style="word-wrap: break-word; width: 100%">
+                                {{ ri.lastOutMessage | json:4 }}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
             <td>{{ ri.latestUpdate | date:'mediumTime' }}</td>
             <td>{{ ri.chainId }}</td>
             <td>
@@ -70,9 +123,7 @@ col-md-4">
         </tr>
     </tbody>
 </table>
-<button ng-click="reloadRoutingInfo()" ng-disabled="isRequesting">
-    Reload
-</button>
+
 </div>
 </body>
 </html>

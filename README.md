@@ -180,7 +180,7 @@ aws.accesskeyid=### use given credentials ###
 aws.secretaccesskey=### use given credentials ###
 aws.region=us-west-1
 # ID of G6-T3-template-ami
-aws.chainnode.defaultami=ami-eb1003ae
+aws.chainnode.defaultami=ami-0ad4cd4f
 aws.chainnode.type=t2.micro
 aws.chainnode.prefix=G6-T3-chainnode-
 aws.chainnode.keyname=G6-T3-id
@@ -243,6 +243,10 @@ SOURCEDIR='deployment/chainnode/*'
 
 Before the onion system can be executed within the AWS EC2 infrastructure, it has to be deployed first. For any remote connectivity (e.g. via PuTTY or WinSCP), use the correct IP address (if in doubt check the AWS web console) and connect with the user `onion` and the given key file `G6-T3-id_rsa.pem`.
 
+We use the "US West (N. California)" region for our EC2 instances, and prepared the following two instances, both based on the "G6-T3-template-ami" AMI (AMI ID `ami-0ad4cd4f`).
+* G6-T3-quoteserver (Instance ID `i-9b4b2358`)
+* G6-T3-directorynode (Instance ID `i-8c40284f`)
+
 * Deployment of the **Quote Server**:
   * Connect to the quote server (user `onion`)
   * Create a folder `~/quoteserver`
@@ -266,18 +270,18 @@ Before the onion system can be executed within the AWS EC2 infrastructure, it ha
 **3.7 Startup - AWS**
 
 Perform the following tasks to start the directory server:
-* Connect to directory server (via SSH / user `ec2-user`) and switch to the home directory. 
+* Connect to directory server (via SSH / user `ec2-user`)
 * Run the following command to start the directory server:
 ```
 sudo service directory restart
 ```
 Perform the following tasks to start the quote server: 
-* Connect to quote server (via SSH / user `ec2-user`) and switch to the home directory. 
+* Connect to quote server (via SSH / user `ec2-user`)
 * Run the following command to start the quote server:
 ```
 sudo service quote restart
 ```
-Perform the following tasks to start the client:
+Perform the following tasks to start the client (locally):
 * (Either) Run client from within IntelliJ (see 2.2.3).
 * (Or) Switch to the directory `code/onion/onion-client/target`
 * Run the following command to start the client:
