@@ -129,10 +129,14 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
     @Override
     public Collection<ChainNodeInfo> getAllChainNodes() {
         return new LinkedList<ChainNodeInfo>() {{
-            getAllAWSChainNodes().forEach(cni -> add(cni));
+            getAllAWSChainNodes().stream().filter(cni -> cni.isStarted()).forEach(cni -> add(cni));
         }};
     }
 
+    /**
+     * Returns ALL chain nodes
+     * @return
+     */
     public Collection<AWSChainNode> getAllAWSChainNodes() {
         return new LinkedList<AWSChainNode>() {{
             awsConnector.getAllChainNodes(false).forEach(cni -> add(cni));

@@ -12,7 +12,6 @@ public class AWSChainNode extends ChainNodeInfo{
     private boolean Started;
     private boolean ShuttingDown;
 
-
     /**
      * InstanceState; public java.lang.Integer getCode()
      * The low byte represents the state. The high byte is an opaque internal value and should be ignored.

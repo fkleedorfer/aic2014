@@ -12,8 +12,9 @@ public interface DirectoryNodeService {
 
 
     /**
-     * IP-Address from Direcotrynode
+     * Public IP-Address from Direcotrynode
      *
+     * @return
      */
     public String getIPAddress();
 
@@ -43,7 +44,7 @@ public interface DirectoryNodeService {
     public ChainNodeInfo getChainNode(String id);
 
     /**
-     * Returns a list of all chain nodes.
+     * Returns a list of all available (and therefore registered) chain nodes.
      *
      * @return
      */

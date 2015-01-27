@@ -105,52 +105,48 @@ public class AWSConnector {
      */
     public List<AWSChainNode> getAllChainNodes(boolean allStarted) {
 
-        synchronized (this) {
+        DescribeInstancesResult result = ec2.describeInstances();
+        for (Reservation reservation : result.getReservations()) {
+            for (Instance instance : reservation.getInstances()) {
 
-            DescribeInstancesResult result = ec2.describeInstances();
-            SimpleDateFormat format = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
-            for (Reservation reservation : result.getReservations()) {
-                for (Instance instance : reservation.getInstances()) {
+                Optional<Tag> optional = instance.getTags().stream().filter((tag) ->
+                                tag.getKey().equalsIgnoreCase(AWS_TAG_NAME) && tag.getValue().startsWith(env.getProperty("aws.chainnode.prefix"))
+                ).findFirst();
+                if (!optional.isPresent()) {
+                    //current instance does not start with the chain-node-name-prefix... ignore
+                    continue;
+                }
 
-                    Optional<Tag> optional = instance.getTags().stream().filter((tag) ->
-                                    tag.getKey().equalsIgnoreCase(AWS_TAG_NAME) && tag.getValue().startsWith(env.getProperty("aws.chainnode.prefix"))
-                    ).findFirst();
-                    if (!optional.isPresent()) {
-                        //current instance does not start with the chain-node-name-prefix... ignore
+                String id = instance.getInstanceId();
+                String instanceName = optional.get().getValue();
+                String publicIP = instance.getPublicIpAddress();
+                InstanceState state = instance.getState();
+
+                //hier werden die existierenden laufenden Instanzen gesucht nur in diesem Fall werden die Nodes hier der Liste zugefügt ansonsten passiert das nur wenn
+                //eine neue Instanz erstellt wird.
+                if(allStarted) {
+                    if (!(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING) || state.getName().equalsIgnoreCase(AWS_STATE_PENDING))) {
+                        //current instance is neither running nor starting... ignore
                         continue;
                     }
 
-                    String id = instance.getInstanceId();
-                    String instanceName = optional.get().getValue();
-                    String publicIP = instance.getPublicIpAddress();
-                    InstanceState state = instance.getState();
+                    AWSChainNode awsCN = this.getById(id);
+                    if (awsCN == null) {
+                        awsCN = new AWSChainNode();
+                        awsCN.setId(id);
+                        awsCN.setInstanceName(instanceName);
+                        awsCN.setPublicIP(publicIP);
+                        awsCN.setStarted(false);
+                        awsCN.setState(state);
+                        awsChainNodes.add(awsCN);
+                    }
 
-                    //hier werden die existierenden laufenden Instanzen gesucht nur in diesem Fall werden die Nodes hier der Liste zugefügt ansonsten passiert das nur wenn
-                    //eine neue Instanz erstellt wird.
-                    if(allStarted) {
-                        if (!(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING) || state.getName().equalsIgnoreCase(AWS_STATE_PENDING))) {
-                            //current instance is neither running nor starting... ignore
-                            continue;
-                        }
-
-                        AWSChainNode awsCN = this.getById(id);
-                        if (awsCN == null) {
-                            awsCN = new AWSChainNode();
-                            awsCN.setId(id);
-                            awsCN.setInstanceName(instanceName);
-                            awsCN.setPublicIP(publicIP);
-                            awsCN.setStarted(true);
-                            awsCN.setState(state);
-                            awsChainNodes.add(awsCN);
-                        }
-
-                    }else{
-                        AWSChainNode awsCN = this.getById(id);
-                        if (awsCN != null) {
-                            awsCN.setState(state);
-                            awsCN.setPublicIP(publicIP);
-                            awsCN.setLastLifeCheck(new Date());
-                        }
+                }else{
+                    AWSChainNode awsCN = this.getById(id);
+                    if (awsCN != null) {
+                        awsCN.setState(state);
+                        awsCN.setPublicIP(publicIP);
+                        awsCN.setLastLifeCheck(new Date());
                     }
                 }
             }
@@ -202,7 +198,6 @@ public class AWSConnector {
 
 
         int counter = 0;
-        SimpleDateFormat format = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
         for (Instance instance : result.getReservation().getInstances()) {
             String instanceName = counter >= names.length ? "#undef#" : names[counter];
             counter++;
@@ -226,9 +221,6 @@ public class AWSConnector {
                 awsCN.setPort(Integer.parseInt(env.getProperty("aws.chainnode.port")));
                 awsChainNodes.add(awsCN);
             }
-
-
         }
-
     }
 }
