@@ -23,6 +23,8 @@ import com.github.aic2014.onion.client.OnionClientCommandLineRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -65,7 +67,7 @@ public class OnionClientAppController {
         Calendar cal = Calendar.getInstance();
 
         long start = System.currentTimeMillis();
-        final String requestString = buildRequestString(url);
+        final String requestString = buildRequestString(url.isEmpty() ? null : new URL(url));
         final CountDownLatch latch = new CountDownLatch(messageCount);
         final AtomicInteger requestSentCounter = new AtomicInteger(0);
         final AtomicInteger responseSuccessfulCounter = new AtomicInteger(0);
@@ -118,7 +120,7 @@ public class OnionClientAppController {
         Calendar cal = Calendar.getInstance();
         String res = "";
         try {
-            String requestString = buildRequestString(url);
+            String requestString = buildRequestString(url.isEmpty() ? null : new URL(url));
             res = dateFormat.format(cal.getTime()) + " - Sending Request: " + requestString + "\n";
             OnionRoutedHttpRequest request = client.getHttpRequest();
             String response = request.execute(requestString);
@@ -163,16 +165,21 @@ public class OnionClientAppController {
         return new ResponseEntity<ResponseText>(new ResponseText("nix"), HttpStatus.OK);
     }
 
-    private String buildRequestString(String url) throws java.io.IOException, org.apache.http.HttpException {
-        String qsUri = "";
-        if(url != "") {
-            qsUri = url;
-        } else {
-            qsUri = quoteServerUri;
-        }
+    @RequestMapping(value = "/defaultTarget", method = RequestMethod.GET)
+    public ResponseEntity<ResponseText> defaultTarget() throws MalformedURLException {
+        String url = quoteServerUri + "/quote";
+        return new ResponseEntity<>(new ResponseText(url), HttpStatus.OK);
+    }
 
-        HttpGet request = new HttpGet(qsUri+"/quote");
-        request.addHeader("Host", quoteServerHostnamePort);
+    private String buildRequestString(URL url) throws java.io.IOException, org.apache.http.HttpException {
+        if (url == null)
+            url = new URL(defaultTarget().getBody().getText());
+
+        HttpGet request = new HttpGet(url.toString());
+        String host = url.getHost();
+        if (url.getPort() > 0)
+            host += ":" + url.getPort();
+        request.addHeader("Host", host);
         HttpTransportMetricsImpl metrics = new HttpTransportMetricsImpl();
         SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(metrics, 255);
         HttpMessageWriter<HttpRequest> httpRequestWriter = new DefaultHttpRequestWriter(sessionOutputBuffer);

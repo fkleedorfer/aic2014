@@ -16,7 +16,7 @@
 </pre>
 -->
 <br>
-<textarea id="textview" rows="25" cols="100">
+<textarea id="textview" rows="20" cols="100" readonly>
 {{response}}
 </textarea>
 <br>
@@ -24,19 +24,19 @@
 Target URL:  <input type="text" ng-model="inputUri" size="58">
 <br>
 <br>
-<button ng-click="sendRequest()" ng-disabled="isRequesting">
+<button ng-click="sendRequest()" ng-disabled="isRequesting" class="btn btn-lg btn-primary">
     Send Request
 </button>
-<button ng-click="sendBomb()" ng-disabled="isRequesting">
+<button ng-click="sendBomb()" ng-disabled="isRequesting" class="btn btn-lg btn-default">
     Send N Concurrent Requests
 </button>
   N =
 <select ng-options="opt as opt.name for opt in options" ng-model="optionList" ng-init="optionList = options[0]">
 </select>
-<button ng-click="sendHelp()" ng-disabled="isRequesting">
+<button ng-click="sendHelp()" ng-disabled="isRequesting" class="btn btn-lg btn-default">
     Help
 </button>
-<button ng-click="sendExit()" ng-disabled="isRequesting">
+<button ng-click="sendExit()" ng-disabled="isRequesting" class="btn btn-lg btn-default">
     Exit
 </button>
 </div>

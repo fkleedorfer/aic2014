@@ -10,6 +10,11 @@ clientApp.controller('onionClientAppController', function ($scope, $http) {
      { "name": "13" }, { "name": "14" }, { "name": "15" }, { "name": "16" }, { "name": "17" }, { "name": "18" },
      { "name": "19" }, { "name": "20" }];
 
+    $http.get('/defaultTarget').
+        success(function(data, status, headers, config) {
+            $scope.inputUri = data.text;
+        });
+
     $scope.sendRequest = function sendRequest(){
           $scope.isRequesting = true;
           //$http.get('/sendRequest').
