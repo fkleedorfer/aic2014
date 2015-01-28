@@ -58,7 +58,7 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         //1.1 update chainnode deployment config. file
         initConfiguration();
         retrievePublicIP();
-        updateChainNodeInfo();
+        updateChainNodeConfigFile();
 
         //
         //2. init AWS-EC2 client
@@ -80,12 +80,15 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         }
         latestNodeIndex = numberOfTotalChainNodes;
         awsConnector.createAWSChainNodes(numberOfTotalChainNodes, chainNodeNames);
+
+        //5. Initialize main list with all chain nodes
         logger.info("Created (requested) " + numberOfTotalChainNodes + " new chain nodes within AWS.");
 
-        //6. Run setup-script for new chainnodes
-        cnInstaller = new ChainNodeInstaller(env, awsConnector);
         starting = false;
-        //der Thread  läuft Liste wird vom Connector geladen
+
+        //6. Start Installer-Thread to install chain-nodes
+        cnInstaller = new ChainNodeInstaller(env, awsConnector);
+        cnInstaller.startInstallerThread();
     }
 
     @Override
@@ -96,7 +99,9 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
             AWSChainNode awsChainNode = this.awsConnector.findChainNodeByIP(remoteChainNodeInfo.getPublicIP());
             awsChainNode.setPublicKey(remoteChainNodeInfo.getPublicKey());
             awsChainNode.setPort(remoteChainNodeInfo.getPort());
+            awsChainNode.confirmRegistration();
             id = awsChainNode.getId();
+
             //routing Status will be registered when public key has been received
             this.awsConnector.registerRoutingStatus(awsChainNode);
         }
@@ -112,34 +117,30 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
     @Override
     public void unregisterChainNode(String id) {
-        /*
-        synchronized(awsChain
-        Nodes) {
-            awsChainNodes.removeIf(cn -> cn.getId().equals(id));
-        }
-        */
+
     }
 
     @Override
     public ChainNodeInfo getChainNode(String id) {
-        Optional<AWSChainNode> result = awsConnector.getAllChainNodes(false).stream().filter(cni -> id.equals(cni.getId())).findAny();
+        Optional<ChainNodeInfo> result = getAllChainNodes().stream().filter(cni -> id.equals(cni.getId())).findAny();
         return result.isPresent() ? result.get() : null;
     }
 
     @Override
     public Collection<ChainNodeInfo> getAllChainNodes() {
         return new LinkedList<ChainNodeInfo>() {{
-            getAllAWSChainNodes().stream().filter(cni -> cni.isStarted()).forEach(cni -> add(cni));
+            getAllAWSChainNodes().stream().filter(cni -> cni.isRegistered()).forEach(cni -> add(cni));
         }};
     }
 
     /**
-     * Returns ALL chain nodes
+     * Returns all PENDING or RUNNING chain nodes
+     *
      * @return
      */
     public Collection<AWSChainNode> getAllAWSChainNodes() {
         return new LinkedList<AWSChainNode>() {{
-            awsConnector.getAllChainNodes(false).forEach(cni -> add(cni));
+            awsConnector.getInternalChainNodeList().forEach(cni -> add(cni));
         }};
     }
 
@@ -186,6 +187,9 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
         ((SimpleClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(readTimeout);
     }
 
+    /**
+     * Discovers the public IP of this server
+     */
     private void retrievePublicIP() {
         //
         // Code-Snippet for IP-check from: http://stackoverflow.com/a/14541376
@@ -197,25 +201,20 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
             in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
             ip = in.readLine();
             if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                }
+                try { in.close(); } catch (IOException e) { }
             }
             publicIP = ip;
-        } catch (IOException e) {
-            try {
-                in.close();
-            } catch (Exception innerE) {
-            }
+        }
+        catch (IOException e) {
+            try { in.close(); } catch (Exception innerE) { }
         }
     }
 
     /**
      * Updates the chainnode configuration file, which will be deployed.
-     * Adds the public IP of this directory service into the config. file.
+     * Adds the public IP of this directory service into the config file.
      */
-    private void updateChainNodeInfo() {
+    private void updateChainNodeConfigFile() {
 
         try {
             if (getIPAddress() == null || getIPAddress().isEmpty()) {
@@ -241,24 +240,18 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
 
     @Scheduled(fixedDelay = 5000)
     public void LifeCheck() {
-        if (starting)
+       if (starting)
             return;
 
-        //es müssen mindestens
-        int countAlive = 0;
-        Collection<AWSChainNode> aWSChainNodes = (this).getAllAWSChainNodes();
+        Collection<AWSChainNode> aWSChainNodes = getAllAWSChainNodes();
 
-        InetAddress inetAddress = null;
-
-        Date start, stop;
         Iterator itAwsChainNode = aWSChainNodes.iterator();
         AWSChainNode aWSChainNode;
         ChainNodeRoutingStats chainNodeRoutingStats;
         while (itAwsChainNode.hasNext()) {
-            aWSChainNode = (AWSChainNode) itAwsChainNode.next();
 
-            //instance is running check responsetime  16 : running
-            if ((aWSChainNode.getState() != null) && (aWSChainNode.getState().getCode() == 16) && (!aWSChainNode.isShuttingDown()) && (aWSChainNode.getPublicKey() != null)) {
+            aWSChainNode = (AWSChainNode) itAwsChainNode.next();
+            if (aWSChainNode.getAWSState() == AWSState.RUNNING && !aWSChainNode.isScheduledForShuttingDown() && aWSChainNode.isRegistered()) {
 
                 try {
                     chainNodeRoutingStats = restTemplate.getForObject(aWSChainNode.getUri().toString() + "/ping", ChainNodeRoutingStats.class);
@@ -269,8 +262,8 @@ public class AWSDirectoryNodeService implements DirectoryNodeService {
                 } catch (Exception e) {
                     logger.debug("caught exception while trying to ping node " + aWSChainNode.getId(), e.getMessage());
                     logger.info("could not ping node %s, unregistering it Error: " + e.getMessage(), aWSChainNode.getId());
-                    aWSChainNode.setShuttingDown(true);
-                    this.awsConnector.loadBalancerDeleteNode(aWSChainNode.getId());
+                    aWSChainNode.scheduleShutdown();
+                    awsConnector.loadBalancerDeleteNode(aWSChainNode.getId());
                 }
             }
         }

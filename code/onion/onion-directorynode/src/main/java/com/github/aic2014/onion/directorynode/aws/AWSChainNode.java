@@ -9,20 +9,11 @@ import com.github.aic2014.onion.model.ChainNodeInfo;
 public class AWSChainNode extends ChainNodeInfo{
 
     private String instanceName;
-    private boolean Started;
-    private boolean ShuttingDown;
+    private boolean isInstalling = false;
+    private boolean isRegistered = false;
+    private boolean isScheduledForShuttingDown = false;
 
-    /**
-     * InstanceState; public java.lang.Integer getCode()
-     * The low byte represents the state. The high byte is an opaque internal value and should be ignored.
-     * 0 : pending
-     * 16 : running
-     * 32 : shutting-down
-     * 48 : terminated
-     * 64 : stopping
-     * 80 : stopped
-     */
-    private InstanceState state;
+    private AWSState awsState = null;
 
     /**
      * Gets the AWS-name of this instance.
@@ -37,27 +28,52 @@ public class AWSChainNode extends ChainNodeInfo{
         this.instanceName = instanceName;
     }
 
-    public boolean isStarted() {
-        return Started;
+    /**
+     * Gets whether the chain nodes has successfully registered itself at
+     * the directory node or not
+     * @return
+     */
+    public boolean isRegistered() {
+        return isRegistered;
     }
 
-    public void setStarted(boolean Started) {
-        this.Started = Started;
+    /**
+     * True if the chain node is been installed right now
+     * @return
+     */
+    public boolean isInstalling() {
+        return isInstalling;
     }
 
-    public boolean isShuttingDown() {
-        return ShuttingDown;
+    /**
+     * True if thie chain nodes has been scheduled to shut down
+     * (e.g. from the life checker)
+     *
+     * @return
+     */
+    public boolean isScheduledForShuttingDown() {
+        return isScheduledForShuttingDown;
     }
 
-    public void setShuttingDown(boolean ShuttingDown) {
-        this.ShuttingDown = ShuttingDown;
+    public void confirmRegistration() {
+        this.isRegistered = true;
+        this.isInstalling = false;
     }
 
-    public InstanceState getState(){
-        return state;
+    public void confirmInstalling() {
+        this.isRegistered = false;
+        this.isInstalling = true;
     }
 
-    public void setState(InstanceState state){
-        this.state = state;
+    public void scheduleShutdown() {
+        this.isScheduledForShuttingDown = true;
+    }
+
+    public AWSState getAWSState() {
+        return awsState;
+    }
+
+    public void updateAWSState(InstanceState state) {
+        awsState = AWSState.fromState(state);
     }
 }

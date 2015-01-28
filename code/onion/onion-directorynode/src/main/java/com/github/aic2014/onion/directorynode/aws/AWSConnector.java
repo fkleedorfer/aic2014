@@ -11,100 +11,83 @@ import com.github.aic2014.onion.model.ChainNodeInfo;
 import com.github.aic2014.onion.model.ChainNodeRoutingStats;
 import org.springframework.core.env.Environment;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- *
+ * Providing relevant and simplifed access to the AWS EC2 API
+ * Maintaining an internal list of AWSChainNodes.
  */
 public class AWSConnector {
 
-    public final static String AWS_STATE_RUNNING = "running";
-    public final static String AWS_STATE_PENDING = "pending";
     public final static String AWS_TAG_NAME = "Name";
 
     private AmazonEC2 ec2;
     private Environment env;
-    private List<AWSChainNode> awsChainNodes = Collections.synchronizedList(new ArrayList<AWSChainNode>());
+    private List<AWSChainNode> awsChainNodes;
     private LoadBalancingChainCalculator loadBalancingChainCalculator;
 
+    /**
+     * Initializes the AWSConnector Object.
+     *
+     * @param env
+     */
     public AWSConnector(Environment env) {
         ec2 = new AmazonEC2Client(new BasicAWSCredentials(env.getProperty("aws.accesskeyid"),  env.getProperty("aws.secretaccesskey")));
         ec2.setRegion(Region.getRegion(Regions.fromName(env.getProperty("aws.region"))));
         this.env = env;
-        this.awsChainNodes = new ArrayList<>();
-        this.loadBalancingChainCalculator = new LoadBalancingChainCalculator();
+        awsChainNodes = Collections.synchronizedList(new ArrayList<AWSChainNode>());
+        loadBalancingChainCalculator = new LoadBalancingChainCalculator();
     }
 
-
-    public AWSChainNode getById(String instanceId) {
-        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getId().equals(instanceId)).findAny();
-        return result.isPresent() ? result.get() : null;
-    }
-
-    public void setPingTime(String instanceId, long pingTime) {
-        synchronized (this.awsChainNodes){
-             for (AWSChainNode awsChainNode : this.awsChainNodes){
-                 if (awsChainNode.getId()== instanceId){
-                     awsChainNode.setPingTime(pingTime);
-                     break;
-                 }
-            }
-        }
-    }
-
-    public void deleteAwsNode(String instanceName) {
-        synchronized (this.awsChainNodes){
-            for (AWSChainNode awsChainNode : this.awsChainNodes){
-                if (awsChainNode.getInstanceName() == instanceName){
-                    this.awsChainNodes.remove(awsChainNode);
-                    break;
-                }
-
-            }
-        }
-    }
-
-
+    /**
+     * Finds the corresponding Chain Node from the given public IP.
+     * Lookup ONLY within the internal list
+     *
+     * @param ip
+     * @return
+     */
     public AWSChainNode findChainNodeByIP(String ip) {
         Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getPublicIP().equals(ip)).findAny();
         return result.isPresent() ? result.get() : null;
     }
 
-    public void registerRoutingStatus (AWSChainNode awsCN){
-            this.loadBalancingChainCalculator.registerChainNode(awsCN);
-
+    public void registerRoutingStatus(AWSChainNode awsCN){
+        this.loadBalancingChainCalculator.registerChainNode(awsCN);
     }
 
-    public void loadBalancerDeleteNode (String id){
+    public void updateRoutingStatus(AWSChainNode awsCN, ChainNodeRoutingStats stats) {
+        this.loadBalancingChainCalculator.updateStats(stats, awsCN);
+    }
+
+    public void loadBalancerDeleteNode(String id){
         this.loadBalancingChainCalculator.deleteChainNode(id);
     }
 
-    public void updateRoutingStatus (AWSChainNode awsCN , ChainNodeRoutingStats stats){
-
-        this.loadBalancingChainCalculator.updateStats(stats, awsCN);
-
-    }
-
-    public ChainNodeInfo[] getChain(int length){
-
+    public ChainNodeInfo[] getChain(int length) {
         ChainNodeInfo [] chainNodeInfos = this.loadBalancingChainCalculator.getChain(length);
         ChainNodeInfo chainNodeInfo;
-        for (int i = 0; i < 3; i++){
+        for (int i = 0; i < length; i++){
             chainNodeInfo = this.findChainNodeByIP(chainNodeInfos[i].getPublicIP());
             chainNodeInfo.setSentMessages(chainNodeInfo.getSentMessages() + 1);
         }
-
         return this.loadBalancingChainCalculator.getChain(length);
     }
 
-    /**
-     * Gets all PENDING or ACTIVE chain nodes.
-     * Results are not cached.
-     * @return
-     */
-    public List<AWSChainNode> getAllChainNodes(boolean allStarted) {
+    public List<AWSChainNode> getInternalChainNodeList() {
+        return new LinkedList<AWSChainNode>() {{
+            awsChainNodes.stream().forEach(cni -> add(cni));
+        }};
+    }
 
+    /**
+     * Gets (ALL) || (PENDING or ACTIVE) chain nodes.
+     * It also updates the internal list of chain nodes
+     *
+     * @return new List with references to the existing chain nodes
+     */
+    public List<AWSChainNode> getAllChainNodes(boolean onlyRunning) {
+
+        LinkedList<AWSChainNode> allChainNodes = new LinkedList<>();
         DescribeInstancesResult result = ec2.describeInstances();
         for (Reservation reservation : result.getReservations()) {
             for (Instance instance : reservation.getInstances()) {
@@ -124,37 +107,51 @@ public class AWSConnector {
 
                 //hier werden die existierenden laufenden Instanzen gesucht nur in diesem Fall werden die Nodes hier der Liste zugefügt ansonsten passiert das nur wenn
                 //eine neue Instanz erstellt wird.
-                if(allStarted) {
-                    if (!(state.getName().equalsIgnoreCase(AWS_STATE_RUNNING) || state.getName().equalsIgnoreCase(AWS_STATE_PENDING))) {
-                        //current instance is neither running nor starting... ignore
-                        continue;
-                    }
-
-                    AWSChainNode awsCN = this.getById(id);
-                    if (awsCN == null) {
-                        awsCN = new AWSChainNode();
-                        awsCN.setId(id);
-                        awsCN.setInstanceName(instanceName);
-                        awsCN.setPublicIP(publicIP);
-                        awsCN.setStarted(false);
-                        awsCN.setState(state);
-                        awsChainNodes.add(awsCN);
-                    }
-
-                }else{
-                    AWSChainNode awsCN = this.getById(id);
-                    if (awsCN != null) {
-                        awsCN.setState(state);
-                        awsCN.setPublicIP(publicIP);
-                        awsCN.setLastLifeCheck(new Date());
-                    }
+                if (onlyRunning && !(AWSState.fromState(state) == AWSState.RUNNING || AWSState.fromState(state) == AWSState.PENDING)) {
+                    //current instance is neither RUNNING nor PENDING... ignore
+                    continue;
                 }
+
+                AWSChainNode awsCN = new AWSChainNode();
+                awsCN.setId(id);
+                awsCN.setInstanceName(instanceName);
+                awsCN.setPublicIP(publicIP);
+                awsCN.updateAWSState(state);
+                awsCN.setLastLifeCheck(new Date());
+
+                allChainNodes.add(awsCN);
             }
         }
 
-        return new LinkedList<AWSChainNode>() {{
-            awsChainNodes.forEach(cni -> add(cni));
-        }};
+        return allChainNodes;
+    }
+
+    public void updateCurrentChainNodes() {
+        DescribeInstancesResult result = ec2.describeInstances();
+        for (Reservation reservation : result.getReservations()) {
+            for (Instance instance : reservation.getInstances()) {
+
+                Optional<Tag> optional = instance.getTags().stream().filter((tag) ->
+                                tag.getKey().equalsIgnoreCase(AWS_TAG_NAME) && tag.getValue().startsWith(env.getProperty("aws.chainnode.prefix"))
+                ).findFirst();
+                if (!optional.isPresent()) {
+                    //current instance does not start with the chain-node-name-prefix... ignore
+                    continue;
+                }
+
+                String id = instance.getInstanceId();
+                String publicIP = instance.getPublicIpAddress();
+                InstanceState state = instance.getState();
+
+                AWSChainNode awsCN = getById(id);
+                if (awsCN == null)
+                    continue;
+
+                awsCN.updateAWSState(state);
+                awsCN.setPublicIP(publicIP);
+                awsCN.setLastLifeCheck(new Date());
+            }
+        }
     }
 
     /**
@@ -196,7 +193,6 @@ public class AWSConnector {
 
         RunInstancesResult result = ec2.runInstances(request);
 
-
         int counter = 0;
         for (Instance instance : result.getReservation().getInstances()) {
             String instanceName = counter >= names.length ? "#undef#" : names[counter];
@@ -207,19 +203,37 @@ public class AWSConnector {
             ec2.createTags(tagRequest);
 
             //wenn die Node mit dem Instanznamen schon rennt wirds von der Liste gelöscht, heruntergefahren is se ja schon
-            this.deleteAwsNode(instanceName);
+            deleteAwsNodeFromList(instanceName);
 
-            AWSChainNode awsCN = this.getById(instance.getInstanceId());
-            if (awsCN == null) {
-                awsCN = new AWSChainNode();
-                awsCN.setId(instance.getInstanceId());
-                awsCN.setInstanceName(instanceName);
-                awsCN.setStarted(false);
-                awsCN.setShuttingDown(false);
-                awsCN.setState(instance.getState());
-                awsCN.setLaunchedDate(new Date());
-                awsCN.setPort(Integer.parseInt(env.getProperty("aws.chainnode.port")));
-                awsChainNodes.add(awsCN);
+            AWSChainNode awsCN = new AWSChainNode();
+            awsCN.setId(instance.getInstanceId());
+            awsCN.setInstanceName(instanceName);
+            awsCN.setPort(Integer.parseInt(env.getProperty("aws.chainnode.port")));
+            awsCN.updateAWSState(instance.getState());
+            awsCN.setLaunchedDate(new Date());
+            awsChainNodes.add(awsCN);
+        }
+    }
+
+    /**
+     * Finds the corresponding AWSChainNode from the chain node list
+     * @param instanceId
+     * @return
+     */
+    private AWSChainNode getById(String instanceId) {
+        Optional<AWSChainNode> result = this.awsChainNodes.stream().filter(cni -> cni.getId().equals(instanceId)).findAny();
+        return result.isPresent() ? result.get() : null;
+    }
+
+    /**
+     * Removes the given chain node from the internal list
+     * @param instanceName
+     */
+    private void deleteAwsNodeFromList(String instanceName) {
+        for (AWSChainNode awsChainNode : this.awsChainNodes){
+            if (awsChainNode.getInstanceName().equals(instanceName)) {
+                this.awsChainNodes.remove(awsChainNode);
+                return;
             }
         }
     }
