@@ -15,16 +15,24 @@
 {{response}}
 </pre>
 -->
+<br>
 <textarea id="textview" rows="25" cols="100">
 {{response}}
 </textarea>
+<br>
+<br>
+Target URL:  <input type="text" ng-model="inputUri" size="58">
+<br>
 <br>
 <button ng-click="sendRequest()" ng-disabled="isRequesting">
     Send Request
 </button>
 <button ng-click="sendBomb()" ng-disabled="isRequesting">
-    Send 20 Concurrent Requests
+    Send N Concurrent Requests
 </button>
+  N =
+<select ng-options="opt as opt.name for opt in options" ng-model="optionList" ng-init="optionList = options[0]">
+</select>
 <button ng-click="sendHelp()" ng-disabled="isRequesting">
     Help
 </button>

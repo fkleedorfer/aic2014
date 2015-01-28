@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.github.aic2014.onion.client.OnionClientCommandLineRunner;
 
@@ -49,17 +50,22 @@ public class OnionClientAppController {
     @Value("${quoteserver.hostnamePort}")
     private String quoteServerHostnamePort;
 
-    @RequestMapping(value = "/sendBomb", method = RequestMethod.GET)
-    public ResponseEntity<ResponseText> sendBomb() throws Exception {
+    @RequestMapping(value = "/sendBomb", method = RequestMethod.PUT)
+    public ResponseEntity<ResponseText> sendBomb(@RequestParam(required = true, value = "n") String n, @RequestParam(required = true, value = "url") String url) throws Exception{
+
+        int temp = 20;
+        if(!n.equals("")) {
+            temp = Integer.valueOf(n);
+        }
+
+        final String[] res = {""};
+        int messageCount = temp;
 
         DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss:SSS");
         Calendar cal = Calendar.getInstance();
 
-        final String[] res = {""};
-        int messageCount = 20;
-
         long start = System.currentTimeMillis();
-        final String requestString = buildRequestString();
+        final String requestString = buildRequestString(url);
         final CountDownLatch latch = new CountDownLatch(messageCount);
         final AtomicInteger requestSentCounter = new AtomicInteger(0);
         final AtomicInteger responseSuccessfulCounter = new AtomicInteger(0);
@@ -102,16 +108,17 @@ public class OnionClientAppController {
         res[0] = res[0] + dateFormat.format(cal.getTime()) + " - " + String.format("Done bombing. Attempted to send %s messages in %.2f seconds (%s successful, %s failed, %.2f messages per second)",
                 messageCount, time, responseSuccessfulCounter.get(), responseFailedCounter.get(), messageCount/time) + "\n";
         res[0] = res [0] + "--------------------------------------------------------------------------------------------\n";
+
         return new ResponseEntity<ResponseText>(new ResponseText(res[0]), HttpStatus.OK);
     }
 
-    @RequestMapping(value="/sendRequest", method = RequestMethod.GET)
-    public ResponseEntity<ResponseText> sendRequest() {
+    @RequestMapping(value = "/sendRequest", method = RequestMethod.PUT)
+    public ResponseEntity<ResponseText> sendRequest(@RequestParam(required = true, value = "url") String url) {
         DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss:SSS");
         Calendar cal = Calendar.getInstance();
         String res = "";
         try {
-            String requestString = buildRequestString();
+            String requestString = buildRequestString(url);
             res = dateFormat.format(cal.getTime()) + " - Sending Request: " + requestString + "\n";
             OnionRoutedHttpRequest request = client.getHttpRequest();
             String response = request.execute(requestString);
@@ -121,8 +128,14 @@ public class OnionClientAppController {
             return new ResponseEntity<ResponseText>(new ResponseText(res), HttpStatus.OK);
         } catch(Exception e) {
             e.printStackTrace();
-            res = dateFormat.format(cal.getTime()) + " - Request Sending failed!\n"+
-                    "--------------------------------------------------------------------------------------------\n";
+            if(url != "") {
+                res = dateFormat.format(cal.getTime()) + " - Request Sending to " + url + " failed!\n"+
+                        "--------------------------------------------------------------------------------------------\n";
+            } else {
+                res = dateFormat.format(cal.getTime()) + " - Request Sending to " + quoteServerUri + " failed!\n"+
+                        "--------------------------------------------------------------------------------------------\n";
+            }
+
             return new ResponseEntity<ResponseText>(new ResponseText(res), HttpStatus.OK);
         }
     }
@@ -150,8 +163,15 @@ public class OnionClientAppController {
         return new ResponseEntity<ResponseText>(new ResponseText("nix"), HttpStatus.OK);
     }
 
-    private String buildRequestString() throws java.io.IOException, org.apache.http.HttpException {
-        HttpGet request = new HttpGet(quoteServerUri+"/quote");
+    private String buildRequestString(String url) throws java.io.IOException, org.apache.http.HttpException {
+        String qsUri = "";
+        if(url != "") {
+            qsUri = url;
+        } else {
+            qsUri = quoteServerUri;
+        }
+
+        HttpGet request = new HttpGet(qsUri+"/quote");
         request.addHeader("Host", quoteServerHostnamePort);
         HttpTransportMetricsImpl metrics = new HttpTransportMetricsImpl();
         SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(metrics, 255);

@@ -11,7 +11,7 @@ quoteServerApp.controller('QuoteController', function ($scope, $http) {
         $http.get('/quote').
             success(function(data, status, headers, config) {
                 $scope.quote = data.text;
-                $scope.status = data.timestamp + " - Quote: "+data.text+"-----------------\n" + $scope.status;
+                $scope.status = data.timestamp + " - Quote: \""+data.text+"\" requested!\n" + $scope.status;
                 $scope.isRequesting = false;
             }).
             error(function(data, status, headers, config) {
