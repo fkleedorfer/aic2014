@@ -9,5 +9,5 @@ echo Starting the Onion Routing client.
 echo Updating from `git remote -v | grep fetch`...
 git pull
 echo Building...
-mvn -pl $PROJ clean install
+mvn clean install
 mvn -pl $PROJ exec:java -Dexec.mainClass="$MAINCLASS" -Dexec.classpathScope=runtime $VMARGS
