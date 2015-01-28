@@ -67,8 +67,8 @@ Point your browser to `http://localhost:20141` to see if it works.
 Running the chain node:
 ```
 cd code/onion/onion-chainnode
-mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.chainnode.ChainNodeApp" -DONION_CONF_DIR=../conf.loca
-l -Dlogging.config=../conf.local/logback.xml
+mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.chainnode.ChainNodeApp"
+-DONION_CONF_DIR=../conf.local -Dlogging.config=../conf.local/logback.xml
 ``` 
 The port the chain node uses is chosen at random. It is output as one of the last log messages.
 Point your browser to `http://localhost:[port]` to see if it works.
@@ -78,8 +78,8 @@ directory node to see if it worked.
 Running the client:
 ```
 cd code/onion/onion-client
-mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.client.ClientApp" -DONION_CONF_DIR=../conf.loca
-l -Dlogging.config=../conf.local/logback.xml
+mvn exec:java -Dexec.mainClass="com.github.aic2014.onion.client.OnionClientApp"
+-DONION_CONF_DIR=../conf.local -Dlogging.config=../conf.local/logback.xml
 ```
 
 The client will present a list of commands you can enter.
