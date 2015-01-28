@@ -9,12 +9,13 @@
 <body ng-controller="QuoteController">
 <div class="container-fluid">
 <h1>Quoteserver status</h1>
-    <button ng-click="getQuote()" ng-disabled="isRequesting">
-        getQuote
+    <button ng-click="getQuote()" ng-disabled="isRequesting" class="btn btn-lg btn-primary">
+        Fetch New Quote
     </button>
     <div>
         <pre>{{quote }}</pre>
     </div>
+    <h2>History</h2>
     <div>
         <pre>{{status }}</pre>
     </div>
